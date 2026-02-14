@@ -4,24 +4,34 @@ import java.time.LocalDate;
 
 public class utilisateur {
 
+    // =========================
     // Attributs
-    private int id;                 // id utilisateur
-    private String nom;             // nom
-    private String prenom;          // prénom
-    private String email;           // email
-    private String motDePasse;      // mot de passe
-    private String statut;          // ACTIF / BLOQUE
-    private LocalDate dateCreation; // date de création
-    private String nfcId;           // identifiant NFC
-    private int roleId;             // clé étrangère vers role
+    // =========================
+    private int id;
+    private String nom;
+    private String prenom;
+    private String email;
+    private String motDePasse;
+    private String statut;
+    private LocalDate dateCreation;
+    private String nfcId;
+    private int roleId;
+    private int numTel;
+    private String profilePicture;   // base64 encoded image
 
+    // =========================
     // Constructeur vide
+    // =========================
     public utilisateur() {}
 
-    // Constructeur sans id (ajout)
+    // =========================
+    // Constructeur sans id (AJOUT)
+    // =========================
     public utilisateur(String nom, String prenom, String email,
                        String motDePasse, String statut,
-                       LocalDate dateCreation, String nfcId, int roleId) {
+                       LocalDate dateCreation, String nfcId,
+                       int roleId, int numTel) {
+
         this.nom = nom;
         this.prenom = prenom;
         this.email = email;
@@ -30,12 +40,17 @@ public class utilisateur {
         this.dateCreation = dateCreation;
         this.nfcId = nfcId;
         this.roleId = roleId;
+        this.numTel = numTel;
     }
 
-    // Constructeur avec id (modification / lecture DB)
+    // =========================
+    // Constructeur avec id
+    // =========================
     public utilisateur(int id, String nom, String prenom, String email,
                        String motDePasse, String statut,
-                       LocalDate dateCreation, String nfcId, int roleId) {
+                       LocalDate dateCreation, String nfcId,
+                       int roleId, int numTel) {
+
         this.id = id;
         this.nom = nom;
         this.prenom = prenom;
@@ -45,9 +60,13 @@ public class utilisateur {
         this.dateCreation = dateCreation;
         this.nfcId = nfcId;
         this.roleId = roleId;
+        this.numTel = numTel;
     }
 
+    // =========================
     // Getters & Setters
+    // =========================
+
     public int getId() {
         return id;
     }
@@ -120,6 +139,25 @@ public class utilisateur {
         this.roleId = roleId;
     }
 
+    public int getNumTel() {
+        return numTel;
+    }
+
+    public void setNumTel(int numTel) {
+        this.numTel = numTel;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
+    }
+
+    // =========================
+    // toString()
+    // =========================
     @Override
     public String toString() {
         return "utilisateur{" +
@@ -131,6 +169,8 @@ public class utilisateur {
                 ", dateCreation=" + dateCreation +
                 ", nfcId='" + nfcId + '\'' +
                 ", roleId=" + roleId +
+                ", numTel=" + numTel +
+                ", profilePicture=" + (profilePicture != null ? "[base64]" : "null") +
                 '}';
     }
 }

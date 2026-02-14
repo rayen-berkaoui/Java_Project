@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esprit.controllers.AdminController"
+            prefWidth="1200" prefHeight="800"
+            style="-fx-padding: 0; -fx-border-width: 0;"
+            styleClass="root">
+
+    <!-- Top Bar -->
+    <top>
+        <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="20" style="-fx-background-color: #1a1a1a; -fx-padding: 15 25;">
+            <Label text="TABAANI Admin Panel" style="-fx-font-size: 18; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="statsLabel" text="" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+            <Button text="Dashboard" styleClass="dashboard-button" onAction="#handleBackToDashboard" />
+            <Button text="Deconnexion" styleClass="dashboard-button-danger" onAction="#handleLogout" />
+            <Button text="--" onAction="#handleMinimize" styleClass="window-button" />
+            <Button text="X" onAction="#handleClose" styleClass="window-button-close" />
+        </HBox>
+    </top>
+
+    <!-- Center Content -->
+    <center>
+        <HBox spacing="0">
+            <!-- Sidebar -->
+            <VBox spacing="12" style="-fx-background-color: #0d0d0d; -fx-padding: 25;" prefWidth="230">
+                <Label text="Administration" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;" />
+
+                <Button fx:id="navUsers" text="Utilisateurs" styleClass="sidebar-button-active" prefWidth="200" onAction="#handleShowUsers" />
+                <Button fx:id="navRoles" text="Roles" styleClass="sidebar-button" prefWidth="200" onAction="#handleShowRoles" />
+
+                <Separator />
+
+                <Label text="Systeme" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                <Button fx:id="navLogs" text="Journaux" styleClass="sidebar-button" prefWidth="200" onAction="#handleShowLogs" />
+                <Button fx:id="navReports" text="Rapports" styleClass="sidebar-button" prefWidth="200" onAction="#handleShowReports" />
+                <Button fx:id="navSecurity" text="Securite" styleClass="sidebar-button" prefWidth="200" onAction="#handleShowSecurity" />
+
+                <Region VBox.vgrow="ALWAYS" />
+                <Label text="Admin v1.0" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
+            </VBox>
+
+            <!-- Main Content Area -->
+            <StackPane fx:id="contentArea" HBox.hgrow="ALWAYS" style="-fx-background-color: #000000;">
+
+                <!-- ==================== USERS PANEL ==================== -->
+                <VBox fx:id="usersPane" spacing="20" style="-fx-padding: 25;" visible="true">
+
+                    <Label text="Gestion des Utilisateurs" style="-fx-font-size: 20; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                    <Separator />
+
+                    <!-- Stats Cards -->
+                    <HBox spacing="15">
+                        <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="Total" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="totalUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        </VBox>
+                        <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="Actifs" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="activeUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #51CF66; -fx-font-weight: bold;" />
+                        </VBox>
+                        <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="Bloques" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="blockedUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #FF6B6B; -fx-font-weight: bold;" />
+                        </VBox>
+                    </HBox>
+
+                    <!-- Search + Actions Bar -->
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <TextField fx:id="userSearchField" promptText="Rechercher un utilisateur..." prefWidth="280"
+                                   style="-fx-background-color: #1a1a1a; -fx-text-fill: #ffffff; -fx-prompt-text-fill: #666666; -fx-padding: 8 12; -fx-background-radius: 8; -fx-border-color: #333333; -fx-border-radius: 8;" />
+                        <Button text="Rechercher" styleClass="dashboard-button" onAction="#handleSearchUsers" />
+                        <Button text="Effacer" styleClass="dashboard-button" onAction="#handleClearSearch" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="userCountLabel" text="" style="-fx-text-fill: #aaaaaa; -fx-font-size: 12;" />
+                    </HBox>
+
+                    <!-- Users Table -->
+                    <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 15; -fx-background-radius: 10;" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="usersTable" VBox.vgrow="ALWAYS" style="-fx-font-size: 11;">
+                            <columns>
+                                <TableColumn fx:id="colId" text="ID" prefWidth="50" />
+                                <TableColumn fx:id="colName" text="Nom" prefWidth="140" />
+                                <TableColumn fx:id="colEmail" text="Email" prefWidth="180" />
+                                <TableColumn fx:id="colPhone" text="Telephone" prefWidth="100" />
+                                <TableColumn fx:id="colRole" text="Role" prefWidth="100" />
+                                <TableColumn fx:id="colStatus" text="Statut" prefWidth="80" />
+                                <TableColumn fx:id="colDate" text="Inscription" prefWidth="110" />
+                            </columns>
+                        </TableView>
+
+                        <!-- Pagination -->
+                        <HBox spacing="10" alignment="CENTER">
+                            <Button fx:id="btnPrevPage" text="Precedent" styleClass="dashboard-button" onAction="#handlePrevPage" />
+                            <Label fx:id="pageInfoLabel" text="Page 1 / 1" style="-fx-text-fill: #FFD700; -fx-font-size: 12;" />
+                            <Button fx:id="btnNextPage" text="Suivant" styleClass="dashboard-button" onAction="#handleNextPage" />
+                        </HBox>
+                    </VBox>
+
+                    <!-- Action Buttons -->
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Button text="Bloquer" styleClass="dashboard-button-danger" onAction="#handleBlockUser" />
+                        <Button text="Debloquer" styleClass="dashboard-button" onAction="#handleUnblockUser" />
+                        <Button text="Supprimer" styleClass="dashboard-button-danger" onAction="#handleDeleteUser" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button text="Actualiser" styleClass="dashboard-button" onAction="#handleRefreshUsers" />
+                    </HBox>
+                </VBox>
+
+                <!-- ==================== ROLES PANEL ==================== -->
+                <VBox fx:id="rolesPane" spacing="20" style="-fx-padding: 25;" visible="false">
+
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="Gestion des Roles" style="-fx-font-size: 20; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button text="+ Nouveau Role" styleClass="dashboard-button" onAction="#handleNewRole" />
+                    </HBox>
+                    <Separator />
+
+                    <!-- Role Cards -->
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+                        <FlowPane fx:id="rolesContainer" hgap="15" vgap="15" style="-fx-padding: 5;" />
+                    </ScrollPane>
+
+                    <!-- Role Statistics -->
+                    <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-background-radius: 10;">
+                        <Label text="Distribution des Roles" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
+                        <Separator />
+                        <VBox fx:id="roleStatsContainer" spacing="8" />
+                    </VBox>
+                </VBox>
+
+                <!-- ==================== LOGS PANEL ==================== -->
+                <VBox fx:id="logsPane" spacing="20" style="-fx-padding: 25;" visible="false">
+
+                    <Label text="Journaux d'Activite" style="-fx-font-size: 20; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                    <Separator />
+
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="Derniere activite des utilisateurs" style="-fx-text-fill: #aaaaaa; -fx-font-size: 12;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button text="Actualiser" styleClass="dashboard-button" onAction="#handleRefreshLogs" />
+                    </HBox>
+
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;" VBox.vgrow="ALWAYS">
+                        <VBox fx:id="logsContainer" spacing="8" style="-fx-padding: 5;" />
+                    </ScrollPane>
+                </VBox>
+
+                <!-- ==================== REPORTS PANEL ==================== -->
+                <VBox fx:id="reportsPane" spacing="20" style="-fx-padding: 25;" visible="false">
+
+                    <Label text="Rapports et Statistiques" style="-fx-font-size: 20; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                    <Separator />
+
+                    <!-- Report Stats Cards -->
+                    <HBox spacing="15">
+                        <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="Utilisateurs Total" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="reportTotalLabel" text="0" style="-fx-font-size: 28; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        </VBox>
+                        <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="Taux d'Activite" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="reportActiveRateLabel" text="0%" style="-fx-font-size: 28; -fx-text-fill: #51CF66; -fx-font-weight: bold;" />
+                        </VBox>
+                        <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="Roles Actifs" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="reportRolesLabel" text="0" style="-fx-font-size: 28; -fx-text-fill: #64B5F6; -fx-font-weight: bold;" />
+                        </VBox>
+                        <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="Taux de Blocage" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="reportBlockRateLabel" text="0%" style="-fx-font-size: 28; -fx-text-fill: #FF6B6B; -fx-font-weight: bold;" />
+                        </VBox>
+                    </HBox>
+
+                    <!-- Role Distribution -->
+                    <VBox spacing="8" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-background-radius: 10;" VBox.vgrow="ALWAYS">
+                        <Label text="Distribution par Role" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
+                        <Separator />
+                        <VBox fx:id="reportDistContainer" spacing="10" />
+                    </VBox>
+                </VBox>
+
+                <!-- ==================== SECURITY PANEL ==================== -->
+                <VBox fx:id="securityPane" spacing="20" style="-fx-padding: 25;" visible="false">
+
+                    <Label text="Securite du Systeme" style="-fx-font-size: 20; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                    <Separator />
+
+                    <VBox fx:id="securityContainer" spacing="12" />
+                </VBox>
+
+            </StackPane>
+        </HBox>
+    </center>
+
+</BorderPane>

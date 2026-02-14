@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esprit.controllers.DashboardController"
+            prefWidth="1200" prefHeight="800"
+            style="-fx-padding: 0; -fx-border-width: 0;"
+            styleClass="root">
+
+    <!-- Top Bar -->
+    <top>
+        <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="20" style="-fx-background-color: #1a1a1a; -fx-padding: 15 25;">
+            <Label text="📊 TABAANI Dashboard" style="-fx-font-size: 18; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label fx:id="userNameLabel" text="" style="-fx-text-fill: #FFD700; -fx-font-size: 14;" />
+            <Button text="👤 Profile" styleClass="dashboard-button" onAction="#handleViewProfile" />
+            <Button text="🚪 Logout" styleClass="dashboard-button-danger" onAction="#handleLogout" />
+            <Button text="—" onAction="#handleMinimize" styleClass="window-button" />
+            <Button text="✕" onAction="#handleClose" styleClass="window-button-close" />
+        </HBox>
+    </top>
+
+    <!-- Center Content -->
+    <center>
+        <HBox spacing="0">
+            <!-- Sidebar -->
+            <VBox spacing="12" style="-fx-background-color: #0d0d0d; -fx-padding: 25;" prefWidth="230">
+                <Label text="Navigation" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;" />
+
+                <Button fx:id="btnDashboard" text="📈 Tableau de bord" styleClass="sidebar-button-active" prefWidth="200" onAction="#handleShowDashboard" />
+
+                <Separator />
+
+                <Label text="Système" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                <Button fx:id="btnSettings" text="⚙️ Paramètres" styleClass="sidebar-button" prefWidth="200" onAction="#handleShowSettings" />
+                <Button fx:id="btnSupport" text="📞 Support" styleClass="sidebar-button" prefWidth="200" onAction="#handleShowSupport" />
+
+                <Separator />
+
+                <Button text="🛡️ Admin Panel" styleClass="sidebar-button" prefWidth="200" onAction="#handleGoToAdmin" />
+
+                <Region VBox.vgrow="ALWAYS" />
+                <Label text="Tabaani v1.0" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
+            </VBox>
+
+            <!-- Main Content StackPane -->
+            <StackPane fx:id="contentArea" HBox.hgrow="ALWAYS" style="-fx-background-color: #000000;">
+
+                <!-- ============ DASHBOARD PANEL ============ -->
+                <VBox fx:id="dashboardPane" spacing="20" style="-fx-background-color: #000000; -fx-padding: 25;">
+
+                    <!-- Welcome Section -->
+                    <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;">
+                        <Label fx:id="welcomeLabel" text="Bienvenue 👋" style="-fx-font-size: 20; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="Tableau de bord — vue d'ensemble en temps réel" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                    </VBox>
+
+                    <!-- Stats Cards -->
+                    <HBox spacing="15">
+                        <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="👥" style="-fx-font-size: 24; -fx-text-fill: #FFD700;" />
+                            <Label text="Total Utilisateurs" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="totalUsersLabel" text="0" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        </VBox>
+                        <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="✅" style="-fx-font-size: 24; -fx-text-fill: #51CF66;" />
+                            <Label text="Utilisateurs Actifs" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="activeUsersLabel" text="0" style="-fx-font-size: 22; -fx-text-fill: #51CF66; -fx-font-weight: bold;" />
+                        </VBox>
+                        <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="🚫" style="-fx-font-size: 24; -fx-text-fill: #FF6B6B;" />
+                            <Label text="Utilisateurs Bloqués" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="blockedUsersLabel" text="0" style="-fx-font-size: 22; -fx-text-fill: #FF6B6B; -fx-font-weight: bold;" />
+                        </VBox>
+                        <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS">
+                            <Label text="🏷️" style="-fx-font-size: 24; -fx-text-fill: #64B5F6;" />
+                            <Label text="Total Rôles" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                            <Label fx:id="totalRolesLabel" text="0" style="-fx-font-size: 22; -fx-text-fill: #64B5F6; -fx-font-weight: bold;" />
+                        </VBox>
+                    </HBox>
+
+                    <!-- Recent Users -->
+                    <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" VBox.vgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label text="📝 Derniers inscrits" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button text="🔄 Rafraîchir" styleClass="dashboard-button" onAction="#handleRefreshDashboard" />
+                        </HBox>
+                        <Separator />
+                        <VBox fx:id="recentUsersContainer" spacing="8" VBox.vgrow="ALWAYS" />
+                    </VBox>
+                </VBox>
+
+                <!-- ============ SETTINGS PANEL ============ -->
+                <VBox fx:id="settingsPane" spacing="20" style="-fx-background-color: #000000; -fx-padding: 25;" visible="false">
+                    <VBox spacing="5">
+                        <Label text="⚙️ Paramètres" style="-fx-font-size: 20; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="Configurer les préférences du système" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                    </VBox>
+
+                    <ScrollPane style="-fx-background-color: transparent; -fx-padding: 0;" fitToWidth="true" VBox.vgrow="ALWAYS">
+                        <VBox spacing="20">
+                            <VBox spacing="15" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;">
+                                <Label text="🔔 Notifications" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
+                                <Separator />
+                                <HBox spacing="15" alignment="CENTER_LEFT">
+                                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                        <Label text="Notifications Email" style="-fx-text-fill: #ffffff; -fx-font-size: 13;" />
+                                        <Label text="Recevoir les alertes par email" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <CheckBox fx:id="emailNotifCheckbox" selected="true" styleClass="custom-checkbox" />
+                                </HBox>
+                                <HBox spacing="15" alignment="CENTER_LEFT">
+                                    <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                        <Label text="Authentification à deux facteurs" style="-fx-text-fill: #ffffff; -fx-font-size: 13;" />
+                                        <Label text="Ajouter une couche de sécurité" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <CheckBox fx:id="twoFactorCheckbox" styleClass="custom-checkbox" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="15" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;">
+                                <Label text="🎨 Apparence" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
+                                <Separator />
+                                <HBox spacing="15" alignment="CENTER_LEFT">
+                                    <Label text="Langue" style="-fx-text-fill: #ffffff; -fx-font-size: 13;" prefWidth="150" />
+                                    <ComboBox fx:id="languageComboBox" styleClass="text-field-modern" prefWidth="200">
+                                        <items>
+                                            <FXCollections fx:factory="observableArrayList">
+                                                <String fx:value="Français" />
+                                                <String fx:value="English" />
+                                                <String fx:value="العربية" />
+                                            </FXCollections>
+                                        </items>
+                                    </ComboBox>
+                                </HBox>
+                            </VBox>
+
+                            <HBox spacing="15" alignment="CENTER_RIGHT">
+                                <Label fx:id="settingsMessageLabel" text="" style="-fx-font-size: 12;" />
+                                <Button text="💾 Sauvegarder" styleClass="dashboard-button" onAction="#handleSaveSettings" />
+                            </HBox>
+                        </VBox>
+                    </ScrollPane>
+                </VBox>
+
+                <!-- ============ SUPPORT PANEL ============ -->
+                <VBox fx:id="supportPane" spacing="20" style="-fx-background-color: #000000; -fx-padding: 25;" visible="false">
+                    <VBox spacing="5">
+                        <Label text="📞 Centre de Support" style="-fx-font-size: 20; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="Aide et assistance technique" style="-fx-text-fill: #cccccc; -fx-font-size: 12;" />
+                    </VBox>
+
+                    <HBox spacing="15">
+                        <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS" alignment="CENTER">
+                            <Label text="📚" style="-fx-font-size: 32; -fx-text-fill: #FFD700;" />
+                            <Label text="FAQ" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
+                            <Label text="Réponses aux questions fréquentes" style="-fx-text-fill: #cccccc; -fx-font-size: 11;" textAlignment="CENTER" wrapText="true" />
+                            <Button text="Consulter" styleClass="dashboard-button" onAction="#handleViewFAQ" />
+                        </VBox>
+                        <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS" alignment="CENTER">
+                            <Label text="📧" style="-fx-font-size: 32; -fx-text-fill: #51CF66;" />
+                            <Label text="Email Support" style="-fx-text-fill: #51CF66; -fx-font-size: 14; -fx-font-weight: bold;" />
+                            <Label text="support@tabaani.com" style="-fx-text-fill: #cccccc; -fx-font-size: 11;" />
+                            <Button text="Envoyer Email" styleClass="dashboard-button" onAction="#handleSendEmail" />
+                        </VBox>
+                        <VBox spacing="10" style="-fx-background-color: #1a1a1a; -fx-padding: 20; -fx-border-radius: 10; -fx-background-radius: 10;" HBox.hgrow="ALWAYS" alignment="CENTER">
+                            <Label text="💬" style="-fx-font-size: 32; -fx-text-fill: #FFB74D;" />
+                            <Label text="Chat en direct" style="-fx-text-fill: #FFB74D; -fx-font-size: 14; -fx-font-weight: bold;" />
+                            <Label text="Discuter avec notre équipe" style="-fx-text-fill: #cccccc; -fx-font-size: 11;" textAlignment="CENTER" wrapText="true" />
+                            <Button text="Démarrer" styleClass="dashboard-button" onAction="#handleStartChat" />
+                        </VBox>
+                    </HBox>
+
+                    <VBox spacing="15" style="-fx-background-color: #1a1a1a; -fx-padding: 25; -fx-border-radius: 10; -fx-background-radius: 10;" VBox.vgrow="ALWAYS">
+                        <Label text="🎫 Soumettre un ticket" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" />
+                        <Separator />
+                        <HBox spacing="15">
+                            <VBox spacing="8" HBox.hgrow="ALWAYS">
+                                <Label text="Sujet" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                <TextField fx:id="ticketSubjectField" promptText="Décrivez le sujet..." styleClass="text-field-modern" />
+                            </VBox>
+                            <VBox spacing="8" prefWidth="200">
+                                <Label text="Priorité" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                <ComboBox fx:id="ticketPriorityCombo" promptText="Sélectionner" styleClass="text-field-modern" prefWidth="200">
+                                    <items>
+                                        <FXCollections fx:factory="observableArrayList">
+                                            <String fx:value="Faible" />
+                                            <String fx:value="Moyen" />
+                                            <String fx:value="Élevé" />
+                                            <String fx:value="Critique" />
+                                        </FXCollections>
+                                    </items>
+                                </ComboBox>
+                            </VBox>
+                        </HBox>
+                        <VBox spacing="8" VBox.vgrow="ALWAYS">
+                            <Label text="Description" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                            <TextArea fx:id="ticketDescriptionArea" promptText="Décrivez votre problème en détail..." styleClass="text-field-modern" VBox.vgrow="ALWAYS" wrapText="true" />
+                        </VBox>
+                        <HBox spacing="15" alignment="CENTER_RIGHT">
+                            <Label fx:id="ticketMessageLabel" text="" style="-fx-font-size: 12;" />
+                            <Button text="📤 Soumettre" styleClass="dashboard-button" onAction="#handleSubmitTicket" />
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+            </StackPane>
+        </HBox>
+    </center>
+
+</BorderPane>

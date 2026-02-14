@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esprit.controllers.signupController"
+            prefWidth="1000.0"
+            prefHeight="600.0"
+            style="-fx-background-color: #000000; -fx-border-width: 0; -fx-padding: 0; -fx-background-insets: 0;"
+            styleClass="root">
+
+    <fx:define>
+        <ToggleGroup fx:id="roleGroup"/>
+    </fx:define>
+
+    <!-- Custom Title Bar -->
+    <top>
+        <HBox fx:id="titleBar" alignment="CENTER_RIGHT" spacing="0"
+              style="-fx-background-color: #0a0a0a; -fx-padding: 5 10;">
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="—" onAction="#handleMinimize" styleClass="window-button" />
+            <Button text="✕" onAction="#handleClose" styleClass="window-button-close" />
+        </HBox>
+    </top>
+
+    <center>
+        <StackPane>
+
+            <Region styleClass="gradient-background"/>
+
+            <VBox alignment="CENTER">
+
+                <VBox styleClass="login-card signup-card"
+                      alignment="CENTER"
+                      spacing="18"
+                      maxWidth="380">
+
+                    <!-- Header -->
+                    <VBox alignment="CENTER" spacing="6">
+                        <Label text="✨" styleClass="login-icon"/>
+                        <Label text="CRÉER UN COMPTE" styleClass="login-title"/>
+                    </VBox>
+
+                    <Region styleClass="divider"/>
+
+                    <VBox spacing="12">
+
+                        <TextField fx:id="firstNameField"
+                                   promptText="Prénom"
+                                   styleClass="text-field-modern"/>
+
+                        <TextField fx:id="lastNameField"
+                                   promptText="Nom"
+                                   styleClass="text-field-modern"/>
+
+                        <TextField fx:id="emailField"
+                                   promptText="Adresse Email"
+                                   styleClass="text-field-modern"/>
+
+                        <TextField fx:id="phoneField"
+                                   promptText="Téléphone"
+                                   styleClass="text-field-modern"/>
+
+                        <!-- Role -->
+                        <HBox alignment="CENTER" spacing="25">
+                            <RadioButton fx:id="touristeRadio"
+                                         text="Touriste"
+                                         toggleGroup="$roleGroup"
+                                         styleClass="role-radio"/>
+
+                            <RadioButton fx:id="partenaireRadio"
+                                         text="Partenaire"
+                                         toggleGroup="$roleGroup"
+                                         styleClass="role-radio"/>
+                        </HBox>
+
+                        <!-- ✅ PASSWORD WITH TOGGLE -->
+                        <StackPane>
+                            <!-- Hidden -->
+                            <PasswordField fx:id="passwordField"
+                                           promptText="Mot de passe"
+                                           styleClass="text-field-modern"
+                                           style="-fx-padding: 14 45 14 16;"/>
+
+                            <!-- Visible -->
+                            <TextField fx:id="visiblePasswordField"
+                                       promptText="Mot de passe"
+                                       styleClass="text-field-modern"
+                                       style="-fx-padding: 14 45 14 16;"
+                                       managed="false"
+                                       visible="false"/>
+
+                            <!-- Eye button overlaid on right -->
+                            <Button fx:id="togglePasswordButton"
+                                    text="👁"
+                                    onAction="#handleTogglePassword"
+                                    styleClass="eye-button"
+                                    StackPane.alignment="CENTER_RIGHT"/>
+                        </StackPane>
+
+                        <Label fx:id="passwordHintLabel"
+                               style="-fx-text-fill: #FFD700; -fx-font-size: 11;"/>
+                        <ProgressBar fx:id="strengthBar"
+                                     prefWidth="300"
+                                     progress="0"
+                                     style="-fx-accent: #FFD700;"/>
+
+                        <!-- Confirm -->
+                        <PasswordField fx:id="confirmPasswordField"
+                                       promptText="Confirmer mot de passe"
+                                       styleClass="text-field-modern"/>
+
+                    </VBox>
+
+                    <CheckBox fx:id="termsCheckBox"
+                              text="J'accepte les conditions"
+                              styleClass="custom-checkbox"/>
+
+                    <Button fx:id="signupButton"
+                            text="S'INSCRIRE"
+                            styleClass="login-button-modern"
+                            onAction="#handleSignup"/>
+
+                    <Label fx:id="errorLabel"
+                           styleClass="error-label-modern"/>
+
+                    <HBox alignment="CENTER" spacing="5">
+                        <Label text="Déjà un compte?"
+                               styleClass="footer-text"/>
+                        <Hyperlink text="Se connecter"
+                                   onAction="#handleLoginLink"/>
+                    </HBox>
+
+                </VBox>
+
+            </VBox>
+
+        </StackPane>
+    </center>
+
+</BorderPane>
