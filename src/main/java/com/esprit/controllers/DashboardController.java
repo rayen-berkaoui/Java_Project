@@ -5,18 +5,26 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.chart.*;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.scene.Node;
+import javafx.geometry.Pos;
+import javafx.collections.FXCollections;
 
+import com.esprit.entities.AuditLog;
+import com.esprit.entities.RolePermission;
+import com.esprit.entities.role;
 import com.esprit.entities.utilisateur;
-import com.esprit.services.roleServices;
-import com.esprit.services.utilisateurServices;
+import com.esprit.services.*;
 
-import java.util.List;
+import java.io.File;
+import java.time.LocalDate;
+import java.util.*;
 
 public class DashboardController {
 
@@ -26,6 +34,10 @@ public class DashboardController {
 
     // Panels
     @FXML private VBox dashboardPane;
+    @FXML private VBox chartsPane;
+    @FXML private VBox usersPane;
+    @FXML private VBox auditPane;
+    @FXML private VBox permissionsPane;
     @FXML private VBox settingsPane;
     @FXML private VBox supportPane;
 
@@ -34,6 +46,10 @@ public class DashboardController {
 
     // Nav buttons
     @FXML private Button btnDashboard;
+    @FXML private Button btnCharts;
+    @FXML private Button btnUsers;
+    @FXML private Button btnAudit;
+    @FXML private Button btnPermissions;
     @FXML private Button btnSettings;
     @FXML private Button btnSupport;
 
@@ -43,6 +59,36 @@ public class DashboardController {
     @FXML private Label blockedUsersLabel;
     @FXML private Label totalRolesLabel;
     @FXML private VBox recentUsersContainer;
+
+    // Mini charts on dashboard
+    @FXML private PieChart miniPieChart;
+    @FXML private BarChart<String, Number> miniBarChart;
+
+    // Charts panel
+    @FXML private PieChart statusPieChart;
+    @FXML private BarChart<String, Number> roleBarChart;
+    @FXML private LineChart<String, Number> activityLineChart;
+
+    // Users panel
+    @FXML private TextField userSearchField;
+    @FXML private ComboBox<String> bulkRoleCombo;
+    @FXML private CheckBox selectAllCheckbox;
+    @FXML private Label selectionCountLabel;
+    @FXML private Label userStatusLabel;
+    @FXML private VBox userTableContainer;
+    @FXML private Label pageLabel;
+
+    // Audit panel
+    @FXML private ComboBox<String> auditActionFilter;
+    @FXML private DatePicker auditDateFrom;
+    @FXML private DatePicker auditDateTo;
+    @FXML private TextField auditSearchField;
+    @FXML private Label auditCountLabel;
+    @FXML private VBox auditTableContainer;
+
+    // Permissions panel
+    @FXML private VBox permissionsGrid;
+    @FXML private Label permissionsMessageLabel;
 
     // Settings
     @FXML private CheckBox emailNotifCheckbox;
@@ -59,10 +105,21 @@ public class DashboardController {
     // Services
     private final utilisateurServices userService = new utilisateurServices();
     private final roleServices roleService = new roleServices();
+    private final AuditLogService auditService = new AuditLogService();
+    private final RolePermissionService permService = new RolePermissionService();
+    private final ExportService exportService = new ExportService();
+    private final ImportService importService = new ImportService();
 
+    // State
     private String currentUserName;
+    private int currentAdminId = 0;
     private double xOffset = 0;
     private double yOffset = 0;
+    private int currentPage = 1;
+    private final int PAGE_SIZE = 15;
+    private String currentSearchQuery = "";
+    private final Map<Integer, CheckBox> userCheckboxes = new LinkedHashMap<>();
+    private final Map<Integer, CheckBox> permCheckboxMap = new LinkedHashMap<>();
 
     // ================= INIT =================
     @FXML
@@ -79,6 +136,9 @@ public class DashboardController {
                 s.setY(e.getScreenY() - yOffset);
             });
         }
+
+        // Load bulk role combo
+        loadRolesCombo();
     }
 
     public void setUserName(String userName) {
@@ -87,7 +147,24 @@ public class DashboardController {
         if (welcomeLabel != null) welcomeLabel.setText("Bienvenue, " + userName);
     }
 
-    // ================= DASHBOARD DATA (Real DB) =================
+    public void setAdminId(int adminId) {
+        this.currentAdminId = adminId;
+    }
+
+    private void loadRolesCombo() {
+        try {
+            List<role> roles = roleService.afficher();
+            List<String> items = new ArrayList<>();
+            for (role r : roles) {
+                items.add(r.getId() + " - " + r.getNom());
+            }
+            if (bulkRoleCombo != null) bulkRoleCombo.setItems(FXCollections.observableArrayList(items));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ================= DASHBOARD DATA =================
     private void loadDashboardData() {
         int total = userService.countAll();
         int active = userService.countByStatus("ACTIF");
@@ -101,6 +178,33 @@ public class DashboardController {
         if (totalRolesLabel != null) totalRolesLabel.setText(String.valueOf(roles));
 
         loadRecentUsers();
+        loadMiniCharts(active, blocked);
+    }
+
+    private void loadMiniCharts(int active, int blocked) {
+        // Mini pie chart
+        if (miniPieChart != null) {
+            miniPieChart.getData().clear();
+            miniPieChart.getData().add(new PieChart.Data("Actifs (" + active + ")", active));
+            miniPieChart.getData().add(new PieChart.Data("Bloques (" + blocked + ")", blocked));
+            miniPieChart.setStyle("-fx-padding: 0;");
+        }
+
+        // Mini bar chart
+        if (miniBarChart != null) {
+            miniBarChart.getData().clear();
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            try {
+                List<role> roles = roleService.afficher();
+                for (role r : roles) {
+                    int count = userService.countByRole(r.getId());
+                    series.getData().add(new XYChart.Data<>(r.getNom(), count));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            miniBarChart.getData().add(series);
+        }
     }
 
     private void loadRecentUsers() {
@@ -122,7 +226,7 @@ public class DashboardController {
             String dateStr = u.getDateCreation() != null ? u.getDateCreation().toString() : "-";
 
             HBox row = new HBox(15);
-            row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            row.setAlignment(Pos.CENTER_LEFT);
             row.setStyle("-fx-background-color: #0d0d0d; -fx-padding: 10 15; -fx-background-radius: 8;");
 
             Label idLabel = new Label("#" + u.getId());
@@ -149,9 +253,590 @@ public class DashboardController {
         }
     }
 
+    // ================= CHARTS =================
+    private void loadCharts() {
+        int active = userService.countByStatus("ACTIF");
+        int blocked = userService.countByStatus("BLOQUE");
+
+        // Pie chart
+        if (statusPieChart != null) {
+            statusPieChart.getData().clear();
+            statusPieChart.getData().add(new PieChart.Data("Actifs (" + active + ")", active));
+            statusPieChart.getData().add(new PieChart.Data("Bloques (" + blocked + ")", blocked));
+        }
+
+        // Bar chart
+        if (roleBarChart != null) {
+            roleBarChart.getData().clear();
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Utilisateurs");
+            try {
+                List<role> roles = roleService.afficher();
+                for (role r : roles) {
+                    int count = userService.countByRole(r.getId());
+                    series.getData().add(new XYChart.Data<>(r.getNom(), count));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            roleBarChart.getData().add(series);
+        }
+
+        // Activity line chart
+        if (activityLineChart != null) {
+            activityLineChart.getData().clear();
+            XYChart.Series<String, Number> lineSeries = new XYChart.Series<>();
+            lineSeries.setName("Actions");
+            List<Object[]> activity = auditService.getActivityPerDay(30);
+            for (Object[] row : activity) {
+                lineSeries.getData().add(new XYChart.Data<>((String) row[0], (Number) row[1]));
+            }
+            if (lineSeries.getData().isEmpty()) {
+                // Add sample data if no audit logs yet
+                lineSeries.getData().add(new XYChart.Data<>("Aujourd'hui", 0));
+            }
+            activityLineChart.getData().add(lineSeries);
+        }
+    }
+
+    @FXML
+    private void handleRefreshCharts() {
+        loadCharts();
+    }
+
+    // ================= USERS PANEL =================
+    private void loadUsersTable() {
+        if (userTableContainer == null) return;
+        userTableContainer.getChildren().clear();
+        userCheckboxes.clear();
+
+        List<utilisateur> users;
+        int totalCount;
+        if (currentSearchQuery != null && !currentSearchQuery.isEmpty()) {
+            users = userService.searchUsers(currentSearchQuery, currentPage, PAGE_SIZE);
+            totalCount = userService.countSearch(currentSearchQuery);
+        } else {
+            users = userService.getPage(currentPage, PAGE_SIZE);
+            totalCount = userService.countAll();
+        }
+
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalCount / PAGE_SIZE));
+        if (pageLabel != null) pageLabel.setText("Page " + currentPage + " / " + totalPages);
+
+        if (users.isEmpty()) {
+            Label empty = new Label("Aucun utilisateur trouve");
+            empty.setStyle("-fx-text-fill: #666666; -fx-font-size: 13; -fx-padding: 20;");
+            userTableContainer.getChildren().add(empty);
+            return;
+        }
+
+        // Header row
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color: rgba(255,215,0,0.06); -fx-padding: 8 12; -fx-background-radius: 8;");
+        header.getChildren().addAll(
+            makeHeaderLabel("", 30),
+            makeHeaderLabel("ID", 40),
+            makeHeaderLabel("Nom", 120),
+            makeHeaderLabel("Email", 200),
+            makeHeaderLabel("Role", 100),
+            makeHeaderLabel("Statut", 70),
+            makeHeaderLabel("Tel", 90),
+            makeHeaderLabel("Date", 100)
+        );
+        userTableContainer.getChildren().add(header);
+
+        for (utilisateur u : users) {
+            String roleName = userService.getRoleName(u.getRoleId());
+            String status = u.getStatut() != null ? u.getStatut() : "";
+            String statusColor = "ACTIF".equalsIgnoreCase(status) ? "#51CF66" : "#FF6B6B";
+
+            HBox row = new HBox(10);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setStyle("-fx-background-color: #0d0d0d; -fx-padding: 8 12; -fx-background-radius: 6;");
+
+            CheckBox cb = new CheckBox();
+            cb.getStyleClass().add("custom-checkbox");
+            cb.setOnAction(e -> updateSelectionCount());
+            userCheckboxes.put(u.getId(), cb);
+
+            StackPane cbWrapper = new StackPane(cb);
+            cbWrapper.setMinWidth(30);
+            cbWrapper.setMaxWidth(30);
+
+            row.getChildren().addAll(
+                cbWrapper,
+                makeDataLabel("#" + u.getId(), 40, "#FFD700"),
+                makeDataLabel(u.getPrenom() + " " + u.getNom(), 120, "#ffffff"),
+                makeDataLabel(u.getEmail() != null ? u.getEmail() : "", 200, "#aaaaaa"),
+                makeDataLabel(roleName, 100, "#64B5F6"),
+                makeDataLabel(status, 70, statusColor),
+                makeDataLabel(String.valueOf(u.getNumTel()), 90, "#888888"),
+                makeDataLabel(u.getDateCreation() != null ? u.getDateCreation().toString() : "-", 100, "#888888")
+            );
+
+            userTableContainer.getChildren().add(row);
+        }
+
+        updateSelectionCount();
+    }
+
+    private Label makeHeaderLabel(String text, double width) {
+        Label l = new Label(text);
+        l.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 10; -fx-font-weight: bold;");
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
+        return l;
+    }
+
+    private Label makeDataLabel(String text, double width, String color) {
+        Label l = new Label(text);
+        l.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 11;");
+        l.setMinWidth(width);
+        l.setMaxWidth(width);
+        return l;
+    }
+
+    @FXML
+    private void handleUserSearch() {
+        currentSearchQuery = userSearchField != null ? userSearchField.getText().trim() : "";
+        currentPage = 1;
+        loadUsersTable();
+    }
+
+    @FXML
+    private void handleSelectAll() {
+        boolean selected = selectAllCheckbox != null && selectAllCheckbox.isSelected();
+        for (CheckBox cb : userCheckboxes.values()) {
+            cb.setSelected(selected);
+        }
+        updateSelectionCount();
+    }
+
+    private void updateSelectionCount() {
+        long count = userCheckboxes.values().stream().filter(CheckBox::isSelected).count();
+        if (selectionCountLabel != null) {
+            selectionCountLabel.setText(count > 0 ? count + " selectionne(s)" : "");
+        }
+    }
+
+    private List<Integer> getSelectedUserIds() {
+        List<Integer> ids = new ArrayList<>();
+        for (Map.Entry<Integer, CheckBox> entry : userCheckboxes.entrySet()) {
+            if (entry.getValue().isSelected()) ids.add(entry.getKey());
+        }
+        return ids;
+    }
+
+    // ================= BULK ACTIONS =================
+    @FXML
+    private void handleBulkActivate() {
+        List<Integer> ids = getSelectedUserIds();
+        if (ids.isEmpty()) { showStatus(userStatusLabel, "Selectionnez des utilisateurs", false); return; }
+        int count = 0;
+        for (int id : ids) {
+            if (userService.unblockUser(id)) {
+                auditService.log(currentAdminId, currentUserName, "UNBLOCK_USER", "USER", id, "User #" + id, "BLOQUE", "ACTIF");
+                count++;
+            }
+        }
+        showStatus(userStatusLabel, count + " utilisateur(s) active(s)", true);
+        loadUsersTable();
+    }
+
+    @FXML
+    private void handleBulkBlock() {
+        List<Integer> ids = getSelectedUserIds();
+        if (ids.isEmpty()) { showStatus(userStatusLabel, "Selectionnez des utilisateurs", false); return; }
+        int count = 0;
+        for (int id : ids) {
+            if (userService.blockUser(id)) {
+                auditService.log(currentAdminId, currentUserName, "BLOCK_USER", "USER", id, "User #" + id, "ACTIF", "BLOQUE");
+                count++;
+            }
+        }
+        showStatus(userStatusLabel, count + " utilisateur(s) bloque(s)", true);
+        loadUsersTable();
+    }
+
+    @FXML
+    private void handleBulkDelete() {
+        List<Integer> ids = getSelectedUserIds();
+        if (ids.isEmpty()) { showStatus(userStatusLabel, "Selectionnez des utilisateurs", false); return; }
+
+        Alert confirm = createConfirmDialog("Supprimer " + ids.size() + " utilisateur(s) ?",
+                "Cette action est irreversible. Les utilisateurs selectionnes seront definitivement supprimes.");
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            int count = 0;
+            for (int id : ids) {
+                if (userService.deleteAccount(id)) {
+                    auditService.log(currentAdminId, currentUserName, "DELETE_USER", "USER", id, "User #" + id, null, null);
+                    count++;
+                }
+            }
+            showStatus(userStatusLabel, count + " utilisateur(s) supprime(s)", true);
+            loadUsersTable();
+        }
+    }
+
+    @FXML
+    private void handleBulkRoleChange() {
+        List<Integer> ids = getSelectedUserIds();
+        if (ids.isEmpty()) { showStatus(userStatusLabel, "Selectionnez des utilisateurs", false); return; }
+        if (bulkRoleCombo == null || bulkRoleCombo.getValue() == null) {
+            showStatus(userStatusLabel, "Selectionnez un role", false);
+            return;
+        }
+
+        String roleStr = bulkRoleCombo.getValue();
+        int newRoleId;
+        try {
+            newRoleId = Integer.parseInt(roleStr.split(" - ")[0].trim());
+        } catch (Exception e) {
+            showStatus(userStatusLabel, "Role invalide", false);
+            return;
+        }
+
+        int count = 0;
+        for (int id : ids) {
+            try {
+                utilisateur u = userService.getUserById(id);
+                if (u != null) {
+                    String oldRole = userService.getRoleName(u.getRoleId());
+                    u.setRoleId(newRoleId);
+                    userService.modifier(u);
+                    String newRole = userService.getRoleName(newRoleId);
+                    auditService.log(currentAdminId, currentUserName, "ROLE_CHANGE", "USER", id,
+                            u.getPrenom() + " " + u.getNom(), oldRole, newRole);
+                    count++;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        showStatus(userStatusLabel, count + " role(s) modifie(s)", true);
+        loadUsersTable();
+    }
+
+    @FXML
+    private void handlePrevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            loadUsersTable();
+        }
+    }
+
+    @FXML
+    private void handleNextPage() {
+        int totalCount = currentSearchQuery.isEmpty() ? userService.countAll() : userService.countSearch(currentSearchQuery);
+        int totalPages = Math.max(1, (int) Math.ceil((double) totalCount / PAGE_SIZE));
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadUsersTable();
+        }
+    }
+
+    // ================= EXPORT =================
+    @FXML
+    private void handleExportPDF() {
+        exportUsers("PDF");
+    }
+
+    @FXML
+    private void handleExportExcel() {
+        exportUsers("Excel");
+    }
+
+    @FXML
+    private void handleExportCSV() {
+        exportUsers("CSV");
+    }
+
+    private void exportUsers(String format) {
+        try {
+            List<utilisateur> users = userService.afficher();
+
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Exporter en " + format);
+            switch (format) {
+                case "PDF":
+                    fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+                    fc.setInitialFileName("utilisateurs.pdf");
+                    break;
+                case "Excel":
+                    fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+                    fc.setInitialFileName("utilisateurs.xlsx");
+                    break;
+                case "CSV":
+                    fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+                    fc.setInitialFileName("utilisateurs.csv");
+                    break;
+            }
+
+            Stage stage = (Stage) contentArea.getScene().getWindow();
+            File file = fc.showSaveDialog(stage);
+            if (file == null) return;
+
+            boolean success = false;
+            switch (format) {
+                case "PDF": success = exportService.exportToPDF(users, file); break;
+                case "Excel": success = exportService.exportToExcel(users, file); break;
+                case "CSV": success = exportService.exportToCSV(users, file); break;
+            }
+
+            if (success) {
+                auditService.log(currentAdminId, currentUserName, "EXPORT_" + format.toUpperCase(),
+                        "DATA", 0, file.getName(), null, users.size() + " utilisateurs");
+                showStatus(userStatusLabel, "Export " + format + " reussi ! (" + users.size() + " utilisateurs)", true);
+            } else {
+                showStatus(userStatusLabel, "Erreur lors de l'export", false);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            showStatus(userStatusLabel, "Erreur: " + e.getMessage(), false);
+        }
+    }
+
+    // ================= IMPORT =================
+    @FXML
+    private void handleImportUsers() {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Importer des utilisateurs");
+        fc.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("CSV / Excel", "*.csv", "*.xlsx"),
+            new FileChooser.ExtensionFilter("CSV Files", "*.csv"),
+            new FileChooser.ExtensionFilter("Excel Files", "*.xlsx")
+        );
+
+        Stage stage = (Stage) contentArea.getScene().getWindow();
+        File file = fc.showOpenDialog(stage);
+        if (file == null) return;
+
+        ImportService.ImportResult result;
+        if (file.getName().toLowerCase().endsWith(".xlsx")) {
+            result = importService.importFromExcel(file);
+        } else {
+            result = importService.importFromCSV(file);
+        }
+
+        auditService.log(currentAdminId, currentUserName, "IMPORT_USERS", "DATA", 0, file.getName(),
+                null, result.getSummary());
+
+        StringBuilder msg = new StringBuilder(result.getSummary());
+        if (!result.errors.isEmpty()) {
+            msg.append("\n\nErreurs:\n");
+            for (int i = 0; i < Math.min(result.errors.size(), 10); i++) {
+                msg.append("- ").append(result.errors.get(i)).append("\n");
+            }
+            if (result.errors.size() > 10) {
+                msg.append("... et ").append(result.errors.size() - 10).append(" autres erreurs");
+            }
+        }
+
+        showAlert("Resultat de l'import", msg.toString());
+        loadUsersTable();
+    }
+
+    // ================= AUDIT TRAIL =================
+    private void loadAuditTrail() {
+        if (auditTableContainer == null) return;
+        auditTableContainer.getChildren().clear();
+
+        // Load action filter options
+        if (auditActionFilter != null && auditActionFilter.getItems().isEmpty()) {
+            List<String> actions = auditService.getDistinctActions();
+            actions.add(0, "Toutes");
+            auditActionFilter.setItems(FXCollections.observableArrayList(actions));
+        }
+
+        List<AuditLog> logs = auditService.getAll();
+        displayAuditLogs(logs);
+    }
+
+    @FXML
+    private void handleFilterAudit() {
+        String actionFilter = auditActionFilter != null ? auditActionFilter.getValue() : null;
+        String dateFrom = auditDateFrom != null && auditDateFrom.getValue() != null ?
+                auditDateFrom.getValue().toString() : null;
+        String dateTo = auditDateTo != null && auditDateTo.getValue() != null ?
+                auditDateTo.getValue().toString() : null;
+        String search = auditSearchField != null ? auditSearchField.getText().trim() : "";
+
+        List<AuditLog> logs = auditService.filter(actionFilter, dateFrom, dateTo, search.isEmpty() ? null : search);
+        auditTableContainer.getChildren().clear();
+        displayAuditLogs(logs);
+    }
+
+    @FXML
+    private void handleResetAuditFilter() {
+        if (auditActionFilter != null) auditActionFilter.setValue(null);
+        if (auditDateFrom != null) auditDateFrom.setValue(null);
+        if (auditDateTo != null) auditDateTo.setValue(null);
+        if (auditSearchField != null) auditSearchField.clear();
+        loadAuditTrail();
+    }
+
+    private void displayAuditLogs(List<AuditLog> logs) {
+        if (auditCountLabel != null) {
+            auditCountLabel.setText(logs.size() + " entree(s) trouvee(s)");
+        }
+
+        if (logs.isEmpty()) {
+            Label empty = new Label("Aucune entree d'audit trouvee");
+            empty.setStyle("-fx-text-fill: #666666; -fx-font-size: 13; -fx-padding: 20;");
+            auditTableContainer.getChildren().add(empty);
+            return;
+        }
+
+        // Header
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setStyle("-fx-background-color: rgba(255,215,0,0.06); -fx-padding: 8 12; -fx-background-radius: 8;");
+        header.getChildren().addAll(
+            makeHeaderLabel("Date/Heure", 140),
+            makeHeaderLabel("Admin", 110),
+            makeHeaderLabel("Action", 120),
+            makeHeaderLabel("Cible", 120),
+            makeHeaderLabel("Avant", 130),
+            makeHeaderLabel("Apres", 130)
+        );
+        auditTableContainer.getChildren().add(header);
+
+        for (AuditLog log : logs) {
+            HBox row = new HBox(8);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setStyle("-fx-background-color: #0d0d0d; -fx-padding: 8 12; -fx-background-radius: 6;");
+
+            String dateStr = log.getCreatedAt() != null ? log.getCreatedAt().toString().substring(0, 19) : "-";
+            String actionColor = getActionColor(log.getAction());
+
+            row.getChildren().addAll(
+                makeDataLabel(dateStr, 140, "#888888"),
+                makeDataLabel(log.getAdminName() != null ? log.getAdminName() : "-", 110, "#FFD700"),
+                makeDataLabel(log.getAction() != null ? log.getAction() : "-", 120, actionColor),
+                makeDataLabel(log.getTargetName() != null ? log.getTargetName() : "-", 120, "#64B5F6"),
+                makeDataLabel(log.getOldValue() != null ? log.getOldValue() : "-", 130, "#FF6B6B"),
+                makeDataLabel(log.getNewValue() != null ? log.getNewValue() : "-", 130, "#51CF66")
+            );
+
+            auditTableContainer.getChildren().add(row);
+        }
+    }
+
+    private String getActionColor(String action) {
+        if (action == null) return "#cccccc";
+        if (action.contains("DELETE")) return "#FF6B6B";
+        if (action.contains("BLOCK")) return "#FF6B6B";
+        if (action.contains("UNBLOCK")) return "#51CF66";
+        if (action.contains("EXPORT")) return "#64B5F6";
+        if (action.contains("IMPORT")) return "#FFB74D";
+        if (action.contains("ROLE")) return "#CE93D8";
+        return "#cccccc";
+    }
+
+    // ================= ROLE PERMISSIONS MATRIX =================
+    private void loadPermissionsMatrix() {
+        if (permissionsGrid == null) return;
+        permissionsGrid.getChildren().clear();
+        permCheckboxMap.clear();
+
+        List<role> roles;
+        try {
+            roles = roleService.afficher();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        // Ensure permissions exist
+        List<Integer> roleIds = new ArrayList<>();
+        for (role r : roles) roleIds.add(r.getId());
+        permService.ensureAllPermissions(roleIds);
+
+        Map<Integer, List<RolePermission>> allPerms = permService.getAllPermissions();
+
+        // Header row
+        HBox headerRow = new HBox(0);
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+        headerRow.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-padding: 12 16; -fx-border-color: transparent transparent rgba(255,215,0,0.08) transparent; -fx-border-width: 0 0 1 0;");
+        Label permHeader = new Label("Permission");
+        permHeader.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;");
+        permHeader.setMinWidth(220);
+        permHeader.setMaxWidth(220);
+        headerRow.getChildren().add(permHeader);
+
+        for (role r : roles) {
+            Label roleHeader = new Label(r.getNom());
+            roleHeader.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;");
+            roleHeader.setMinWidth(120);
+            roleHeader.setMaxWidth(120);
+            roleHeader.setAlignment(Pos.CENTER);
+            headerRow.getChildren().add(roleHeader);
+        }
+        permissionsGrid.getChildren().add(headerRow);
+
+        // Permission rows
+        for (String perm : RolePermissionService.ALL_PERMISSIONS) {
+            HBox row = new HBox(0);
+            row.setAlignment(Pos.CENTER_LEFT);
+            String bgColor = permissionsGrid.getChildren().size() % 2 == 0 ? "#0d0d0d" : "#111111";
+            row.setStyle("-fx-background-color: " + bgColor + "; -fx-padding: 10 16;");
+
+            String label = RolePermissionService.PERMISSION_LABELS.getOrDefault(perm, perm);
+            Label permLabel = new Label(label);
+            permLabel.setStyle("-fx-text-fill: #cccccc; -fx-font-size: 12;");
+            permLabel.setMinWidth(220);
+            permLabel.setMaxWidth(220);
+            row.getChildren().add(permLabel);
+
+            for (role r : roles) {
+                boolean enabled = false;
+                List<RolePermission> rolePerms = allPerms.getOrDefault(r.getId(), new ArrayList<>());
+                for (RolePermission rp : rolePerms) {
+                    if (rp.getPermissionName().equals(perm)) {
+                        enabled = rp.isEnabled();
+                        break;
+                    }
+                }
+
+                CheckBox cb = new CheckBox();
+                cb.setSelected(enabled);
+                cb.getStyleClass().add("custom-checkbox");
+                int key = r.getId() * 10000 + perm.hashCode(); // unique key
+                permCheckboxMap.put(key, cb);
+                cb.setUserData(r.getId() + "|" + perm);
+
+                StackPane wrapper = new StackPane(cb);
+                wrapper.setMinWidth(120);
+                wrapper.setMaxWidth(120);
+                wrapper.setAlignment(Pos.CENTER);
+                row.getChildren().add(wrapper);
+            }
+
+            permissionsGrid.getChildren().add(row);
+        }
+    }
+
+    @FXML
+    private void handleSavePermissions() {
+        int updated = 0;
+        for (CheckBox cb : permCheckboxMap.values()) {
+            String data = (String) cb.getUserData();
+            if (data == null) continue;
+            String[] parts = data.split("\\|");
+            int roleId = Integer.parseInt(parts[0]);
+            String permName = parts[1];
+            boolean enabled = cb.isSelected();
+            if (permService.updatePermission(roleId, permName, enabled)) updated++;
+        }
+        auditService.log(currentAdminId, currentUserName, "UPDATE_PERMISSIONS", "ROLE", 0, "All Roles", null, updated + " permissions updated");
+        showStatus(permissionsMessageLabel, "Permissions sauvegardees ! (" + updated + " mises a jour)", true);
+    }
+
     // ================= NAVIGATION =================
     private void setActiveNav(Button active) {
-        Button[] navButtons = {btnDashboard, btnSettings, btnSupport};
+        Button[] navButtons = {btnDashboard, btnCharts, btnUsers, btnAudit, btnPermissions, btnSettings, btnSupport};
         for (Button b : navButtons) {
             if (b != null) {
                 b.getStyleClass().remove("sidebar-button-active");
@@ -172,6 +857,34 @@ public class DashboardController {
     }
 
     @FXML
+    private void handleShowCharts() {
+        setActiveNav(btnCharts);
+        loadCharts();
+        showPane(chartsPane);
+    }
+
+    @FXML
+    private void handleShowUsers() {
+        setActiveNav(btnUsers);
+        loadUsersTable();
+        showPane(usersPane);
+    }
+
+    @FXML
+    private void handleShowAudit() {
+        setActiveNav(btnAudit);
+        loadAuditTrail();
+        showPane(auditPane);
+    }
+
+    @FXML
+    private void handleShowPermissions() {
+        setActiveNav(btnPermissions);
+        loadPermissionsMatrix();
+        showPane(permissionsPane);
+    }
+
+    @FXML
     private void handleShowSettings() {
         setActiveNav(btnSettings);
         showPane(settingsPane);
@@ -189,7 +902,7 @@ public class DashboardController {
     }
 
     private void showPane(VBox paneToShow) {
-        VBox[] allPanes = {dashboardPane, settingsPane, supportPane};
+        VBox[] allPanes = {dashboardPane, chartsPane, usersPane, auditPane, permissionsPane, settingsPane, supportPane};
         for (VBox pane : allPanes) {
             if (pane != null) pane.setVisible(false);
         }
@@ -230,6 +943,7 @@ public class DashboardController {
     @FXML
     private void handleLogout() {
         try {
+            auditService.log(currentAdminId, currentUserName, "LOGOUT");
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/login.fxml"));
             Parent root = loader.load();
             Stage stage = (Stage) contentArea.getScene().getWindow();
@@ -298,7 +1012,7 @@ public class DashboardController {
             return;
         }
 
-        System.out.println("Ticket soumis - Sujet: " + subject + " | Priorite: " + priority);
+        auditService.log(currentAdminId, currentUserName, "SUBMIT_TICKET", "SUPPORT", 0, subject, null, priority);
 
         if (ticketMessageLabel != null) {
             ticketMessageLabel.setText("Ticket soumis avec succes !");
@@ -316,7 +1030,8 @@ public class DashboardController {
         boolean twoFactor = twoFactorCheckbox != null && twoFactorCheckbox.isSelected();
         String lang = languageComboBox != null ? languageComboBox.getValue() : "Francais";
 
-        System.out.println("Parametres sauvegardes - Email: " + emailNotif + " | 2FA: " + twoFactor + " | Langue: " + lang);
+        auditService.log(currentAdminId, currentUserName, "SAVE_SETTINGS", "SETTING", 0, "Dashboard Settings",
+                null, "Email: " + emailNotif + ", 2FA: " + twoFactor + ", Lang: " + lang);
 
         if (settingsMessageLabel != null) {
             settingsMessageLabel.setText("Parametres sauvegardes !");
@@ -325,6 +1040,13 @@ public class DashboardController {
     }
 
     // ================= HELPERS =================
+    private void showStatus(Label label, String text, boolean success) {
+        if (label != null) {
+            label.setText(text);
+            label.setStyle("-fx-text-fill: " + (success ? "#51CF66" : "#FF6B6B") + "; -fx-font-size: 11;");
+        }
+    }
+
     private void fadeTransition(Stage stage, Parent newRoot, String title) {
         Scene oldScene = stage.getScene();
         Node oldRoot = oldScene.getRoot();
@@ -391,5 +1113,30 @@ public class DashboardController {
         dp.getStyleClass().add("dialog-pane");
 
         alert.showAndWait();
+    }
+
+    private Alert createConfirmDialog(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.initStyle(StageStyle.UNDECORATED);
+
+        Label titleLabel = new Label(title);
+        titleLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 16; -fx-font-weight: bold;");
+
+        Separator sep = new Separator();
+
+        Label msgLabel = new Label(message);
+        msgLabel.setStyle("-fx-text-fill: #cccccc; -fx-font-size: 13;");
+        msgLabel.setWrapText(true);
+        msgLabel.setMaxWidth(420);
+
+        VBox content = new VBox(12, titleLabel, sep, msgLabel);
+        content.setStyle("-fx-padding: 20;");
+
+        DialogPane dp = alert.getDialogPane();
+        dp.setContent(content);
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+        dp.getStyleClass().add("dialog-pane");
+
+        return alert;
     }
 }

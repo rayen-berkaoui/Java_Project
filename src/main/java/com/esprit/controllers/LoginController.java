@@ -315,22 +315,22 @@ public class LoginController {
         }
 
         if (faceStatusLabel != null) {
-            faceStatusLabel.setText("Capture du visage en cours...");
+            faceStatusLabel.setText("Capture du visage en cours... Regardez la camera et ne bougez pas.");
             faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 11;");
         }
 
         new Thread(() -> {
             try {
-                Mat currentFrame = faceService.grabMat();
-                if (currentFrame == null) {
-                    Platform.runLater(() -> showError("Erreur de capture"));
-                    return;
-                }
+                // Use multi-capture for more robust registration (3 samples)
+                Platform.runLater(() -> {
+                    faceStatusLabel.setText("Capture 1/3... Restez immobile.");
+                    faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 11;");
+                });
 
-                String faceEncoding = faceService.encodeFace(currentFrame);
+                String faceEncoding = faceService.encodeMultipleFaces();
                 if (faceEncoding == null) {
                     Platform.runLater(() -> {
-                        faceStatusLabel.setText("Impossible d'encoder le visage. Reessayez.");
+                        faceStatusLabel.setText("Impossible d'encoder le visage. Reessayez en regardant la camera.");
                         faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
                     });
                     return;
@@ -539,6 +539,7 @@ public class LoginController {
 
                 DashboardController controller = loader.getController();
                 controller.setUserName(user.getNom());
+                controller.setAdminId(user.getId());
 
                 Stage stage = (Stage) emailField.getScene().getWindow();
                 fadeTransition(stage, root, "Tabaani - Dashboard");

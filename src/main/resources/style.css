@@ -806,3 +806,214 @@
     -fx-border-color: rgba(255, 215, 0, 0.7);
     -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.1), 8, 0.3, 0, 0);
 }
+
+/* ================= CHARTS ================= */
+.chart {
+    -fx-background-color: transparent;
+    -fx-padding: 5;
+}
+
+.chart-content {
+    -fx-background-color: transparent;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+    -fx-padding: 8;
+}
+
+.chart-legend-item {
+    -fx-text-fill: #aaaaaa;
+}
+
+.chart-pie-label {
+    -fx-fill: #cccccc;
+    -fx-font-size: 10;
+}
+
+.default-color0.chart-pie {
+    -fx-pie-color: #FFD700;
+}
+
+.default-color1.chart-pie {
+    -fx-pie-color: #FF6B6B;
+}
+
+.default-color2.chart-pie {
+    -fx-pie-color: #64B5F6;
+}
+
+.default-color3.chart-pie {
+    -fx-pie-color: #51CF66;
+}
+
+.default-color4.chart-pie {
+    -fx-pie-color: #CE93D8;
+}
+
+.default-color0.chart-bar {
+    -fx-bar-fill: #FFD700;
+}
+
+.default-color1.chart-bar {
+    -fx-bar-fill: #64B5F6;
+}
+
+.default-color2.chart-bar {
+    -fx-bar-fill: #51CF66;
+}
+
+.default-color0.chart-series-line {
+    -fx-stroke: #FFD700;
+    -fx-stroke-width: 2;
+}
+
+.default-color0.chart-line-symbol {
+    -fx-background-color: #FFD700, #0a0a0a;
+    -fx-background-insets: 0, 2;
+    -fx-background-radius: 5;
+    -fx-padding: 4;
+}
+
+.axis {
+    -fx-tick-label-fill: #888888;
+    -fx-font-size: 10;
+}
+
+.axis-label {
+    -fx-text-fill: #888888;
+    -fx-font-size: 10;
+}
+
+.chart-vertical-grid-lines,
+.chart-horizontal-grid-lines {
+    -fx-stroke: rgba(255, 255, 255, 0.05);
+}
+
+.chart-alternative-row-fill {
+    -fx-fill: transparent;
+}
+
+.chart-vertical-zero-line,
+.chart-horizontal-zero-line {
+    -fx-stroke: rgba(255, 215, 0, 0.15);
+}
+
+/* ================= DATE PICKER ================= */
+.date-picker {
+    -fx-background-color: rgba(18, 18, 18, 0.9);
+    -fx-border-color: rgba(255, 215, 0, 0.15);
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.date-picker .text-field {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 11;
+}
+
+.date-picker .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.date-picker .arrow-button .arrow {
+    -fx-background-color: #FFD700;
+}
+
+.date-picker-popup {
+    -fx-background-color: #141414;
+    -fx-border-color: rgba(255, 215, 0, 0.2);
+    -fx-border-radius: 8;
+}
+
+.date-picker-popup .month-year-pane {
+    -fx-background-color: #0a0a0a;
+}
+
+.date-picker-popup > .month-year-pane > .spinner > .label {
+    -fx-text-fill: #FFD700;
+    -fx-font-weight: bold;
+}
+
+.date-picker-popup > .month-year-pane > .spinner > .button {
+    -fx-background-color: transparent;
+}
+
+.date-picker-popup > .month-year-pane > .spinner > .button > .left-arrow,
+.date-picker-popup > .month-year-pane > .spinner > .button > .right-arrow {
+    -fx-background-color: #FFD700;
+}
+
+.date-picker-popup .day-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cccccc;
+}
+
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: rgba(255, 215, 0, 0.15);
+}
+
+.date-picker-popup .selected {
+    -fx-background-color: #FFD700;
+    -fx-text-fill: #000000;
+}
+
+.date-picker-popup .today {
+    -fx-background-color: rgba(255, 215, 0, 0.1);
+}
+
+.date-picker-popup .day-name-cell {
+    -fx-text-fill: #FFD700;
+}
+
+.date-picker-popup .week-number-cell {
+    -fx-text-fill: #555555;
+}
+
+/* ================= MENU BUTTON ================= */
+.menu-button {
+    -fx-background-color: linear-gradient(to right, #FFD700, #FFAA00);
+    -fx-text-fill: #000000;
+    -fx-font-weight: bold;
+    -fx-font-size: 12;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.menu-button:hover {
+    -fx-background-color: linear-gradient(to right, #FFE44D, #FFBF00);
+}
+
+.menu-button .arrow {
+    -fx-background-color: #000000;
+}
+
+.context-menu {
+    -fx-background-color: #141414;
+    -fx-border-color: rgba(255, 215, 0, 0.2);
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 15, 0.3, 0, 5);
+}
+
+.menu-item {
+    -fx-background-color: transparent;
+}
+
+.menu-item .label {
+    -fx-text-fill: #cccccc;
+    -fx-font-size: 12;
+}
+
+.menu-item:hover {
+    -fx-background-color: rgba(255, 215, 0, 0.1);
+}
+
+.menu-item:hover .label {
+    -fx-text-fill: #FFD700;
+}

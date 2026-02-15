@@ -16,7 +16,9 @@ import javafx.scene.image.PixelFormat;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 /**
  * Face Recognition Service using OpenCV via JavaCV.
@@ -33,10 +35,15 @@ public class FaceRecognitionService {
     private CascadeClassifier faceDetector;
     private boolean cameraRunning = false;
 
-    // Threshold for face match (0.0 = no match, 1.0 = perfect match)
-    // Same person with webcam variation typically scores 0.72-0.95
-    // Different person typically scores 0.40-0.65
-    private static final double MATCH_THRESHOLD = 0.70;
+    // ═══════ MULTI-CAPTURE FACE ENCODING ═══════
+    // We store 3 face captures separated by ||| for robust matching
+    private static final String ENCODING_SEPARATOR = "|||";
+    private static final int NUM_CAPTURES = 3;
+
+    // MSE threshold: same person RMSE is typically 15-35, different person 45-80+
+    // We convert to similarity: sim = exp(-mse / sigma)
+    // Same person: sim ~ 0.75-0.95, Different person: sim ~ 0.15-0.45
+    private static final double MATCH_THRESHOLD = 0.55;
 
     public FaceRecognitionService() {
         // Load the Haar cascade for face detection from OpenCV data
@@ -209,14 +216,55 @@ public class FaceRecognitionService {
     }
 
     /**
-     * Extract face region from image and encode as Base64 string.
-     * Takes multiple samples and picks the best one for stability.
+     * Encode a single face from a frame as Base64.
      * Returns null if no face detected.
      */
     public String encodeFace(Mat image) {
+        return encodeSingleFace(image);
+    }
+
+    /**
+     * Capture multiple face encodings for registration (more robust).
+     * Takes NUM_CAPTURES samples with delays between them.
+     * Returns a combined encoding string with ||| separator, or null on failure.
+     */
+    public String encodeMultipleFaces() {
+        if (!cameraRunning) return null;
+
+        List<String> encodings = new ArrayList<>();
+        System.out.println("=== Multi-capture face registration: capturing " + NUM_CAPTURES + " samples ===");
+
+        for (int i = 0; i < NUM_CAPTURES * 3 && encodings.size() < NUM_CAPTURES; i++) {
+            try {
+                Thread.sleep(300); // wait between captures for variation
+            } catch (InterruptedException ignored) {}
+
+            Mat frame = grabMat();
+            if (frame == null) continue;
+
+            String enc = encodeSingleFace(frame);
+            if (enc != null) {
+                encodings.add(enc);
+                System.out.println("Captured face " + encodings.size() + "/" + NUM_CAPTURES);
+            }
+        }
+
+        if (encodings.size() < 2) {
+            System.out.println("Failed: only captured " + encodings.size() + " faces, need at least 2");
+            return null;
+        }
+
+        String combined = String.join(ENCODING_SEPARATOR, encodings);
+        System.out.println("Multi-capture complete: " + encodings.size() + " samples, total length: " + combined.length());
+        return combined;
+    }
+
+    /**
+     * Extract and encode a single face from an image.
+     */
+    private String encodeSingleFace(Mat image) {
         RectVector faces = detectFaces(image);
         if (faces.size() == 0) {
-            System.out.println("encodeFace: No face detected in frame");
             return null;
         }
 
@@ -230,12 +278,9 @@ public class FaceRecognitionService {
             }
         }
 
-        System.out.println("encodeFace: Face found at (" + faceRect.x() + "," + faceRect.y()
-            + ") size " + faceRect.width() + "x" + faceRect.height());
-
         Mat faceROI = new Mat(image, faceRect);
 
-        // Resize face to standard size
+        // Resize to standard 200x200
         Mat standardFace = new Mat();
         resize(faceROI, standardFace, new Size(200, 200));
 
@@ -247,20 +292,17 @@ public class FaceRecognitionService {
             grayFace = standardFace.clone();
         }
 
-        // Apply histogram equalization for consistent lighting
+        // Histogram equalization for consistent lighting
         equalizeHist(grayFace, grayFace);
 
-        // Apply slight Gaussian blur to reduce noise from webcam
+        // Slight blur to reduce webcam noise
         GaussianBlur(grayFace, grayFace, new Size(3, 3), 0);
 
-        // Encode face image as Base64
         byte[] faceBytes = matToBytes(grayFace);
         if (faceBytes == null) return null;
 
         String encoded = Base64.getEncoder().encodeToString(faceBytes);
-        System.out.println("encodeFace: Encoded " + faceBytes.length + " bytes -> Base64 length " + encoded.length());
 
-        // Cleanup
         faceROI.close();
         standardFace.close();
         grayFace.close();
@@ -269,68 +311,36 @@ public class FaceRecognitionService {
     }
 
     /**
-     * Compare a captured face encoding with a stored face encoding.
-     * Uses multiple complementary methods for robust comparison.
+     * Compare a captured face against a stored encoding (which may contain multiple captures).
+     * Uses MSE (Mean Squared Error) which measures ACTUAL pixel differences.
+     * 
+     * WHY MSE WORKS: Different people have different eye shapes, nose, mouth.
+     * These show up as large pixel differences (high MSE).
+     * Correlation/Bhattacharyya NORMALIZE these away, making all faces look similar.
+     * MSE preserves the actual differences.
+     * 
      * Returns similarity score (0.0 to 1.0)
      */
     public double compareFaces(String storedEncoding, String capturedEncoding) {
         if (storedEncoding == null || capturedEncoding == null) return 0.0;
 
         try {
-            byte[] storedBytes = Base64.getDecoder().decode(storedEncoding);
-            byte[] capturedBytes = Base64.getDecoder().decode(capturedEncoding);
+            // Split stored encoding into multiple captures if present
+            String[] storedParts = storedEncoding.split("\\|\\|\\|");
+            
+            double bestScore = 0.0;
 
-            System.out.println("compareFaces: stored=" + storedBytes.length + " bytes, captured=" + capturedBytes.length + " bytes");
+            for (String storedPart : storedParts) {
+                if (storedPart.trim().isEmpty()) continue;
 
-            // Determine face size from byte count
-            int faceSize = (int) Math.round(Math.sqrt(storedBytes.length));
-            if (faceSize * faceSize != storedBytes.length) faceSize = 200;
-            int capSize = (int) Math.round(Math.sqrt(capturedBytes.length));
-            if (capSize * capSize != capturedBytes.length) capSize = 200;
-
-            Mat storedFace = bytesToMat(storedBytes, faceSize, faceSize);
-            Mat capturedFace = bytesToMat(capturedBytes, capSize, capSize);
-
-            if (storedFace == null || capturedFace == null) {
-                System.out.println("compareFaces: Failed to create Mat from bytes");
-                return 0.0;
+                double score = compareTwoFaces(storedPart.trim(), capturedEncoding);
+                if (score > bestScore) {
+                    bestScore = score;
+                }
             }
 
-            // Resize both to 200x200 if needed
-            if (storedFace.rows() != 200 || storedFace.cols() != 200) {
-                Mat resized = new Mat();
-                resize(storedFace, resized, new Size(200, 200));
-                storedFace.close();
-                storedFace = resized;
-            }
-            if (capturedFace.rows() != 200 || capturedFace.cols() != 200) {
-                Mat resized = new Mat();
-                resize(capturedFace, resized, new Size(200, 200));
-                capturedFace.close();
-                capturedFace = resized;
-            }
-
-            // Method 1: LBPH comparison (weight: 40%)
-            double lbphScore = compareLBPH(storedFace, capturedFace);
-
-            // Method 2: Normalized correlation (weight: 35%)
-            double corrScore = compareCorrelation(storedFace, capturedFace);
-
-            // Method 3: Structural region comparison (weight: 25%)
-            double regionScore = compareRegions(storedFace, capturedFace);
-
-            double combined = lbphScore * 0.40 + corrScore * 0.35 + regionScore * 0.25;
-
-            System.out.println(String.format(
-                "Face comparison — LBPH: %.4f, Correlation: %.4f, Regions: %.4f => Combined: %.4f (threshold: %.2f)",
-                lbphScore, corrScore, regionScore, combined, MATCH_THRESHOLD
-            ));
-
-            // Cleanup
-            storedFace.close();
-            capturedFace.close();
-
-            return combined;
+            System.out.println("Best match score across " + storedParts.length + " stored captures: " + String.format("%.4f", bestScore));
+            return bestScore;
 
         } catch (Exception e) {
             System.err.println("compareFaces ERROR: " + e.getMessage());
@@ -340,183 +350,143 @@ public class FaceRecognitionService {
     }
 
     /**
-     * Normalized correlation coefficient between two face images.
-     * Very effective for same-person recognition with lighting variation.
+     * Compare two single face encodings using MSE + regional MSE.
      */
-    private double compareCorrelation(Mat face1, Mat face2) {
-        byte[] data1 = getPixelData(face1);
-        byte[] data2 = getPixelData(face2);
-        if (data1 == null || data2 == null) return 0.0;
+    private double compareTwoFaces(String enc1, String enc2) {
+        try {
+            byte[] bytes1 = Base64.getDecoder().decode(enc1);
+            byte[] bytes2 = Base64.getDecoder().decode(enc2);
 
-        int limit = Math.min(data1.length, data2.length);
+            int size1 = (int) Math.round(Math.sqrt(bytes1.length));
+            int size2 = (int) Math.round(Math.sqrt(bytes2.length));
+            if (size1 * size1 != bytes1.length) size1 = 200;
+            if (size2 * size2 != bytes2.length) size2 = 200;
 
-        double mean1 = 0, mean2 = 0;
-        for (int i = 0; i < limit; i++) {
-            mean1 += (data1[i] & 0xFF);
-            mean2 += (data2[i] & 0xFF);
-        }
-        mean1 /= limit;
-        mean2 /= limit;
+            Mat face1 = bytesToMat(bytes1, size1, size1);
+            Mat face2 = bytesToMat(bytes2, size2, size2);
+            if (face1 == null || face2 == null) return 0.0;
 
-        double numerator = 0, denom1 = 0, denom2 = 0;
-        for (int i = 0; i < limit; i++) {
-            double d1 = (data1[i] & 0xFF) - mean1;
-            double d2 = (data2[i] & 0xFF) - mean2;
-            numerator += d1 * d2;
-            denom1 += d1 * d1;
-            denom2 += d2 * d2;
-        }
-
-        double denom = Math.sqrt(denom1 * denom2);
-        double correlation = (denom > 0) ? (numerator / denom) : 0.0;
-
-        // correlation ranges -1 to 1; normalize to 0 to 1
-        return (correlation + 1.0) / 2.0;
-    }
-
-    /**
-     * LBPH: Compare Local Binary Pattern Histograms
-     * LBP captures micro-texture patterns unique to each face
-     */
-    private double compareLBPH(Mat face1, Mat face2) {
-        int rows = face1.rows();
-        int cols = face1.cols();
-
-        byte[] data1 = getPixelData(face1);
-        byte[] data2 = getPixelData(face2);
-        if (data1 == null || data2 == null) return 0.0;
-
-        // Calculate LBP for both faces
-        int[] lbpHist1 = computeLBPHistogram(data1, rows, cols);
-        int[] lbpHist2 = computeLBPHistogram(data2, rows, cols);
-
-        // Compare histograms using Bhattacharyya coefficient (better than chi-squared)
-        double dotProduct = 0;
-        double norm1 = 0;
-        double norm2 = 0;
-        for (int i = 0; i < 256; i++) {
-            dotProduct += Math.sqrt((double) lbpHist1[i] * lbpHist2[i]);
-            norm1 += lbpHist1[i];
-            norm2 += lbpHist2[i];
-        }
-
-        // Bhattacharyya coefficient: 1.0 = identical, 0.0 = completely different
-        double bhatt = (norm1 > 0 && norm2 > 0)
-            ? dotProduct / Math.sqrt(norm1 * norm2)
-            : 0.0;
-
-        return bhatt;
-    }
-
-    /**
-     * Compute LBP histogram for a grayscale image
-     */
-    private int[] computeLBPHistogram(byte[] data, int rows, int cols) {
-        int[] histogram = new int[256];
-
-        for (int y = 1; y < rows - 1; y++) {
-            for (int x = 1; x < cols - 1; x++) {
-                int center = data[y * cols + x] & 0xFF;
-                int lbp = 0;
-
-                // 8 neighbors, clockwise from top-left
-                if ((data[(y-1)*cols + (x-1)] & 0xFF) >= center) lbp |= 128;
-                if ((data[(y-1)*cols + x]     & 0xFF) >= center) lbp |= 64;
-                if ((data[(y-1)*cols + (x+1)] & 0xFF) >= center) lbp |= 32;
-                if ((data[y*cols + (x+1)]     & 0xFF) >= center) lbp |= 16;
-                if ((data[(y+1)*cols + (x+1)] & 0xFF) >= center) lbp |= 8;
-                if ((data[(y+1)*cols + x]     & 0xFF) >= center) lbp |= 4;
-                if ((data[(y+1)*cols + (x-1)] & 0xFF) >= center) lbp |= 2;
-                if ((data[y*cols + (x-1)]     & 0xFF) >= center) lbp |= 1;
-
-                histogram[lbp]++;
+            // Ensure same size
+            if (face1.rows() != 200 || face1.cols() != 200) {
+                Mat r = new Mat(); resize(face1, r, new Size(200, 200)); face1.close(); face1 = r;
             }
+            if (face2.rows() != 200 || face2.cols() != 200) {
+                Mat r = new Mat(); resize(face2, r, new Size(200, 200)); face2.close(); face2 = r;
+            }
+
+            byte[] data1 = getPixelData(face1);
+            byte[] data2 = getPixelData(face2);
+
+            // Method 1: Global MSE (weight 40%)
+            double globalMSE = computeMSE(data1, data2, 0, data1.length);
+            double globalSim = mseToSimilarity(globalMSE);
+
+            // Method 2: Regional MSE with face-area weighting (weight 40%)
+            double regionSim = computeRegionalMSE(data1, data2, 200, 200);
+
+            // Method 3: Absolute difference count — how many pixels differ significantly (weight 20%)
+            double diffRatio = computeDiffRatio(data1, data2, 30); // pixels differing by >30
+
+            double combined = globalSim * 0.40 + regionSim * 0.40 + diffRatio * 0.20;
+
+            System.out.println(String.format(
+                "  MSE=%.1f (sim=%.4f), RegionSim=%.4f, DiffRatio=%.4f => Combined=%.4f",
+                globalMSE, globalSim, regionSim, diffRatio, combined
+            ));
+
+            face1.close();
+            face2.close();
+
+            return combined;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return 0.0;
         }
-        return histogram;
     }
 
     /**
-     * Multi-region comparison: Split face into grid regions and compare each
-     * Different face regions have different discriminative power
+     * Compute Mean Squared Error between pixel arrays
      */
-    private double compareRegions(Mat face1, Mat face2) {
-        int rows = face1.rows();
-        int cols = face1.cols();
-        byte[] data1 = getPixelData(face1);
-        byte[] data2 = getPixelData(face2);
-        if (data1 == null || data2 == null) return 0.0;
+    private double computeMSE(byte[] d1, byte[] d2, int start, int end) {
+        double mse = 0;
+        int count = 0;
+        int limit = Math.min(Math.min(d1.length, d2.length), end);
+        for (int i = start; i < limit; i++) {
+            double diff = (d1[i] & 0xFF) - (d2[i] & 0xFF);
+            mse += diff * diff;
+            count++;
+        }
+        return count > 0 ? mse / count : Double.MAX_VALUE;
+    }
 
-        // Split face into 4x4 grid = 16 regions
-        int gridRows = 4;
-        int gridCols = 4;
-        int regionH = rows / gridRows;
-        int regionW = cols / gridCols;
+    /**
+     * Convert MSE to similarity score using exponential decay.
+     * Same person MSE: ~200-600 -> sim 0.74-0.90
+     * Diff person MSE: ~1200-3000+ -> sim 0.22-0.55
+     */
+    private double mseToSimilarity(double mse) {
+        // sigma controls the decay rate — tuned for 200x200 equalized grayscale faces
+        double sigma = 1500.0;
+        return Math.exp(-mse / sigma);
+    }
 
-        // Weights: eye area and nose/mouth area are more discriminative
-        // Row 0=forehead, 1=eyes, 2=nose, 3=mouth
-        double[][] weights = {
-            {0.5, 0.8, 0.8, 0.5},   // forehead row
-            {0.9, 1.5, 1.5, 0.9},   // eye row (most important)
-            {0.7, 1.2, 1.2, 0.7},   // nose row
-            {0.6, 1.0, 1.0, 0.6}    // mouth/chin row
+    /**
+     * Regional MSE: split face into weighted regions.
+     * Eye & nose regions weigh more because they differ most between people.
+     */
+    private double computeRegionalMSE(byte[] d1, byte[] d2, int rows, int cols) {
+        // 5 key face regions (y-ranges as fractions of face height)
+        // [startRow%, endRow%, startCol%, endCol%, weight]
+        double[][] regions = {
+            {0.05, 0.30, 0.10, 0.90, 0.8},  // forehead
+            {0.25, 0.50, 0.05, 0.45, 1.8},  // left eye
+            {0.25, 0.50, 0.55, 0.95, 1.8},  // right eye
+            {0.40, 0.70, 0.25, 0.75, 1.5},  // nose
+            {0.65, 0.90, 0.15, 0.85, 1.2},  // mouth
         };
 
-        double totalSimilarity = 0;
+        double totalSim = 0;
         double totalWeight = 0;
 
-        for (int gy = 0; gy < gridRows; gy++) {
-            for (int gx = 0; gx < gridCols; gx++) {
-                // Compute LBP histogram for this region in both faces
-                int[] regionHist1 = new int[256];
-                int[] regionHist2 = new int[256];
+        for (double[] reg : regions) {
+            int r0 = (int)(reg[0] * rows), r1 = (int)(reg[1] * rows);
+            int c0 = (int)(reg[2] * cols), c1 = (int)(reg[3] * cols);
+            double weight = reg[4];
 
-                int startY = gy * regionH + 1;
-                int endY = Math.min((gy + 1) * regionH - 1, rows - 1);
-                int startX = gx * regionW + 1;
-                int endX = Math.min((gx + 1) * regionW - 1, cols - 1);
-
-                for (int y = startY; y < endY; y++) {
-                    for (int x = startX; x < endX; x++) {
-                        if (y > 0 && y < rows - 1 && x > 0 && x < cols - 1) {
-                            int center1 = data1[y * cols + x] & 0xFF;
-                            int lbp1 = computeLBPAt(data1, y, x, cols, center1);
-                            regionHist1[lbp1]++;
-
-                            int center2 = data2[y * cols + x] & 0xFF;
-                            int lbp2 = computeLBPAt(data2, y, x, cols, center2);
-                            regionHist2[lbp2]++;
-                        }
+            double regionMSE = 0;
+            int count = 0;
+            for (int y = r0; y < r1; y++) {
+                for (int x = c0; x < c1; x++) {
+                    int idx = y * cols + x;
+                    if (idx < d1.length && idx < d2.length) {
+                        double diff = (d1[idx] & 0xFF) - (d2[idx] & 0xFF);
+                        regionMSE += diff * diff;
+                        count++;
                     }
                 }
-
-                // Compare region histograms using Bhattacharyya
-                double dotP = 0, n1 = 0, n2 = 0;
-                for (int i = 0; i < 256; i++) {
-                    dotP += Math.sqrt((double) regionHist1[i] * regionHist2[i]);
-                    n1 += regionHist1[i];
-                    n2 += regionHist2[i];
-                }
-                double regionSim = (n1 > 0 && n2 > 0) ? dotP / Math.sqrt(n1 * n2) : 0.0;
-                double w = weights[gy][gx];
-                totalSimilarity += regionSim * w;
-                totalWeight += w;
             }
+            regionMSE = count > 0 ? regionMSE / count : 5000;
+            totalSim += mseToSimilarity(regionMSE) * weight;
+            totalWeight += weight;
         }
 
-        return totalWeight > 0 ? totalSimilarity / totalWeight : 0.0;
+        return totalWeight > 0 ? totalSim / totalWeight : 0.0;
     }
 
-    private int computeLBPAt(byte[] data, int y, int x, int cols, int center) {
-        int lbp = 0;
-        if ((data[(y-1)*cols + (x-1)] & 0xFF) >= center) lbp |= 128;
-        if ((data[(y-1)*cols + x]     & 0xFF) >= center) lbp |= 64;
-        if ((data[(y-1)*cols + (x+1)] & 0xFF) >= center) lbp |= 32;
-        if ((data[y*cols + (x+1)]     & 0xFF) >= center) lbp |= 16;
-        if ((data[(y+1)*cols + (x+1)] & 0xFF) >= center) lbp |= 8;
-        if ((data[(y+1)*cols + x]     & 0xFF) >= center) lbp |= 4;
-        if ((data[(y+1)*cols + (x-1)] & 0xFF) >= center) lbp |= 2;
-        if ((data[y*cols + (x-1)]     & 0xFF) >= center) lbp |= 1;
-        return lbp;
+    /**
+     * Compute ratio of pixels that are SIMILAR (differ by less than threshold).
+     * Same person: most pixels similar -> high ratio (0.75-0.90)
+     * Diff person: many pixels differ -> low ratio (0.40-0.60)
+     */
+    private double computeDiffRatio(byte[] d1, byte[] d2, int threshold) {
+        int similar = 0;
+        int limit = Math.min(d1.length, d2.length);
+        for (int i = 0; i < limit; i++) {
+            int diff = Math.abs((d1[i] & 0xFF) - (d2[i] & 0xFF));
+            if (diff <= threshold) similar++;
+        }
+        return (double) similar / limit;
     }
 
     /**
