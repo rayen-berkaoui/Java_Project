@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esprit.controllers.ReservationController"
+            prefWidth="1400" prefHeight="860"
+            style="-fx-padding: 0; -fx-border-width: 0;"
+            styleClass="root">
+
+    <!-- ═══════ TOP BAR ═══════ -->
+    <top>
+        <VBox spacing="0">
+            <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="0"
+                  style="-fx-background-color: #080808; -fx-padding: 12 25;">
+
+                <!-- Brand -->
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <StackPane prefWidth="36" prefHeight="36"
+                               style="-fx-background-color: rgba(255,215,0,0.12); -fx-background-radius: 10;">
+                        <Label text="&#x1F4B3;" style="-fx-font-size: 16;" />
+                    </StackPane>
+                    <VBox spacing="0">
+                        <Label text="SMARTTRAVEL" style="-fx-font-size: 16; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="Mes Paiements" style="-fx-font-size: 9; -fx-text-fill: #666666;" />
+                    </VBox>
+                </HBox>
+
+                <Region HBox.hgrow="ALWAYS" />
+
+                <!-- User badge -->
+                <HBox spacing="8" alignment="CENTER"
+                      style="-fx-background-color: rgba(255,215,0,0.05); -fx-padding: 6 16; -fx-background-radius: 20;">
+                    <StackPane prefWidth="26" prefHeight="26"
+                               style="-fx-background-color: rgba(255,215,0,0.15); -fx-background-radius: 13;">
+                        <Label text="&#x1F464;" style="-fx-font-size: 11;" />
+                    </StackPane>
+                    <Label fx:id="userNameLabel" text="Voyageur" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                </HBox>
+
+                <Region prefWidth="12" />
+
+                <HBox spacing="8" alignment="CENTER">
+                    <Button text="&#x1F3E0; Accueil" styleClass="dashboard-button" onAction="#handleBackToMain"
+                            style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                    <Button text="&#x1F6D2; Panier" styleClass="dashboard-button" onAction="#handleGoToPanier"
+                            style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                    <Button text="&#x1F6AA; Deconnexion" styleClass="dashboard-button-danger" onAction="#handleLogout"
+                            style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                </HBox>
+
+                <Region prefWidth="10" />
+
+                <HBox spacing="2">
+                    <Button text="&#x2014;" onAction="#handleMinimize" styleClass="window-button" />
+                    <Button text="&#x2715;" onAction="#handleClose" styleClass="window-button-close" />
+                </HBox>
+            </HBox>
+
+            <Region style="-fx-background-color: linear-gradient(to right, rgba(255,215,0,0.5), rgba(255,215,0,0.15), rgba(255,215,0,0.02), transparent); -fx-pref-height: 1.5;" />
+        </VBox>
+    </top>
+
+    <!-- ═══════ CENTER ═══════ -->
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER"
+                    style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a; -fx-padding: 0;">
+            <VBox spacing="24" style="-fx-padding: 30;">
+
+                <!-- Page Header -->
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <VBox spacing="3">
+                        <Label text="&#x1F4B3; Mes Paiements" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
+                        <Label text="Historique de vos reservations et paiements confirmes" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
+                    </VBox>
+                </HBox>
+
+                <!-- Stats Cards Row -->
+                <HBox spacing="14">
+                    <VBox spacing="8" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <StackPane prefWidth="38" prefHeight="38"
+                                       style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 10;">
+                                <Label text="&#x1F4B3;" style="-fx-font-size: 16;" />
+                            </StackPane>
+                            <VBox spacing="2">
+                                <Label text="Total Reservations" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                <Label fx:id="totalReservationsLabel" text="0" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="8" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <StackPane prefWidth="38" prefHeight="38"
+                                       style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 10;">
+                                <Label text="&#x2705;" style="-fx-font-size: 16;" />
+                            </StackPane>
+                            <VBox spacing="2">
+                                <Label text="Payees" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                <Label fx:id="payeLabel" text="0" style="-fx-font-size: 22; -fx-text-fill: #51CF66; -fx-font-weight: bold;" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="8" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <StackPane prefWidth="38" prefHeight="38"
+                                       style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 10;">
+                                <Label text="&#x23F3;" style="-fx-font-size: 16;" />
+                            </StackPane>
+                            <VBox spacing="2">
+                                <Label text="En Cours" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                <Label fx:id="enCoursLabel" text="0" style="-fx-font-size: 22; -fx-text-fill: #64B5F6; -fx-font-weight: bold;" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    <VBox spacing="8" HBox.hgrow="ALWAYS"
+                          style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <StackPane prefWidth="38" prefHeight="38"
+                                       style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 10;">
+                                <Label text="&#x1F4B0;" style="-fx-font-size: 16;" />
+                            </StackPane>
+                            <VBox spacing="2">
+                                <Label text="Total Depense" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                <Label fx:id="totalDepenseLabel" text="0 DT" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </HBox>
+
+                <!-- Message -->
+                <Label fx:id="messageLabel" text="" style="-fx-font-size: 12; -fx-text-fill: #51CF66;" />
+
+                <!-- Carousel Section -->
+                <VBox spacing="16"
+                      style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 24; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+
+                    <HBox alignment="CENTER_LEFT" spacing="12">
+                        <Label text="&#x1F4CB; Historique des Paiements" style="-fx-font-size: 15; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <HBox spacing="8" alignment="CENTER">
+                            <Button text="&#x25C0;" styleClass="dashboard-button" onAction="#handlePrev"
+                                    style="-fx-padding: 6 14; -fx-font-size: 13;" />
+                            <Label fx:id="pageLabel" text="1 / 1" style="-fx-text-fill: #888; -fx-font-size: 12;" />
+                            <Button text="&#x25B6;" styleClass="dashboard-button" onAction="#handleNext"
+                                    style="-fx-padding: 6 14; -fx-font-size: 13;" />
+                        </HBox>
+                    </HBox>
+
+                    <HBox fx:id="reservationCarousel" spacing="16" alignment="CENTER_LEFT"
+                          style="-fx-padding: 6 0;" />
+
+                </VBox>
+
+            </VBox>
+        </ScrollPane>
+    </center>
+</BorderPane>
