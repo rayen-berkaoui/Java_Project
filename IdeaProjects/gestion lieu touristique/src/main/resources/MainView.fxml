@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.MainController"
+            styleClass="root-pane"
+            prefHeight="1080" prefWidth="1920">
+
+    <top>
+        <VBox spacing="0">
+            <!-- Main Navigation Bar -->
+            <HBox styleClass="nav-bar" prefHeight="70" alignment="CENTER_LEFT">
+                <padding><Insets top="0" right="30" bottom="0" left="30"/></padding>
+
+                <Label styleClass="nav-title" text="🗺️ GESTION TOURISTIQUE"/>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <HBox spacing="12" alignment="CENTER">
+                    <Button styleClass="nav-button" text="📂 Catégories" onAction="#selectCategoriesTab" prefHeight="42" minWidth="140"/>
+                    <Button styleClass="nav-button" text="📍 Adresses" onAction="#selectAddressesTab" prefHeight="42" minWidth="140"/>
+                    <Button styleClass="nav-button" text="🏛️ Lieux" onAction="#selectLocationsTab" prefHeight="42" minWidth="140"/>
+                </HBox>
+
+                <Region prefWidth="30"/>
+
+                <Button styleClass="nav-button fullscreen-btn" text="⛶" onAction="#toggleFullScreen" prefHeight="42" prefWidth="50"/>
+            </HBox>
+
+            <!-- Gold accent line -->
+            <Region styleClass="accent-line" prefHeight="3" maxHeight="3"/>
+        </VBox>
+    </top>
+
+    <center>
+        <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" styleClass="main-tab-pane" prefHeight="1010" prefWidth="1920">
+
+            <Tab text="Catégories" closable="false">
+                <fx:include source="CategorieView.fxml"/>
+            </Tab>
+
+            <Tab text="Adresses" closable="false">
+                <fx:include source="AdresseView.fxml"/>
+            </Tab>
+
+            <Tab text="Lieux Touristiques" closable="false">
+                <fx:include source="LieuTouristiqueView.fxml"/>
+            </Tab>
+
+        </TabPane>
+    </center>
+
+</BorderPane>

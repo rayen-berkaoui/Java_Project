@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<ScrollPane xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.LieuTouristiqueController"
+            fitToWidth="true" fitToHeight="true" styleClass="content-scroll" prefHeight="1010" prefWidth="1920">
+    <VBox styleClass="content-root" VBox.vgrow="ALWAYS">
+        <padding><Insets top="25" right="40" bottom="20" left="40"/></padding>
+
+        <!-- Page Header -->
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="page-header">
+            <Label text="🏛️" style="-fx-font-size: 36px;"/>
+            <VBox spacing="2">
+                <Label text="Lieux Touristiques" styleClass="title-label"/>
+                <Label text="Découvrir et gérer les destinations touristiques" styleClass="subtitle-label"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER_RIGHT" styleClass="stat-card">
+                <Label fx:id="lblCount" text="--" styleClass="stat-number"/>
+                <Label text="Lieux" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <Region styleClass="accent-line" prefHeight="2" maxHeight="2"/>
+
+        <!-- Action Buttons -->
+        <HBox spacing="15" alignment="CENTER_LEFT" styleClass="action-bar">
+            <padding><Insets top="10" right="0" bottom="5" left="0"/></padding>
+            <Button text="✦ Ajouter" fx:id="btnAjouter" styleClass="btn-add"/>
+            <Button text="✎ Modifier" fx:id="btnModifier" styleClass="btn-edit"/>
+            <Button text="✕ Supprimer" fx:id="btnSupprimer" styleClass="btn-delete"/>
+        </HBox>
+
+        <!-- Carousel Section -->
+        <VBox VBox.vgrow="ALWAYS" alignment="CENTER" spacing="12">
+
+            <!-- Navigation + Cards Row -->
+            <HBox alignment="CENTER" spacing="15" VBox.vgrow="ALWAYS">
+                <padding><Insets top="5" right="0" bottom="0" left="0"/></padding>
+
+                <!-- Left Arrow -->
+                <Button fx:id="btnPrev" text="◀" styleClass="carousel-arrow"/>
+
+                <!-- Cards Container -->
+                <HBox fx:id="cardsContainer" alignment="CENTER" spacing="18" HBox.hgrow="ALWAYS">
+                    <!-- Cards built dynamically by controller -->
+                </HBox>
+
+                <!-- Right Arrow -->
+                <Button fx:id="btnNext" text="▶" styleClass="carousel-arrow"/>
+            </HBox>
+
+            <!-- Empty State (shown when no data) -->
+            <VBox fx:id="emptyState" alignment="CENTER" spacing="10" visible="false" managed="false">
+                <Label text="🏛️" style="-fx-font-size: 64px; -fx-opacity: 0.4;"/>
+                <Label text="Aucun lieu touristique" style="-fx-text-fill: #888; -fx-font-size: 20px;"/>
+                <Label text="Cliquez sur Ajouter pour commencer" style="-fx-text-fill: #555; -fx-font-size: 14px;"/>
+            </VBox>
+
+            <!-- Dots + Page Info -->
+            <HBox fx:id="pageIndicator" alignment="CENTER" spacing="8" styleClass="carousel-indicator-bar">
+                <padding><Insets top="0" right="0" bottom="5" left="0"/></padding>
+                <Label fx:id="lblPageInfo" text="" styleClass="carousel-page-info"/>
+            </HBox>
+
+        </VBox>
+
+    </VBox>
+</ScrollPane>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<DialogPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.AdresseFormDialogController"
+            styleClass="dialog-pane">
+    <content>
+        <ScrollPane fitToWidth="true" fitToHeight="true" styleClass="dialog-scroll">
+            <VBox spacing="0" styleClass="dialog-content-root">
+
+                <!-- Dialog Header Section -->
+                <HBox alignment="CENTER_LEFT" spacing="15" styleClass="dialog-header-section">
+                    <padding><Insets top="30" right="50" bottom="30" left="50"/></padding>
+                    <Label text="📍" style="-fx-font-size: 42px;"/>
+                    <VBox spacing="4">
+                        <Label text="Adresse" styleClass="dialog-page-title"/>
+                        <Label text="Remplissez les coordonnées et l'emplacement" styleClass="dialog-page-subtitle"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Gold Separator -->
+                <Region styleClass="accent-line" prefHeight="2" maxHeight="2"/>
+
+                <!-- Form Section -->
+                <HBox spacing="40" VBox.vgrow="ALWAYS" alignment="TOP_CENTER">
+                    <padding><Insets top="50" right="80" bottom="50" left="80"/></padding>
+
+                    <!-- Left Column - Address -->
+                    <VBox spacing="30" HBox.hgrow="ALWAYS" styleClass="form-section" maxWidth="600">
+                        <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+                        <Label text="🏠 Informations générales" styleClass="form-section-title"/>
+
+                        <VBox spacing="10" styleClass="form-group">
+                            <Label text="Rue" styleClass="form-field-label"/>
+                            <TextField fx:id="tfRue" promptText="Nom de la rue..." styleClass="form-input" prefHeight="50"/>
+                        </VBox>
+
+                        <VBox spacing="10" styleClass="form-group">
+                            <Label text="Ville" styleClass="form-field-label"/>
+                            <TextField fx:id="tfVille" promptText="Nom de la ville..." styleClass="form-input" prefHeight="50"/>
+                        </VBox>
+                    </VBox>
+
+                    <!-- Right Column - Coordinates -->
+                    <VBox spacing="30" HBox.hgrow="ALWAYS" styleClass="form-section" maxWidth="600">
+                        <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+                        <Label text="🌍 Coordonnées GPS" styleClass="form-section-title"/>
+
+                        <VBox spacing="10" styleClass="form-group">
+                            <Label text="Latitude" styleClass="form-field-label"/>
+                            <TextField fx:id="tfLatitude" promptText="Ex: 36.8065" styleClass="form-input" prefHeight="50"/>
+                        </VBox>
+
+                        <VBox spacing="10" styleClass="form-group">
+                            <Label text="Longitude" styleClass="form-field-label"/>
+                            <TextField fx:id="tfLongitude" promptText="Ex: 10.1815" styleClass="form-input" prefHeight="50"/>
+                        </VBox>
+
+                        <VBox spacing="10" styleClass="form-group">
+                            <Label text="Altitude" styleClass="form-field-label"/>
+                            <TextField fx:id="tfAltitude" promptText="En mètres..." styleClass="form-input" prefHeight="50"/>
+                        </VBox>
+                    </VBox>
+
+                </HBox>
+            </VBox>
+        </ScrollPane>
+    </content>
+    <buttonTypes>
+        <ButtonType fx:constant="OK"/>
+        <ButtonType fx:constant="CANCEL"/>
+    </buttonTypes>
+</DialogPane>

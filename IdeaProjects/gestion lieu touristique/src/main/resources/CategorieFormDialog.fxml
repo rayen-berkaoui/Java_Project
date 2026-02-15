@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<DialogPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.CategorieFormDialogController"
+            styleClass="dialog-pane">
+    <content>
+        <ScrollPane fitToWidth="true" fitToHeight="true" styleClass="dialog-scroll">
+            <VBox spacing="0" styleClass="dialog-content-root" alignment="TOP_CENTER">
+
+                <!-- Dialog Header Section -->
+                <HBox alignment="CENTER_LEFT" spacing="15" styleClass="dialog-header-section">
+                    <padding><Insets top="30" right="50" bottom="30" left="50"/></padding>
+                    <Label text="📂" style="-fx-font-size: 42px;"/>
+                    <VBox spacing="4">
+                        <Label text="Catégorie" styleClass="dialog-page-title"/>
+                        <Label text="Remplissez les informations de la catégorie" styleClass="dialog-page-subtitle"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Gold Separator -->
+                <Region styleClass="accent-line" prefHeight="2" maxHeight="2"/>
+
+                <!-- Form Section - centered card -->
+                <VBox alignment="TOP_CENTER" VBox.vgrow="ALWAYS">
+                    <padding><Insets top="60" right="100" bottom="60" left="100"/></padding>
+                    <VBox spacing="35" styleClass="form-section" maxWidth="700">
+                        <padding><Insets top="40" right="50" bottom="40" left="50"/></padding>
+                        <Label text="📝 Informations" styleClass="form-section-title"/>
+
+                        <VBox spacing="10" styleClass="form-group">
+                            <Label text="Nom de la catégorie" styleClass="form-field-label"/>
+                            <TextField fx:id="tfNom" promptText="Entrez le nom..." styleClass="form-input" prefHeight="50"/>
+                        </VBox>
+
+                        <VBox spacing="10" styleClass="form-group">
+                            <Label text="Description" styleClass="form-field-label"/>
+                            <TextField fx:id="tfDescription" promptText="Décrivez la catégorie..." styleClass="form-input" prefHeight="50"/>
+                        </VBox>
+                    </VBox>
+                </VBox>
+            </VBox>
+        </ScrollPane>
+    </content>
+    <buttonTypes>
+        <ButtonType fx:constant="OK"/>
+        <ButtonType fx:constant="CANCEL"/>
+    </buttonTypes>
+</DialogPane>

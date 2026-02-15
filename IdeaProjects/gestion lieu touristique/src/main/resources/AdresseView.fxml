@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<ScrollPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.AdresseController"
+            fitToWidth="true" fitToHeight="true" styleClass="content-scroll" prefHeight="1010" prefWidth="1920">
+    <VBox styleClass="content-root" VBox.vgrow="ALWAYS">
+        <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+
+        <!-- Page Header -->
+        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="page-header">
+            <Label text="📍" style="-fx-font-size: 36px;"/>
+            <VBox spacing="2">
+                <Label text="Gestion des Adresses" styleClass="title-label"/>
+                <Label text="Gérer les adresses et coordonnées géographiques" styleClass="subtitle-label"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <VBox alignment="CENTER_RIGHT" styleClass="stat-card">
+                <Label fx:id="lblCount" text="--" styleClass="stat-number"/>
+                <Label text="Adresses" styleClass="stat-label"/>
+            </VBox>
+        </HBox>
+
+        <!-- Decorative separator -->
+        <Region styleClass="accent-line" prefHeight="2" maxHeight="2"/>
+
+        <!-- Action Buttons -->
+        <HBox spacing="15" alignment="CENTER_LEFT" styleClass="action-bar">
+            <padding><Insets top="15" right="0" bottom="15" left="0"/></padding>
+            <Button text="✦ Ajouter" fx:id="btnAjouter" styleClass="btn-add"/>
+            <Button text="✎ Modifier" fx:id="btnModifier" styleClass="btn-edit"/>
+            <Button text="✕ Supprimer" fx:id="btnSupprimer" styleClass="btn-delete"/>
+        </HBox>
+
+        <!-- Table wrapped in styled card -->
+        <VBox styleClass="table-card" VBox.vgrow="ALWAYS">
+            <TableView fx:id="tableAdresse" VBox.vgrow="ALWAYS" styleClass="data-table">
+                <columns>
+                    <TableColumn text="#" fx:id="colId" minWidth="45" maxWidth="70"/>
+                    <TableColumn text="Rue" fx:id="colRue" minWidth="160" prefWidth="280"/>
+                    <TableColumn text="Ville" fx:id="colVilleCol" minWidth="120" prefWidth="200"/>
+                    <TableColumn text="Latitude" fx:id="colLatitude" minWidth="100" prefWidth="150"/>
+                    <TableColumn text="Longitude" fx:id="colLongitude" minWidth="100" prefWidth="150"/>
+                    <TableColumn text="Altitude" fx:id="colAltitude" minWidth="100" prefWidth="150"/>
+                </columns>
+            </TableView>
+        </VBox>
+
+    </VBox>
+</ScrollPane>
