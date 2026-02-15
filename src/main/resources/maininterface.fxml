@@ -1,0 +1,968 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esprit.controllers.MainInterfaceController"
+            prefWidth="1400" prefHeight="860"
+            style="-fx-padding: 0; -fx-border-width: 0;"
+            styleClass="root">
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- TOP BAR                                                        -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <top>
+        <VBox spacing="0">
+            <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="0"
+                  style="-fx-background-color: #080808; -fx-padding: 12 25;">
+
+                <!-- Brand -->
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <StackPane prefWidth="36" prefHeight="36"
+                               style="-fx-background-color: rgba(255,215,0,0.12); -fx-background-radius: 10;">
+                        <Label text="&#x2708;" style="-fx-font-size: 16;" />
+                    </StackPane>
+                    <VBox spacing="0">
+                        <Label text="SMARTTRAVEL" style="-fx-font-size: 16; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="Voyage &amp; Loisirs" style="-fx-font-size: 9; -fx-text-fill: #666666;" />
+                    </VBox>
+                </HBox>
+
+                <Region HBox.hgrow="ALWAYS" />
+
+                <!-- Search bar -->
+                <HBox spacing="0" alignment="CENTER"
+                      style="-fx-background-color: rgba(255,255,255,0.04); -fx-padding: 0; -fx-background-radius: 20; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 20; -fx-border-width: 1;">
+                    <Label text="&#x1F50D;" style="-fx-font-size: 12; -fx-padding: 0 0 0 14;" />
+                    <TextField promptText="Rechercher une destination..." prefWidth="260"
+                               style="-fx-background-color: transparent; -fx-text-fill: #cccccc; -fx-prompt-text-fill: #555; -fx-padding: 8 14; -fx-font-size: 12; -fx-border-width: 0;" />
+                </HBox>
+
+                <Region prefWidth="15" />
+
+                <!-- Notifications -->
+                <StackPane style="-fx-cursor: hand;">
+                    <StackPane prefWidth="36" prefHeight="36"
+                               style="-fx-background-color: rgba(255,215,0,0.06); -fx-background-radius: 18;">
+                        <Label text="&#x1F514;" style="-fx-font-size: 14;" />
+                    </StackPane>
+                    <StackPane prefWidth="16" prefHeight="16"
+                               style="-fx-background-color: #FF6B6B; -fx-background-radius: 8;"
+                               StackPane.alignment="TOP_RIGHT"
+                               translateX="4" translateY="-2">
+                        <Label text="3" style="-fx-font-size: 8; -fx-text-fill: white; -fx-font-weight: bold;" />
+                    </StackPane>
+                </StackPane>
+
+                <Region prefWidth="12" />
+
+                <!-- User badge (clickable to profile) -->
+                <HBox spacing="8" alignment="CENTER" onMouseClicked="#handleShowProfil"
+                      style="-fx-background-color: rgba(255,215,0,0.05); -fx-padding: 6 16; -fx-background-radius: 20; -fx-cursor: hand;">
+                    <StackPane prefWidth="26" prefHeight="26"
+                               style="-fx-background-color: rgba(255,215,0,0.15); -fx-background-radius: 13;">
+                        <Label text="&#x1F464;" style="-fx-font-size: 11;" />
+                    </StackPane>
+                    <Label fx:id="userNameLabel" text="Voyageur" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                </HBox>
+
+                <Region prefWidth="12" />
+
+                <!-- Actions -->
+                <HBox spacing="8" alignment="CENTER">
+                    <Button text="&#x1F6AA; Deconnexion" styleClass="dashboard-button-danger" onAction="#handleLogout"
+                            style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                </HBox>
+
+                <Region prefWidth="10" />
+
+                <HBox spacing="2">
+                    <Button text="&#x2014;" onAction="#handleMinimize" styleClass="window-button" />
+                    <Button text="&#x2715;" onAction="#handleClose" styleClass="window-button-close" />
+                </HBox>
+            </HBox>
+
+            <!-- Gold accent line -->
+            <Region style="-fx-background-color: linear-gradient(to right, rgba(255,215,0,0.5), rgba(255,215,0,0.15), rgba(255,215,0,0.02), transparent); -fx-pref-height: 1.5;" />
+        </VBox>
+    </top>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- CENTER = SIDEBAR + CONTENT                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <center>
+        <HBox spacing="0">
+
+            <!-- ═══════ SIDEBAR ═══════ -->
+            <VBox spacing="0" style="-fx-background-color: #080808; -fx-border-color: transparent rgba(255,215,0,0.06) transparent transparent; -fx-border-width: 0 1 0 0;" prefWidth="260" minWidth="260">
+
+                <!-- Discover -->
+                <VBox spacing="4" style="-fx-padding: 24 14 8 14;">
+                    <Label text="D&#xc9;COUVRIR" style="-fx-text-fill: rgba(255,215,0,0.4); -fx-font-size: 10; -fx-font-weight: bold; -fx-padding: 0 6 8 6;" />
+                    <Button fx:id="navAccueil" text="&#x1F3E0;  Accueil" styleClass="sidebar-button-active" prefWidth="232" onAction="#handleShowAccueil" />
+                </VBox>
+
+                <Region prefHeight="6" />
+                <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.08), transparent); -fx-pref-height: 1;" />
+                <Region prefHeight="6" />
+
+                <!-- Explorer -->
+                <VBox spacing="4" style="-fx-padding: 8 14;">
+                    <Label text="EXPLORER" style="-fx-text-fill: rgba(255,215,0,0.4); -fx-font-size: 10; -fx-font-weight: bold; -fx-padding: 0 6 8 6;" />
+                    <Button fx:id="navLieux" text="&#x1F5FA;  Destinations" styleClass="sidebar-button" prefWidth="232" onAction="#handleShowLieux" />
+                    <Button fx:id="navRestaurants" text="&#x1F37D;  Restaurants &amp; Loisirs" styleClass="sidebar-button" prefWidth="232" onAction="#handleShowRestaurants" />
+                </VBox>
+
+                <Region prefHeight="6" />
+                <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.08), transparent); -fx-pref-height: 1;" />
+                <Region prefHeight="6" />
+
+                <!-- Mon Espace -->
+                <VBox spacing="4" style="-fx-padding: 8 14;">
+                    <Label text="MON ESPACE" style="-fx-text-fill: rgba(255,215,0,0.4); -fx-font-size: 10; -fx-font-weight: bold; -fx-padding: 0 6 8 6;" />
+                    <Button fx:id="navAvis" text="&#x2B50;  Mes Avis" styleClass="sidebar-button" prefWidth="232" onAction="#handleShowAvis" />
+                    <Button fx:id="navReservations" text="&#x1F4C5;  Mes Reservations" styleClass="sidebar-button" prefWidth="232" onAction="#handleShowReservations" />
+                </VBox>
+
+                <Region prefHeight="6" />
+                <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.08), transparent); -fx-pref-height: 1;" />
+                <Region prefHeight="6" />
+
+                <!-- Compte -->
+                <VBox spacing="4" style="-fx-padding: 8 14;">
+                    <Label text="COMPTE" style="-fx-text-fill: rgba(255,215,0,0.4); -fx-font-size: 10; -fx-font-weight: bold; -fx-padding: 0 6 8 6;" />
+                    <Button fx:id="navProfil" text="&#x1F464;  Mon Profil" styleClass="sidebar-button" prefWidth="232" onAction="#handleShowProfil" />
+                </VBox>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <!-- Sidebar Footer -->
+                <VBox spacing="4" style="-fx-padding: 14;">
+                    <Region style="-fx-background-color: rgba(255,255,255,0.03); -fx-pref-height: 1;" />
+                    <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 8 6;">
+                        <StackPane prefWidth="24" prefHeight="24"
+                                   style="-fx-background-color: rgba(255,215,0,0.08); -fx-background-radius: 6;">
+                            <Label text="&#x2708;" style="-fx-font-size: 10;" />
+                        </StackPane>
+                        <VBox spacing="0">
+                            <Label text="SmartTravel v1.0" style="-fx-text-fill: #444444; -fx-font-size: 10;" />
+                            <Label text="2025-2026" style="-fx-text-fill: #333333; -fx-font-size: 8;" />
+                        </VBox>
+                    </HBox>
+                </VBox>
+            </VBox>
+
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <!-- CONTENT AREA (StackPane for panel switching)           -->
+            <!-- ═══════════════════════════════════════════════════════ -->
+            <StackPane HBox.hgrow="ALWAYS" style="-fx-background-color: #0a0a0a;">
+
+                <!-- ======================= ACCUEIL PANEL ======================= -->
+                <ScrollPane fx:id="panelAccueil" fitToWidth="true" hbarPolicy="NEVER"
+                            style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a; -fx-padding: 0;">
+                    <VBox spacing="24" style="-fx-padding: 30;">
+
+                        <!-- Welcome Banner -->
+                        <HBox alignment="CENTER_LEFT" spacing="16"
+                              style="-fx-background-color: linear-gradient(to right, rgba(255,215,0,0.08), rgba(255,215,0,0.02)); -fx-padding: 28 32; -fx-background-radius: 16; -fx-border-color: rgba(255,215,0,0.1); -fx-border-radius: 16; -fx-border-width: 1;">
+                            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                <Label fx:id="welcomeLabel" text="&#x1F30D; Bonjour, Voyageur !" style="-fx-font-size: 24; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                                <Label text="Pret a explorer ? Decouvrez les meilleures destinations et experiences en Tunisie." style="-fx-font-size: 13; -fx-text-fill: #999999;" />
+                            </VBox>
+                            <StackPane prefWidth="60" prefHeight="60"
+                                       style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 30;">
+                                <Label text="&#x2708;" style="-fx-font-size: 28;" />
+                            </StackPane>
+                        </HBox>
+
+                        <!-- Quick Actions -->
+                        <HBox spacing="14">
+                            <Button text="&#x1F5FA;  Explorer les Destinations" styleClass="dashboard-button" onAction="#handleShowLieux"
+                                    style="-fx-padding: 12 24; -fx-font-size: 12;" />
+                            <Button text="&#x1F37D;  Trouver un Restaurant" styleClass="dashboard-button" onAction="#handleShowRestaurants"
+                                    style="-fx-padding: 12 24; -fx-font-size: 12;" />
+                            <Button text="&#x1F4C5;  Mes Reservations" styleClass="dashboard-button" onAction="#handleShowReservations"
+                                    style="-fx-padding: 12 24; -fx-font-size: 12;" />
+                            <Button text="&#x1F464;  Mon Profil" styleClass="dashboard-button" onAction="#handleShowProfil"
+                                    style="-fx-padding: 12 24; -fx-font-size: 12;" />
+                        </HBox>
+
+                        <!-- Stats Cards -->
+                        <HBox spacing="16">
+                            <VBox spacing="8" HBox.hgrow="ALWAYS" styleClass="stat-card"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="40" prefHeight="40"
+                                               style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F5FA;" style="-fx-font-size: 18;" />
+                                    </StackPane>
+                                    <VBox spacing="2">
+                                        <Label text="Destinations" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                        <Label text="24 a explorer" style="-fx-text-fill: #64B5F6; -fx-font-size: 20; -fx-font-weight: bold;" />
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="8" HBox.hgrow="ALWAYS" styleClass="stat-card"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="40" prefHeight="40"
+                                               style="-fx-background-color: rgba(255,167,38,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F37D;" style="-fx-font-size: 18;" />
+                                    </StackPane>
+                                    <VBox spacing="2">
+                                        <Label text="Restaurants &amp; Loisirs" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                        <Label text="18 disponibles" style="-fx-text-fill: #FFA726; -fx-font-size: 20; -fx-font-weight: bold;" />
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="8" HBox.hgrow="ALWAYS" styleClass="stat-card"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="40" prefHeight="40"
+                                               style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F4C5;" style="-fx-font-size: 18;" />
+                                    </StackPane>
+                                    <VBox spacing="2">
+                                        <Label text="Mes Reservations" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                        <Label text="3 a venir" style="-fx-text-fill: #51CF66; -fx-font-size: 20; -fx-font-weight: bold;" />
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="8" HBox.hgrow="ALWAYS" styleClass="stat-card"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="40" prefHeight="40"
+                                               style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x2764;" style="-fx-font-size: 18;" />
+                                    </StackPane>
+                                    <VBox spacing="2">
+                                        <Label text="Mes Favoris" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                        <Label text="4 sauvegardes" style="-fx-text-fill: #FFD700; -fx-font-size: 20; -fx-font-weight: bold;" />
+                                    </VBox>
+                                </HBox>
+                            </VBox>
+                        </HBox>
+
+                        <!-- Two columns: Popular + My Activity -->
+                        <HBox spacing="16">
+
+                            <!-- Destinations Tendance -->
+                            <VBox spacing="14" HBox.hgrow="ALWAYS"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                <Label text="&#x1F525; Destinations Tendance" style="-fx-font-size: 15; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+
+                                <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 12; -fx-background-color: rgba(255,255,255,0.02); -fx-background-radius: 10; -fx-cursor: hand;" onMouseClicked="#handleShowLieux">
+                                    <StackPane prefWidth="44" prefHeight="44" style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F3DB;" style="-fx-font-size: 20;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Medina de Tunis" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                        <Label text="Historique - 4.8 etoiles" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <Label text="235 avis" styleClass="badge-gold" style="-fx-font-size: 10; -fx-padding: 4 10; -fx-background-radius: 10;" />
+                                </HBox>
+
+                                <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 12; -fx-background-color: rgba(255,255,255,0.02); -fx-background-radius: 10; -fx-cursor: hand;" onMouseClicked="#handleShowLieux">
+                                    <StackPane prefWidth="44" prefHeight="44" style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F3D6;" style="-fx-font-size: 20;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Plage de Sidi Bou Said" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                        <Label text="Nature - 4.6 etoiles" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <Label text="189 avis" styleClass="badge-green" style="-fx-font-size: 10; -fx-padding: 4 10; -fx-background-radius: 10;" />
+                                </HBox>
+
+                                <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 12; -fx-background-color: rgba(255,255,255,0.02); -fx-background-radius: 10; -fx-cursor: hand;" onMouseClicked="#handleShowLieux">
+                                    <StackPane prefWidth="44" prefHeight="44" style="-fx-background-color: rgba(255,167,38,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F3DC;" style="-fx-font-size: 20;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Desert de Douz" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                        <Label text="Aventure - 4.7 etoiles" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <Label text="178 avis" styleClass="badge-gold" style="-fx-font-size: 10; -fx-padding: 4 10; -fx-background-radius: 10;" />
+                                </HBox>
+
+                                <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 12; -fx-background-color: rgba(255,255,255,0.02); -fx-background-radius: 10; -fx-cursor: hand;" onMouseClicked="#handleShowLieux">
+                                    <StackPane prefWidth="44" prefHeight="44" style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F3DB;" style="-fx-font-size: 20;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Amphitheatre d'El Jem" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                        <Label text="Historique - 4.9 etoiles" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <Label text="312 avis" styleClass="badge-green" style="-fx-font-size: 10; -fx-padding: 4 10; -fx-background-radius: 10;" />
+                                </HBox>
+                            </VBox>
+
+                            <!-- Right column: My Activity -->
+                            <VBox spacing="16" HBox.hgrow="ALWAYS">
+
+                                <!-- My Upcoming Reservations -->
+                                <VBox spacing="12"
+                                      style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                    <Label text="&#x1F4C5; Mes Prochaines Sorties" style="-fx-font-size: 15; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+
+                                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: rgba(81,207,102,0.05); -fx-background-radius: 8; -fx-border-color: rgba(81,207,102,0.15); -fx-border-radius: 8; -fx-border-width: 1;">
+                                        <StackPane prefWidth="36" prefHeight="36" style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 8;">
+                                            <Label text="&#x2713;" style="-fx-font-size: 14; -fx-text-fill: #51CF66; -fx-font-weight: bold;" />
+                                        </StackPane>
+                                        <VBox spacing="1" HBox.hgrow="ALWAYS">
+                                            <Label text="Restaurant Le Baroque" style="-fx-text-fill: white; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                            <Label text="18 Fev 2026 - 20:00 - 4 personnes" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                        </VBox>
+                                        <Label text="Confirmee" styleClass="badge-green" style="-fx-font-size: 10; -fx-padding: 4 10;" />
+                                    </HBox>
+
+                                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: rgba(255,215,0,0.03); -fx-background-radius: 8; -fx-border-color: rgba(255,215,0,0.1); -fx-border-radius: 8; -fx-border-width: 1;">
+                                        <StackPane prefWidth="36" prefHeight="36" style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 8;">
+                                            <Label text="&#x23F3;" style="-fx-font-size: 14;" />
+                                        </StackPane>
+                                        <VBox spacing="1" HBox.hgrow="ALWAYS">
+                                            <Label text="Visite Guidee - Carthage" style="-fx-text-fill: white; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                            <Label text="22 Fev 2026 - 09:00 - 2 personnes" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                        </VBox>
+                                        <Label text="En attente" styleClass="badge-gold" style="-fx-font-size: 10; -fx-padding: 4 10;" />
+                                    </HBox>
+                                </VBox>
+
+                                <!-- My Recent Reviews -->
+                                <VBox spacing="12"
+                                      style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                    <Label text="&#x2B50; Mes Derniers Avis" style="-fx-font-size: 15; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+
+                                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: rgba(255,255,255,0.02); -fx-background-radius: 8;">
+                                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                            <HBox spacing="6" alignment="CENTER_LEFT">
+                                                <Label text="Medina de Tunis" style="-fx-text-fill: white; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                                <Label text="5/5" style="-fx-text-fill: #FFD700; -fx-font-size: 10; -fx-font-weight: bold;" />
+                                            </HBox>
+                                            <Label text="Magnifique endroit, je recommande vivement !" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                        </VBox>
+                                        <Label text="il y a 2h" style="-fx-text-fill: #555555; -fx-font-size: 10;" />
+                                    </HBox>
+
+                                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-background-color: rgba(255,255,255,0.02); -fx-background-radius: 8;">
+                                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                            <HBox spacing="6" alignment="CENTER_LEFT">
+                                                <Label text="Le Baroque" style="-fx-text-fill: white; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                                <Label text="4/5" style="-fx-text-fill: #FFD700; -fx-font-size: 10; -fx-font-weight: bold;" />
+                                            </HBox>
+                                            <Label text="Tres bon restaurant, service rapide." style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                        </VBox>
+                                        <Label text="il y a 5h" style="-fx-text-fill: #555555; -fx-font-size: 10;" />
+                                    </HBox>
+                                </VBox>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </ScrollPane>
+
+                <!-- ======================= DESTINATIONS PANEL ======================= -->
+                <ScrollPane fx:id="panelLieux" fitToWidth="true" hbarPolicy="NEVER" visible="false"
+                            style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;">
+                    <VBox spacing="20" style="-fx-padding: 30;">
+
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="&#x1F5FA; Explorer les Destinations" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label text="12 destinations disponibles" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
+                        </HBox>
+
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Filtrer :" style="-fx-text-fill: #999999; -fx-font-size: 12;" />
+                            <Button text="Tous" styleClass="sidebar-button-active" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Historique" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Nature" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Aventure" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Culture" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Religieux" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                        </HBox>
+
+                        <FlowPane fx:id="lieuxFlow" hgap="16" vgap="16">
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F3DB;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Medina de Tunis" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Tunis" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.8" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="235 avis" style="-fx-text-fill: #666666; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Ancien quartier historique classe UNESCO. Ruelles pittoresques, souks colores et architecture traditionnelle." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Label text="Historique" styleClass="badge-gold" style="-fx-font-size: 10; -fx-padding: 3 10; -fx-background-radius: 8;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764; Ajouter aux favoris" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F3D6;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Plage de Sidi Bou Said" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Sidi Bou Said" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.6" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="189 avis" style="-fx-text-fill: #666666; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Plage pittoresque avec vue panoramique sur le golfe de Tunis et le village bleu et blanc." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Label text="Nature" styleClass="badge-green" style="-fx-font-size: 10; -fx-padding: 3 10; -fx-background-radius: 8;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764; Ajouter aux favoris" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(255,167,38,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F3DC;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Desert de Douz" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Douz" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.7" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="178 avis" style="-fx-text-fill: #666666; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Porte du Sahara. Balades en chameau, bivouac sous les etoiles et dunes a perte de vue." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Label text="Aventure" styleClass="badge-gold" style="-fx-font-size: 10; -fx-padding: 3 10; -fx-background-radius: 8;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764; Ajouter aux favoris" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F3DB;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Amphitheatre d'El Jem" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="El Jem" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.9" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="312 avis" style="-fx-text-fill: #666666; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Colisee romain du IIIe siecle, l'un des mieux conserves au monde. Site UNESCO." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Label text="Historique" styleClass="badge-gold" style="-fx-font-size: 10; -fx-padding: 3 10; -fx-background-radius: 8;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764; Ajouter aux favoris" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F3DB;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Musee du Bardo" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Tunis" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.8" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="290 avis" style="-fx-text-fill: #666666; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Plus grand musee de mosaiques romaines au monde. Collection exceptionnelle d'art antique." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Label text="Culture" styleClass="badge-green" style="-fx-font-size: 10; -fx-padding: 3 10; -fx-background-radius: 8;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764; Ajouter aux favoris" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F3DD;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Ile de Djerba" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Djerba" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.5" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="201 avis" style="-fx-text-fill: #666666; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Ile mediterraneenne aux plages dorees, villages traditionnels et artisanat local." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Label text="Nature" styleClass="badge-green" style="-fx-font-size: 10; -fx-padding: 3 10; -fx-background-radius: 8;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764; Ajouter aux favoris" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+                        </FlowPane>
+                    </VBox>
+                </ScrollPane>
+
+                <!-- ======================= RESTAURANTS &amp; LOISIRS PANEL ======================= -->
+                <ScrollPane fx:id="panelRestaurants" fitToWidth="true" hbarPolicy="NEVER" visible="false"
+                            style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;">
+                    <VBox spacing="20" style="-fx-padding: 30;">
+
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="&#x1F37D; Restaurants &amp; Loisirs" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label text="18 etablissements" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
+                        </HBox>
+
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Label text="Type :" style="-fx-text-fill: #999999; -fx-font-size: 12;" />
+                            <Button text="Tous" styleClass="sidebar-button-active" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Restaurant" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Cafe" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Parc" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Spa" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                            <Button text="Sport" styleClass="sidebar-button" style="-fx-padding: 6 16; -fx-font-size: 11;" />
+                        </HBox>
+
+                        <FlowPane fx:id="restaurantsFlow" hgap="16" vgap="16">
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(255,167,38,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F355;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Le Baroque" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Restaurant - La Marsa" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.7" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="Prix: Moyen" style="-fx-text-fill: #51CF66; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Cuisine italienne raffinee avec vue sur mer. Ambiance chaleureuse et service impeccable." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Button text="&#x1F4C5; Reserver" styleClass="dashboard-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Button text="&#x2B50; Donner un avis" styleClass="sidebar-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764;" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 14; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x2615;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Cafe des Delices" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Cafe - Sidi Bou Said" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.5" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="Prix: Bas" style="-fx-text-fill: #51CF66; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Cafe emblematique avec une vue panoramique sur le golfe de Tunis." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Button text="&#x1F4C5; Reserver" styleClass="dashboard-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Button text="&#x2B50; Donner un avis" styleClass="sidebar-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764;" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 14; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F3CA;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Aqua Palace" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Parc Aquatique - Hammamet" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.3" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="Prix: Eleve" style="-fx-text-fill: #FF6B6B; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Parc aquatique familial avec toboggans, piscines et animations pour toute la famille." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Button text="&#x1F4C5; Reserver" styleClass="dashboard-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Button text="&#x2B50; Donner un avis" styleClass="sidebar-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764;" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 14; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(255,107,107,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F486;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Thermes de Jebel" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Spa - Korbous" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.6" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="Prix: Moyen" style="-fx-text-fill: #51CF66; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Sources thermales naturelles avec soins traditionnels et massages relaxants." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Button text="&#x1F4C5; Reserver" styleClass="dashboard-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Button text="&#x2B50; Donner un avis" styleClass="sidebar-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764;" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 14; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x26BD;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Club Sportif Carthage" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Sport - Carthage" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.2" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="Prix: Moyen" style="-fx-text-fill: #51CF66; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Centre sportif multifonction : tennis, football, natation, fitness et coaching." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Button text="&#x1F4C5; Reserver" styleClass="dashboard-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Button text="&#x2B50; Donner un avis" styleClass="sidebar-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764;" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 14; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10" prefWidth="340"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="50" prefHeight="50" style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 12;">
+                                        <Label text="&#x1F356;" style="-fx-font-size: 24;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Dar El Jeld" style="-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;" />
+                                        <Label text="Restaurant - Tunis" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4.8" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;" />
+                                        <Label text="Prix: Eleve" style="-fx-text-fill: #FF6B6B; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Restaurant gastronomique tunisien dans un palais du XVIIe siecle. Experience unique." style="-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;" />
+                                <HBox spacing="8" alignment="CENTER_LEFT">
+                                    <Button text="&#x1F4C5; Reserver" styleClass="dashboard-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Button text="&#x2B50; Donner un avis" styleClass="sidebar-button" style="-fx-padding: 6 14; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="&#x2764;" style="-fx-text-fill: rgba(255,107,107,0.6); -fx-font-size: 14; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+                        </FlowPane>
+                    </VBox>
+                </ScrollPane>
+
+                <!-- ======================= MES AVIS PANEL ======================= -->
+                <ScrollPane fx:id="panelAvis" fitToWidth="true" hbarPolicy="NEVER" visible="false"
+                            style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;">
+                    <VBox spacing="20" style="-fx-padding: 30;">
+
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="&#x2B50; Mes Avis &amp; Evaluations" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button text="+ Ecrire un Avis" styleClass="dashboard-button"
+                                    style="-fx-padding: 10 20; -fx-font-size: 12;" />
+                        </HBox>
+
+                        <HBox spacing="16">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 12; -fx-border-width: 1;" alignment="CENTER">
+                                <Label text="8" style="-fx-text-fill: #FFD700; -fx-font-size: 32; -fx-font-weight: bold;" />
+                                <Label text="Avis Publies" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 12; -fx-border-width: 1;" alignment="CENTER">
+                                <Label text="4.6" style="-fx-text-fill: #64B5F6; -fx-font-size: 32; -fx-font-weight: bold;" />
+                                <Label text="Ma Note Moyenne" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                            </VBox>
+                            <VBox spacing="4" HBox.hgrow="ALWAYS"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 12; -fx-border-width: 1;" alignment="CENTER">
+                                <Label text="12" style="-fx-text-fill: #51CF66; -fx-font-size: 32; -fx-font-weight: bold;" />
+                                <Label text="Likes Recus" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                            </VBox>
+                        </HBox>
+
+                        <VBox spacing="14">
+                            <VBox spacing="10"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="44" prefHeight="44" style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F3DB;" style="-fx-font-size: 20;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Medina de Tunis" style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;" />
+                                        <Label text="Lieu Touristique - Historique" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="5/5" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" />
+                                        <Label text="15/02/2026" style="-fx-text-fill: #555555; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Magnifique endroit, je recommande vivement ! L'architecture est superbe et l'ambiance est authentique." style="-fx-text-fill: #999999; -fx-font-size: 12; -fx-wrap-text: true;" />
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <Label text="&#x1F44D; 5 personnes ont trouve cet avis utile" style="-fx-text-fill: #51CF66; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="Modifier" style="-fx-text-fill: rgba(255,215,0,0.5); -fx-font-size: 10; -fx-cursor: hand;" />
+                                    <Label text="Supprimer" style="-fx-text-fill: rgba(255,107,107,0.5); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="44" prefHeight="44" style="-fx-background-color: rgba(255,167,38,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F355;" style="-fx-font-size: 20;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Le Baroque" style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;" />
+                                        <Label text="Restaurant - La Marsa" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="4/5" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" />
+                                        <Label text="14/02/2026" style="-fx-text-fill: #555555; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Tres bon restaurant, service rapide. La pizza est excellente et le cadre est agreable." style="-fx-text-fill: #999999; -fx-font-size: 12; -fx-wrap-text: true;" />
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <Label text="&#x1F44D; 3 personnes ont trouve cet avis utile" style="-fx-text-fill: #51CF66; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="Modifier" style="-fx-text-fill: rgba(255,215,0,0.5); -fx-font-size: 10; -fx-cursor: hand;" />
+                                    <Label text="Supprimer" style="-fx-text-fill: rgba(255,107,107,0.5); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="10"
+                                  style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;">
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <StackPane prefWidth="44" prefHeight="44" style="-fx-background-color: rgba(255,167,38,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x1F3DC;" style="-fx-font-size: 20;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Desert de Douz" style="-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;" />
+                                        <Label text="Lieu Touristique - Aventure" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                    </VBox>
+                                    <VBox spacing="2" alignment="CENTER_RIGHT">
+                                        <Label text="5/5" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" />
+                                        <Label text="13/02/2026" style="-fx-text-fill: #555555; -fx-font-size: 9;" />
+                                    </VBox>
+                                </HBox>
+                                <Label text="Experience inoubliable dans le desert ! Le bivouac sous les etoiles est magique." style="-fx-text-fill: #999999; -fx-font-size: 12; -fx-wrap-text: true;" />
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <Label text="&#x1F44D; 4 personnes ont trouve cet avis utile" style="-fx-text-fill: #51CF66; -fx-font-size: 10;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="Modifier" style="-fx-text-fill: rgba(255,215,0,0.5); -fx-font-size: 10; -fx-cursor: hand;" />
+                                    <Label text="Supprimer" style="-fx-text-fill: rgba(255,107,107,0.5); -fx-font-size: 10; -fx-cursor: hand;" />
+                                </HBox>
+                            </VBox>
+                        </VBox>
+                    </VBox>
+                </ScrollPane>
+
+                <!-- ======================= MES RESERVATIONS PANEL ======================= -->
+                <ScrollPane fx:id="panelReservations" fitToWidth="true" hbarPolicy="NEVER" visible="false"
+                            style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;">
+                    <VBox spacing="20" style="-fx-padding: 30;">
+
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="&#x1F4C5; Mes Reservations &amp; Favoris" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button text="+ Nouvelle Reservation" styleClass="dashboard-button"
+                                    style="-fx-padding: 10 20; -fx-font-size: 12;" />
+                        </HBox>
+
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Button fx:id="tabReservations" text="&#x1F4C5; Mes Reservations" styleClass="sidebar-button-active" style="-fx-padding: 8 20; -fx-font-size: 12;" onAction="#handleTabReservations" />
+                            <Button fx:id="tabFavoris" text="&#x2764; Mes Favoris" styleClass="sidebar-button" style="-fx-padding: 8 20; -fx-font-size: 12;" onAction="#handleTabFavoris" />
+                        </HBox>
+
+                        <VBox fx:id="subPanelReservations" spacing="16">
+                            <TableView fx:id="reservationsTable" prefHeight="350" styleClass="table-view">
+                                <columns>
+                                    <TableColumn fx:id="resIdCol" text="ID" prefWidth="50" />
+                                    <TableColumn fx:id="resLieuCol" text="Lieu / Restaurant" prefWidth="220" />
+                                    <TableColumn fx:id="resDateCol" text="Date" prefWidth="120" />
+                                    <TableColumn fx:id="resHeureCol" text="Heure" prefWidth="90" />
+                                    <TableColumn fx:id="resNbCol" text="Personnes" prefWidth="90" />
+                                    <TableColumn fx:id="resStatutCol" text="Statut" prefWidth="120" />
+                                </columns>
+                            </TableView>
+                        </VBox>
+
+                        <VBox fx:id="subPanelFavoris" spacing="16" visible="false" managed="false">
+                            <FlowPane hgap="16" vgap="16">
+                                <HBox spacing="12" alignment="CENTER_LEFT" prefWidth="350"
+                                      style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 16; -fx-background-radius: 12; -fx-border-color: rgba(255,107,107,0.15); -fx-border-radius: 12; -fx-border-width: 1;">
+                                    <StackPane prefWidth="40" prefHeight="40" style="-fx-background-color: rgba(255,107,107,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x2764;" style="-fx-font-size: 16;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Medina de Tunis" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                        <Label text="Lieu Touristique" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                    </VBox>
+                                    <Button text="&#x2715;" styleClass="window-button-close" style="-fx-font-size: 10; -fx-padding: 4 8;" />
+                                </HBox>
+
+                                <HBox spacing="12" alignment="CENTER_LEFT" prefWidth="350"
+                                      style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 16; -fx-background-radius: 12; -fx-border-color: rgba(255,107,107,0.15); -fx-border-radius: 12; -fx-border-width: 1;">
+                                    <StackPane prefWidth="40" prefHeight="40" style="-fx-background-color: rgba(255,107,107,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x2764;" style="-fx-font-size: 16;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Dar El Jeld" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                        <Label text="Restaurant" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                    </VBox>
+                                    <Button text="&#x2715;" styleClass="window-button-close" style="-fx-font-size: 10; -fx-padding: 4 8;" />
+                                </HBox>
+
+                                <HBox spacing="12" alignment="CENTER_LEFT" prefWidth="350"
+                                      style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 16; -fx-background-radius: 12; -fx-border-color: rgba(255,107,107,0.15); -fx-border-radius: 12; -fx-border-width: 1;">
+                                    <StackPane prefWidth="40" prefHeight="40" style="-fx-background-color: rgba(255,107,107,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x2764;" style="-fx-font-size: 16;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Desert de Douz" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                        <Label text="Lieu Touristique" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                    </VBox>
+                                    <Button text="&#x2715;" styleClass="window-button-close" style="-fx-font-size: 10; -fx-padding: 4 8;" />
+                                </HBox>
+
+                                <HBox spacing="12" alignment="CENTER_LEFT" prefWidth="350"
+                                      style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 16; -fx-background-radius: 12; -fx-border-color: rgba(255,107,107,0.15); -fx-border-radius: 12; -fx-border-width: 1;">
+                                    <StackPane prefWidth="40" prefHeight="40" style="-fx-background-color: rgba(255,107,107,0.1); -fx-background-radius: 10;">
+                                        <Label text="&#x2764;" style="-fx-font-size: 16;" />
+                                    </StackPane>
+                                    <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                        <Label text="Cafe des Delices" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                        <Label text="Cafe" style="-fx-text-fill: #888888; -fx-font-size: 10;" />
+                                    </VBox>
+                                    <Button text="&#x2715;" styleClass="window-button-close" style="-fx-font-size: 10; -fx-padding: 4 8;" />
+                                </HBox>
+                            </FlowPane>
+                        </VBox>
+                    </VBox>
+                </ScrollPane>
+
+                <!-- ======================= MON PROFIL PANEL ======================= -->
+                <ScrollPane fx:id="panelProfil" fitToWidth="true" hbarPolicy="NEVER" visible="false"
+                            style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;">
+                    <VBox spacing="24" style="-fx-padding: 30;" alignment="CENTER">
+
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label text="&#x1F464; Mon Profil" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button text="&#x1F464; Profil Complet" styleClass="dashboard-button" onAction="#handleGoToProfile"
+                                    style="-fx-padding: 10 20; -fx-font-size: 12;" />
+                        </HBox>
+
+                        <VBox spacing="20" maxWidth="700" alignment="CENTER"
+                              style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 35; -fx-background-radius: 16; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 16; -fx-border-width: 1;">
+
+                            <StackPane prefWidth="100" prefHeight="100" maxWidth="100" maxHeight="100">
+                                <Circle radius="50" style="-fx-fill: rgba(18,18,18,0.8); -fx-stroke: rgba(255,215,0,0.4); -fx-stroke-width: 2;" />
+                                <Circle radius="47" style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.1); -fx-stroke-width: 1; -fx-stroke-dash-array: 4 3;" />
+                                <Label fx:id="profilInitials" text="?" style="-fx-font-size: 32; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                            </StackPane>
+
+                            <Label fx:id="profilFullName" text="Nom Prenom" style="-fx-font-size: 20; -fx-text-fill: white; -fx-font-weight: bold;" />
+                            <Label fx:id="profilEmail" text="email@example.com" style="-fx-font-size: 13; -fx-text-fill: #888888;" />
+
+                            <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.12), transparent); -fx-pref-height: 1;" prefWidth="600" />
+
+                            <HBox spacing="30" alignment="CENTER">
+                                <VBox spacing="16" HBox.hgrow="ALWAYS">
+                                    <VBox spacing="4">
+                                        <Label text="NOM" style="-fx-text-fill: rgba(255,215,0,0.7); -fx-font-size: 10; -fx-font-weight: bold;" />
+                                        <TextField fx:id="editNomField" promptText="Votre nom" styleClass="text-field-modern" />
+                                    </VBox>
+                                    <VBox spacing="4">
+                                        <Label text="EMAIL" style="-fx-text-fill: rgba(255,215,0,0.7); -fx-font-size: 10; -fx-font-weight: bold;" />
+                                        <TextField fx:id="editEmailField" promptText="Votre email" styleClass="text-field-modern" />
+                                    </VBox>
+                                </VBox>
+                                <VBox spacing="16" HBox.hgrow="ALWAYS">
+                                    <VBox spacing="4">
+                                        <Label text="PRENOM" style="-fx-text-fill: rgba(255,215,0,0.7); -fx-font-size: 10; -fx-font-weight: bold;" />
+                                        <TextField fx:id="editPrenomField" promptText="Votre prenom" styleClass="text-field-modern" />
+                                    </VBox>
+                                    <VBox spacing="4">
+                                        <Label text="TELEPHONE" style="-fx-text-fill: rgba(255,215,0,0.7); -fx-font-size: 10; -fx-font-weight: bold;" />
+                                        <TextField fx:id="editTelField" promptText="Votre numero" styleClass="text-field-modern" />
+                                    </VBox>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="20" alignment="CENTER" style="-fx-padding: 10 0 0 0;">
+                                <HBox spacing="8" alignment="CENTER"
+                                      style="-fx-background-color: rgba(81,207,102,0.08); -fx-padding: 8 16; -fx-background-radius: 10;">
+                                    <Label text="&#x2713;" style="-fx-text-fill: #51CF66; -fx-font-size: 11;" />
+                                    <Label fx:id="profilStatut" text="Statut: ACTIF" style="-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;" />
+                                </HBox>
+                                <HBox spacing="8" alignment="CENTER"
+                                      style="-fx-background-color: rgba(255,215,0,0.05); -fx-padding: 8 16; -fx-background-radius: 10;">
+                                    <Label text="&#x1F4C5;" style="-fx-font-size: 11;" />
+                                    <Label fx:id="profilDate" text="Membre depuis: --" style="-fx-text-fill: #999999; -fx-font-size: 11;" />
+                                </HBox>
+                            </HBox>
+
+                            <Label fx:id="profilMessage" text="" style="-fx-font-size: 12; -fx-text-fill: #51CF66;" />
+
+                            <HBox spacing="12" alignment="CENTER">
+                                <Button text="&#x1F4BE; Sauvegarder les Modifications" styleClass="dashboard-button" onAction="#handleSaveProfile"
+                                        style="-fx-padding: 12 30; -fx-font-size: 13;" />
+                            </HBox>
+                        </VBox>
+                    </VBox>
+                </ScrollPane>
+
+            </StackPane>
+        </HBox>
+    </center>
+</BorderPane>

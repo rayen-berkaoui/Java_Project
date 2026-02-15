@@ -80,6 +80,7 @@ public class utilisateurServices implements ICrud<utilisateur> {
             u.setRoleId(rs.getInt("role_id"));
             u.setNumTel(rs.getInt("num_tel"));
             u.setProfilePicture(rs.getString("profile_picture"));
+            u.setFaceEncoding(rs.getString("face_encoding"));
 
             Date date = rs.getDate("date_creation");
             if (date != null) {
@@ -175,6 +176,7 @@ public class utilisateurServices implements ICrud<utilisateur> {
                 u.setNfcId(rs.getString("nfc_id"));
                 u.setNumTel(rs.getInt("num_tel"));
                 u.setProfilePicture(rs.getString("profile_picture"));
+                u.setFaceEncoding(rs.getString("face_encoding"));
 
                 Date date = rs.getDate("date_creation");
                 if (date != null) {
@@ -551,8 +553,71 @@ public class utilisateurServices implements ICrud<utilisateur> {
         u.setRoleId(rs.getInt("role_id"));
         u.setNumTel(rs.getInt("num_tel"));
         u.setProfilePicture(rs.getString("profile_picture"));
+        u.setFaceEncoding(rs.getString("face_encoding"));
         Date date = rs.getDate("date_creation");
         if (date != null) u.setDateCreation(date.toLocalDate());
         return u;
+    }
+
+    // =====================================================
+    // ✅ SAVE FACE ENCODING
+    // =====================================================
+    public boolean saveFaceEncoding(int userId, String faceEncoding) {
+        String sql = "UPDATE utilisateur SET face_encoding = ? WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, faceEncoding);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // =====================================================
+    // ✅ GET ALL USERS WITH FACE ENCODING
+    // =====================================================
+    public List<utilisateur> getAllUsersWithFaceEncoding() {
+        List<utilisateur> list = new ArrayList<>();
+        String sql = "SELECT * FROM utilisateur WHERE face_encoding IS NOT NULL AND statut = 'ACTIF'";
+        try {
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            while (rs.next()) list.add(mapUser(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // =====================================================
+    // ✅ FIND USER BY FACE (compare with all stored faces)
+    // =====================================================
+    public utilisateur findUserByFace(String capturedEncoding, FaceRecognitionService faceService) {
+        List<utilisateur> usersWithFaces = getAllUsersWithFaceEncoding();
+        utilisateur bestMatch = null;
+        double bestScore = 0.0;
+
+        for (utilisateur u : usersWithFaces) {
+            String storedEncoding = u.getFaceEncoding();
+            if (storedEncoding == null || storedEncoding.isEmpty()) continue;
+
+            double score = faceService.compareFaces(storedEncoding, capturedEncoding);
+            System.out.println("Face match score for " + u.getEmail() + ": " + score);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = u;
+            }
+        }
+
+        if (bestMatch != null && faceService.isFaceMatch(bestMatch.getFaceEncoding(), capturedEncoding)) {
+            System.out.println("✅ Face matched: " + bestMatch.getEmail() + " (score: " + bestScore + ")");
+            return bestMatch;
+        }
+
+        System.out.println("❌ No face match found. Best score: " + bestScore);
+        return null;
     }
 }

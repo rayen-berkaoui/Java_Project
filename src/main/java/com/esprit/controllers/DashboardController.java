@@ -8,8 +8,9 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.animation.FadeTransition;
+import javafx.animation.*;
 import javafx.util.Duration;
+import javafx.scene.Node;
 
 import com.esprit.entities.utilisateur;
 import com.esprit.services.roleServices;
@@ -195,11 +196,20 @@ public class DashboardController {
 
         if (paneToShow != null) {
             paneToShow.setOpacity(0);
+            paneToShow.setTranslateX(20);
             paneToShow.setVisible(true);
-            FadeTransition fade = new FadeTransition(Duration.millis(250), paneToShow);
+
+            FadeTransition fade = new FadeTransition(Duration.millis(350), paneToShow);
             fade.setFromValue(0);
             fade.setToValue(1);
-            fade.play();
+            fade.setInterpolator(Interpolator.EASE_OUT);
+
+            TranslateTransition slide = new TranslateTransition(Duration.millis(350), paneToShow);
+            slide.setFromX(20);
+            slide.setToX(0);
+            slide.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+
+            new ParallelTransition(fade, slide).play();
         }
     }
 
@@ -223,10 +233,7 @@ public class DashboardController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/login.fxml"));
             Parent root = loader.load();
             Stage stage = (Stage) contentArea.getScene().getWindow();
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-            stage.setScene(scene);
-            stage.setTitle("Tabaani - Login");
+            fadeTransition(stage, root, "Tabaani - Login");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -243,10 +250,7 @@ public class DashboardController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/admin.fxml"));
             Parent root = loader.load();
             Stage stage = (Stage) contentArea.getScene().getWindow();
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-            stage.setScene(scene);
-            stage.setTitle("Tabaani - Admin Panel");
+            fadeTransition(stage, root, "Tabaani - Admin Panel");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -321,6 +325,47 @@ public class DashboardController {
     }
 
     // ================= HELPERS =================
+    private void fadeTransition(Stage stage, Parent newRoot, String title) {
+        Scene oldScene = stage.getScene();
+        Node oldRoot = oldScene.getRoot();
+
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(300), oldRoot);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setInterpolator(Interpolator.EASE_IN);
+
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(300), oldRoot);
+        scaleOut.setToX(0.97);
+        scaleOut.setToY(0.97);
+        scaleOut.setInterpolator(Interpolator.EASE_IN);
+
+        ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
+        exitAnim.setOnFinished(e -> {
+            Scene newScene = new Scene(newRoot);
+            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newRoot.setOpacity(0);
+            newRoot.setScaleX(1.03);
+            newRoot.setScaleY(1.03);
+            newRoot.setTranslateY(8);
+            stage.setScene(newScene);
+            stage.setTitle(title);
+
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);
+            fadeIn.setFromValue(0);
+            fadeIn.setToValue(1);
+            fadeIn.setInterpolator(Interpolator.EASE_OUT);
+            ScaleTransition scaleIn = new ScaleTransition(Duration.millis(400), newRoot);
+            scaleIn.setToX(1);
+            scaleIn.setToY(1);
+            scaleIn.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+            TranslateTransition slideIn = new TranslateTransition(Duration.millis(400), newRoot);
+            slideIn.setToY(0);
+            slideIn.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+            new ParallelTransition(fadeIn, scaleIn, slideIn).play();
+        });
+        exitAnim.play();
+    }
+
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.NONE);
         alert.initStyle(StageStyle.UNDECORATED);

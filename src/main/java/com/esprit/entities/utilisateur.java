@@ -18,6 +18,7 @@ public class utilisateur {
     private int roleId;
     private int numTel;
     private String profilePicture;   // base64 encoded image
+    private String faceEncoding;      // stored face encoding for face recognition
 
     // =========================
     // Constructeur vide
@@ -153,6 +154,14 @@ public class utilisateur {
 
     public void setProfilePicture(String profilePicture) {
         this.profilePicture = profilePicture;
+    }
+
+    public String getFaceEncoding() {
+        return faceEncoding;
+    }
+
+    public void setFaceEncoding(String faceEncoding) {
+        this.faceEncoding = faceEncoding;
     }
 
     // =========================

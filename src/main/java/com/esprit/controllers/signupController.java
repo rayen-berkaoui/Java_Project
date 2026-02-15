@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.animation.*;
 import javafx.util.Duration;
@@ -94,6 +95,23 @@ public class signupController {
         partenaireRadio.selectedProperty().addListener((obs, o, n) -> validateForm());
 
         termsCheckBox.selectedProperty().addListener((obs, o, n) -> validateForm());
+
+        // Entrance animation
+        Platform.runLater(() -> {
+            try {
+                Parent root = signupButton.getScene().getRoot();
+                root.setOpacity(0);
+                root.setTranslateY(12);
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(500), root);
+                fadeIn.setFromValue(0);
+                fadeIn.setToValue(1);
+                TranslateTransition slideUp = new TranslateTransition(Duration.millis(500), root);
+                slideUp.setFromY(12);
+                slideUp.setToY(0);
+                slideUp.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+                new ParallelTransition(fadeIn, slideUp).play();
+            } catch (Exception ignored) {}
+        });
     }
 
     // ✅ Toggle visibility
@@ -230,24 +248,63 @@ public class signupController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/login.fxml"));
             Parent root = loader.load();
             Stage stage = (Stage) signupButton.getScene().getWindow();
-
-            Scene scene = new Scene(root);
-            scene.getStylesheets().add(
-                    getClass().getResource("/style.css").toExternalForm()
-            );
-
-            stage.setScene(scene);
-            stage.setTitle("Tabaani - Login");
+            fadeTransition(stage, root, "Tabaani - Login");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     private void shake(Node node) {
-        TranslateTransition tt = new TranslateTransition(Duration.millis(50), node);
-        tt.setByX(8);
-        tt.setCycleCount(6);
-        tt.setAutoReverse(true);
-        tt.play();
+        Timeline shake = new Timeline(
+            new KeyFrame(Duration.ZERO, new KeyValue(node.translateXProperty(), 0)),
+            new KeyFrame(Duration.millis(80), new KeyValue(node.translateXProperty(), -10)),
+            new KeyFrame(Duration.millis(160), new KeyValue(node.translateXProperty(), 10)),
+            new KeyFrame(Duration.millis(240), new KeyValue(node.translateXProperty(), -8)),
+            new KeyFrame(Duration.millis(320), new KeyValue(node.translateXProperty(), 8)),
+            new KeyFrame(Duration.millis(400), new KeyValue(node.translateXProperty(), -4)),
+            new KeyFrame(Duration.millis(480), new KeyValue(node.translateXProperty(), 0))
+        );
+        shake.play();
+    }
+
+    private void fadeTransition(Stage stage, Parent newRoot, String title) {
+        Scene oldScene = stage.getScene();
+        Node oldRoot = oldScene.getRoot();
+
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(300), oldRoot);
+        fadeOut.setFromValue(1);
+        fadeOut.setToValue(0);
+        fadeOut.setInterpolator(Interpolator.EASE_IN);
+
+        ScaleTransition scaleOut = new ScaleTransition(Duration.millis(300), oldRoot);
+        scaleOut.setToX(0.97);
+        scaleOut.setToY(0.97);
+        scaleOut.setInterpolator(Interpolator.EASE_IN);
+
+        ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
+        exitAnim.setOnFinished(e -> {
+            Scene newScene = new Scene(newRoot);
+            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newRoot.setOpacity(0);
+            newRoot.setScaleX(1.03);
+            newRoot.setScaleY(1.03);
+            newRoot.setTranslateY(8);
+            stage.setScene(newScene);
+            stage.setTitle(title);
+
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);
+            fadeIn.setFromValue(0);
+            fadeIn.setToValue(1);
+            fadeIn.setInterpolator(Interpolator.EASE_OUT);
+            ScaleTransition scaleIn = new ScaleTransition(Duration.millis(400), newRoot);
+            scaleIn.setToX(1);
+            scaleIn.setToY(1);
+            scaleIn.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+            TranslateTransition slideIn = new TranslateTransition(Duration.millis(400), newRoot);
+            slideIn.setToY(0);
+            slideIn.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+            new ParallelTransition(fadeIn, scaleIn, slideIn).play();
+        });
+        exitAnim.play();
     }
 }
