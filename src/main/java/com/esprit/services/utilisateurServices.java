@@ -434,8 +434,22 @@ public class utilisateurServices implements ICrud<utilisateur> {
     // ✅ PAGINATED USER LIST
     // =====================================================
     public List<utilisateur> getPage(int page, int pageSize) {
+        return getPageSorted(page, pageSize, "id", "DESC");
+    }
+
+    public List<utilisateur> getPageSorted(int page, int pageSize, String sortColumn, String sortDirection) {
         List<utilisateur> list = new ArrayList<>();
-        String sql = "SELECT * FROM utilisateur ORDER BY id DESC LIMIT ? OFFSET ?";
+        // Whitelist sort columns to prevent SQL injection
+        String col = switch (sortColumn) {
+            case "nom" -> "nom";
+            case "email" -> "email";
+            case "statut" -> "statut";
+            case "date_creation" -> "date_creation";
+            case "role_id" -> "role_id";
+            default -> "id";
+        };
+        String dir = "ASC".equalsIgnoreCase(sortDirection) ? "ASC" : "DESC";
+        String sql = "SELECT * FROM utilisateur ORDER BY " + col + " " + dir + " LIMIT ? OFFSET ?";
         try {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, pageSize);
@@ -450,14 +464,27 @@ public class utilisateurServices implements ICrud<utilisateur> {
     // ✅ SEARCH USERS BY ID OR NAME (paginated)
     // =====================================================
     public List<utilisateur> searchUsers(String query, int page, int pageSize) {
+        return searchUsersSorted(query, page, pageSize, "id", "DESC");
+    }
+
+    public List<utilisateur> searchUsersSorted(String query, int page, int pageSize, String sortColumn, String sortDirection) {
         List<utilisateur> list = new ArrayList<>();
+        String col = switch (sortColumn) {
+            case "nom" -> "nom";
+            case "email" -> "email";
+            case "statut" -> "statut";
+            case "date_creation" -> "date_creation";
+            case "role_id" -> "role_id";
+            default -> "id";
+        };
+        String dir = "ASC".equalsIgnoreCase(sortDirection) ? "ASC" : "DESC";
         String sql;
         boolean isNumeric = query.matches("\\d+");
 
         if (isNumeric) {
-            sql = "SELECT * FROM utilisateur WHERE id = ? OR nom LIKE ? OR prenom LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?";
+            sql = "SELECT * FROM utilisateur WHERE id = ? OR nom LIKE ? OR prenom LIKE ? ORDER BY " + col + " " + dir + " LIMIT ? OFFSET ?";
         } else {
-            sql = "SELECT * FROM utilisateur WHERE nom LIKE ? OR prenom LIKE ? OR email LIKE ? ORDER BY id DESC LIMIT ? OFFSET ?";
+            sql = "SELECT * FROM utilisateur WHERE nom LIKE ? OR prenom LIKE ? OR email LIKE ? ORDER BY " + col + " " + dir + " LIMIT ? OFFSET ?";
         }
 
         try {
@@ -612,7 +639,8 @@ public class utilisateurServices implements ICrud<utilisateur> {
             }
         }
 
-        if (bestMatch != null && faceService.isFaceMatch(bestMatch.getFaceEncoding(), capturedEncoding)) {
+        // Use the already computed bestScore instead of calling compareFaces again
+        if (bestMatch != null && bestScore >= 0.80) {
             System.out.println("✅ Face matched: " + bestMatch.getEmail() + " (score: " + bestScore + ")");
             return bestMatch;
         }

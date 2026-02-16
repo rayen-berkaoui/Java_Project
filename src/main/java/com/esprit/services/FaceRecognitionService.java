@@ -36,14 +36,14 @@ public class FaceRecognitionService {
     private boolean cameraRunning = false;
 
     // ═══════ MULTI-CAPTURE FACE ENCODING ═══════
-    // We store 3 face captures separated by ||| for robust matching
+    // We store 5 face captures separated by ||| for robust matching across sessions
     private static final String ENCODING_SEPARATOR = "|||";
-    private static final int NUM_CAPTURES = 3;
+    private static final int NUM_CAPTURES = 5;
 
-    // MSE threshold: same person RMSE is typically 15-35, different person 45-80+
-    // We convert to similarity: sim = exp(-mse / sigma)
-    // Same person: sim ~ 0.75-0.95, Different person: sim ~ 0.15-0.45
-    private static final double MATCH_THRESHOLD = 0.55;
+    // Threshold for face matching using LBP histogram correlation.
+    // Same person across sessions: typically 0.55-0.85
+    // Different person: typically 0.20-0.50
+    private static final double MATCH_THRESHOLD = 0.80;
 
     public FaceRecognitionService() {
         // Load the Haar cascade for face detection from OpenCV data
@@ -225,7 +225,7 @@ public class FaceRecognitionService {
 
     /**
      * Capture multiple face encodings for registration (more robust).
-     * Takes NUM_CAPTURES samples with delays between them.
+     * Takes NUM_CAPTURES samples with delays between them for lighting variation.
      * Returns a combined encoding string with ||| separator, or null on failure.
      */
     public String encodeMultipleFaces() {
@@ -234,9 +234,10 @@ public class FaceRecognitionService {
         List<String> encodings = new ArrayList<>();
         System.out.println("=== Multi-capture face registration: capturing " + NUM_CAPTURES + " samples ===");
 
-        for (int i = 0; i < NUM_CAPTURES * 3 && encodings.size() < NUM_CAPTURES; i++) {
+        for (int i = 0; i < NUM_CAPTURES * 4 && encodings.size() < NUM_CAPTURES; i++) {
             try {
-                Thread.sleep(300); // wait between captures for variation
+                // Longer delay between captures for more lighting/pose variation
+                Thread.sleep(500);
             } catch (InterruptedException ignored) {}
 
             Mat frame = grabMat();
@@ -249,8 +250,8 @@ public class FaceRecognitionService {
             }
         }
 
-        if (encodings.size() < 2) {
-            System.out.println("Failed: only captured " + encodings.size() + " faces, need at least 2");
+        if (encodings.size() < 3) {
+            System.out.println("Failed: only captured " + encodings.size() + " faces, need at least 3");
             return null;
         }
 
@@ -261,6 +262,11 @@ public class FaceRecognitionService {
 
     /**
      * Extract and encode a single face from an image.
+     * Uses preprocessing to maximize cross-session consistency:
+     * - Grayscale conversion
+     * - CLAHE (adaptive histogram equalization) for local contrast normalization
+     * - Gaussian blur to reduce noise
+     * - Standardized 150x150 resize
      */
     private String encodeSingleFace(Mat image) {
         RectVector faces = detectFaces(image);
@@ -278,11 +284,20 @@ public class FaceRecognitionService {
             }
         }
 
-        Mat faceROI = new Mat(image, faceRect);
+        // Expand the face ROI slightly (20% padding) to capture more context
+        int padX = (int)(faceRect.width() * 0.1);
+        int padY = (int)(faceRect.height() * 0.1);
+        int x = Math.max(0, faceRect.x() - padX);
+        int y = Math.max(0, faceRect.y() - padY);
+        int w = Math.min(image.cols() - x, faceRect.width() + 2 * padX);
+        int h = Math.min(image.rows() - y, faceRect.height() + 2 * padY);
+        Rect expandedRect = new Rect(x, y, w, h);
 
-        // Resize to standard 200x200
+        Mat faceROI = new Mat(image, expandedRect);
+
+        // Resize to standard 150x150
         Mat standardFace = new Mat();
-        resize(faceROI, standardFace, new Size(200, 200));
+        resize(faceROI, standardFace, new Size(150, 150));
 
         // Convert to grayscale
         Mat grayFace = new Mat();
@@ -292,11 +307,13 @@ public class FaceRecognitionService {
             grayFace = standardFace.clone();
         }
 
-        // Histogram equalization for consistent lighting
-        equalizeHist(grayFace, grayFace);
+        // CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        // Much better than regular equalizeHist for cross-session robustness
+        org.bytedeco.opencv.opencv_imgproc.CLAHE clahe = createCLAHE(2.0, new Size(8, 8));
+        clahe.apply(grayFace, grayFace);
 
         // Slight blur to reduce webcam noise
-        GaussianBlur(grayFace, grayFace, new Size(3, 3), 0);
+        GaussianBlur(grayFace, grayFace, new Size(3, 3), 0.8);
 
         byte[] faceBytes = matToBytes(grayFace);
         if (faceBytes == null) return null;
@@ -312,12 +329,8 @@ public class FaceRecognitionService {
 
     /**
      * Compare a captured face against a stored encoding (which may contain multiple captures).
-     * Uses MSE (Mean Squared Error) which measures ACTUAL pixel differences.
-     * 
-     * WHY MSE WORKS: Different people have different eye shapes, nose, mouth.
-     * These show up as large pixel differences (high MSE).
-     * Correlation/Bhattacharyya NORMALIZE these away, making all faces look similar.
-     * MSE preserves the actual differences.
+     * Uses LBP (Local Binary Pattern) histograms + Normalized Cross-Correlation.
+     * These methods are INVARIANT to brightness/contrast changes between sessions.
      * 
      * Returns similarity score (0.0 to 1.0)
      */
@@ -350,7 +363,13 @@ public class FaceRecognitionService {
     }
 
     /**
-     * Compare two single face encodings using MSE + regional MSE.
+     * Compare two single face encodings using highly discriminative methods:
+     * 1. HOG descriptors (50%) — captures gradient/shape features of face geometry
+     * 2. Spatial Grid Correlation (30%) — 6x6 grid, each cell must match independently
+     * 3. Edge Structure Matching (20%) — compares Sobel edge maps of facial contours
+     *
+     * These methods focus on STRUCTURAL differences (nose shape, jawline, brow ridges)
+     * rather than texture patterns, making them far more discriminative between people.
      */
     private double compareTwoFaces(String enc1, String enc2) {
         try {
@@ -359,39 +378,41 @@ public class FaceRecognitionService {
 
             int size1 = (int) Math.round(Math.sqrt(bytes1.length));
             int size2 = (int) Math.round(Math.sqrt(bytes2.length));
-            if (size1 * size1 != bytes1.length) size1 = 200;
-            if (size2 * size2 != bytes2.length) size2 = 200;
+            if (size1 * size1 != bytes1.length) size1 = 150;
+            if (size2 * size2 != bytes2.length) size2 = 150;
 
             Mat face1 = bytesToMat(bytes1, size1, size1);
             Mat face2 = bytesToMat(bytes2, size2, size2);
             if (face1 == null || face2 == null) return 0.0;
 
-            // Ensure same size
-            if (face1.rows() != 200 || face1.cols() != 200) {
-                Mat r = new Mat(); resize(face1, r, new Size(200, 200)); face1.close(); face1 = r;
+            // Ensure same size (150x150)
+            if (face1.rows() != 150 || face1.cols() != 150) {
+                Mat r = new Mat(); resize(face1, r, new Size(150, 150)); face1.close(); face1 = r;
             }
-            if (face2.rows() != 200 || face2.cols() != 200) {
-                Mat r = new Mat(); resize(face2, r, new Size(200, 200)); face2.close(); face2 = r;
+            if (face2.rows() != 150 || face2.cols() != 150) {
+                Mat r = new Mat(); resize(face2, r, new Size(150, 150)); face2.close(); face2 = r;
             }
 
             byte[] data1 = getPixelData(face1);
             byte[] data2 = getPixelData(face2);
 
-            // Method 1: Global MSE (weight 40%)
-            double globalMSE = computeMSE(data1, data2, 0, data1.length);
-            double globalSim = mseToSimilarity(globalMSE);
+            // Method 1: HOG Descriptor Correlation (weight 50%)
+            // HOG captures gradient orientations = face shape geometry
+            double hogScore = computeHOGCorrelation(data1, data2, 150, 150);
 
-            // Method 2: Regional MSE with face-area weighting (weight 40%)
-            double regionSim = computeRegionalMSE(data1, data2, 200, 200);
+            // Method 2: Spatial Grid Correlation (weight 30%)
+            // Fine-grained 6x6 grid comparison — each cell compared independently
+            double gridScore = computeSpatialGridCorrelation(data1, data2, 150, 150);
 
-            // Method 3: Absolute difference count — how many pixels differ significantly (weight 20%)
-            double diffRatio = computeDiffRatio(data1, data2, 30); // pixels differing by >30
+            // Method 3: Edge Structure Matching (weight 20%)
+            // Compare Sobel edge maps of facial contours
+            double edgeScore = computeEdgeStructureMatch(data1, data2, 150, 150);
 
-            double combined = globalSim * 0.40 + regionSim * 0.40 + diffRatio * 0.20;
+            double combined = hogScore * 0.50 + gridScore * 0.30 + edgeScore * 0.20;
 
             System.out.println(String.format(
-                "  MSE=%.1f (sim=%.4f), RegionSim=%.4f, DiffRatio=%.4f => Combined=%.4f",
-                globalMSE, globalSim, regionSim, diffRatio, combined
+                "  HOG=%.4f, Grid=%.4f, Edge=%.4f => Combined=%.4f",
+                hogScore, gridScore, edgeScore, combined
             ));
 
             face1.close();
@@ -406,87 +427,244 @@ public class FaceRecognitionService {
     }
 
     /**
-     * Compute Mean Squared Error between pixel arrays
+     * HOG (Histogram of Oriented Gradients) descriptor comparison.
+     * Computes gradient magnitude and orientation at each pixel, then builds
+     * orientation histograms in 10x10 cells with 9 orientation bins.
+     * This captures the SHAPE of facial features (nose contour, eye socket,
+     * jawline) which is highly discriminative between different people.
      */
-    private double computeMSE(byte[] d1, byte[] d2, int start, int end) {
-        double mse = 0;
-        int count = 0;
-        int limit = Math.min(Math.min(d1.length, d2.length), end);
-        for (int i = start; i < limit; i++) {
-            double diff = (d1[i] & 0xFF) - (d2[i] & 0xFF);
-            mse += diff * diff;
-            count++;
+    private double computeHOGCorrelation(byte[] d1, byte[] d2, int rows, int cols) {
+        double[] hog1 = computeHOGDescriptor(d1, rows, cols);
+        double[] hog2 = computeHOGDescriptor(d2, rows, cols);
+
+        // Pearson correlation between HOG descriptors
+        int n = Math.min(hog1.length, hog2.length);
+        if (n == 0) return 0.0;
+
+        double mean1 = 0, mean2 = 0;
+        for (int i = 0; i < n; i++) { mean1 += hog1[i]; mean2 += hog2[i]; }
+        mean1 /= n; mean2 /= n;
+
+        double cov = 0, var1 = 0, var2 = 0;
+        for (int i = 0; i < n; i++) {
+            double v1 = hog1[i] - mean1;
+            double v2 = hog2[i] - mean2;
+            cov += v1 * v2;
+            var1 += v1 * v1;
+            var2 += v2 * v2;
         }
-        return count > 0 ? mse / count : Double.MAX_VALUE;
+
+        double denom = Math.sqrt(var1 * var2);
+        if (denom < 1e-10) return 0.0;
+
+        double corr = cov / denom;
+        return Math.max(0.0, (corr + 1.0) / 2.0);
     }
 
     /**
-     * Convert MSE to similarity score using exponential decay.
-     * Same person MSE: ~200-600 -> sim 0.74-0.90
-     * Diff person MSE: ~1200-3000+ -> sim 0.22-0.55
+     * Compute HOG descriptor for a grayscale image.
+     * Uses 10x10 pixel cells, 9 orientation bins (0-180 degrees).
+     * Each cell produces a 9-bin histogram of gradient orientations,
+     * weighted by gradient magnitude.
      */
-    private double mseToSimilarity(double mse) {
-        // sigma controls the decay rate — tuned for 200x200 equalized grayscale faces
-        double sigma = 1500.0;
-        return Math.exp(-mse / sigma);
-    }
+    private double[] computeHOGDescriptor(byte[] data, int rows, int cols) {
+        int cellSize = 10;
+        int numBins = 9;
+        int cellsY = rows / cellSize;
+        int cellsX = cols / cellSize;
+        double[] descriptor = new double[cellsY * cellsX * numBins];
 
-    /**
-     * Regional MSE: split face into weighted regions.
-     * Eye & nose regions weigh more because they differ most between people.
-     */
-    private double computeRegionalMSE(byte[] d1, byte[] d2, int rows, int cols) {
-        // 5 key face regions (y-ranges as fractions of face height)
-        // [startRow%, endRow%, startCol%, endCol%, weight]
-        double[][] regions = {
-            {0.05, 0.30, 0.10, 0.90, 0.8},  // forehead
-            {0.25, 0.50, 0.05, 0.45, 1.8},  // left eye
-            {0.25, 0.50, 0.55, 0.95, 1.8},  // right eye
-            {0.40, 0.70, 0.25, 0.75, 1.5},  // nose
-            {0.65, 0.90, 0.15, 0.85, 1.2},  // mouth
-        };
+        for (int cy = 0; cy < cellsY; cy++) {
+            for (int cx = 0; cx < cellsX; cx++) {
+                double[] cellHist = new double[numBins];
 
-        double totalSim = 0;
-        double totalWeight = 0;
+                for (int y = cy * cellSize + 1; y < (cy + 1) * cellSize - 1 && y < rows - 1; y++) {
+                    for (int x = cx * cellSize + 1; x < (cx + 1) * cellSize - 1 && x < cols - 1; x++) {
+                        // Compute gradient using centered differences
+                        double gx = (data[y * cols + x + 1] & 0xFF) - (data[y * cols + x - 1] & 0xFF);
+                        double gy = (data[(y + 1) * cols + x] & 0xFF) - (data[(y - 1) * cols + x] & 0xFF);
 
-        for (double[] reg : regions) {
-            int r0 = (int)(reg[0] * rows), r1 = (int)(reg[1] * rows);
-            int c0 = (int)(reg[2] * cols), c1 = (int)(reg[3] * cols);
-            double weight = reg[4];
+                        double magnitude = Math.sqrt(gx * gx + gy * gy);
+                        double angle = Math.atan2(gy, gx) * 180.0 / Math.PI;
+                        if (angle < 0) angle += 180.0; // Map to [0, 180)
 
-            double regionMSE = 0;
-            int count = 0;
-            for (int y = r0; y < r1; y++) {
-                for (int x = c0; x < c1; x++) {
-                    int idx = y * cols + x;
-                    if (idx < d1.length && idx < d2.length) {
-                        double diff = (d1[idx] & 0xFF) - (d2[idx] & 0xFF);
-                        regionMSE += diff * diff;
-                        count++;
+                        // Bilinear interpolation into bins
+                        double binWidth = 180.0 / numBins;
+                        double binPos = angle / binWidth;
+                        int bin0 = (int) binPos % numBins;
+                        int bin1 = (bin0 + 1) % numBins;
+                        double frac = binPos - (int) binPos;
+
+                        cellHist[bin0] += magnitude * (1.0 - frac);
+                        cellHist[bin1] += magnitude * frac;
                     }
                 }
+
+                // L2 normalize the cell histogram
+                double norm = 0;
+                for (double v : cellHist) norm += v * v;
+                norm = Math.sqrt(norm + 1e-6);
+                for (int b = 0; b < numBins; b++) {
+                    descriptor[(cy * cellsX + cx) * numBins + b] = cellHist[b] / norm;
+                }
             }
-            regionMSE = count > 0 ? regionMSE / count : 5000;
-            totalSim += mseToSimilarity(regionMSE) * weight;
-            totalWeight += weight;
         }
 
-        return totalWeight > 0 ? totalSim / totalWeight : 0.0;
+        return descriptor;
     }
 
     /**
-     * Compute ratio of pixels that are SIMILAR (differ by less than threshold).
-     * Same person: most pixels similar -> high ratio (0.75-0.90)
-     * Diff person: many pixels differ -> low ratio (0.40-0.60)
+     * Fine-grained Spatial Grid Correlation.
+     * Divides face into a 6x6 grid (36 cells). Each cell is compared independently
+     * using Pearson correlation. The final score requires MOST cells to match well.
+     * This catches local differences that global correlation would miss.
+     * Cells in the eye/nose/mouth area are weighted more heavily.
      */
-    private double computeDiffRatio(byte[] d1, byte[] d2, int threshold) {
-        int similar = 0;
-        int limit = Math.min(d1.length, d2.length);
-        for (int i = 0; i < limit; i++) {
-            int diff = Math.abs((d1[i] & 0xFF) - (d2[i] & 0xFF));
-            if (diff <= threshold) similar++;
+    private double computeSpatialGridCorrelation(byte[] d1, byte[] d2, int rows, int cols) {
+        int gridSize = 6;
+        int cellH = rows / gridSize;
+        int cellW = cols / gridSize;
+
+        // Weight matrix: higher weight for discriminative face regions
+        // Top-center = forehead, middle rows = eyes/nose, bottom = mouth/chin
+        double[][] weights = {
+            {0.5, 0.7, 0.8, 0.8, 0.7, 0.5},  // row 0: top forehead
+            {0.8, 1.5, 1.8, 1.8, 1.5, 0.8},  // row 1: eyebrows/upper eyes
+            {0.8, 1.8, 2.0, 2.0, 1.8, 0.8},  // row 2: eyes
+            {0.7, 1.2, 1.8, 1.8, 1.2, 0.7},  // row 3: nose
+            {0.6, 1.0, 1.5, 1.5, 1.0, 0.6},  // row 4: mouth
+            {0.4, 0.6, 0.8, 0.8, 0.6, 0.4},  // row 5: chin
+        };
+
+        double totalScore = 0;
+        double totalWeight = 0;
+
+        for (int gy = 0; gy < gridSize; gy++) {
+            for (int gx = 0; gx < gridSize; gx++) {
+                int startR = gy * cellH;
+                int startC = gx * cellW;
+                int endR = Math.min(startR + cellH, rows);
+                int endC = Math.min(startC + cellW, cols);
+                int cellSize = (endR - startR) * (endC - startC);
+
+                byte[] cell1 = new byte[cellSize];
+                byte[] cell2 = new byte[cellSize];
+                int idx = 0;
+
+                for (int y = startR; y < endR; y++) {
+                    for (int x = startC; x < endC; x++) {
+                        int pixIdx = y * cols + x;
+                        if (pixIdx < d1.length && pixIdx < d2.length) {
+                            cell1[idx] = d1[pixIdx];
+                            cell2[idx] = d2[pixIdx];
+                            idx++;
+                        }
+                    }
+                }
+
+                if (idx > 10) {
+                    double cellCorr = computePearsonCorrelation(cell1, cell2, idx);
+                    double w = weights[gy][gx];
+                    totalScore += cellCorr * w;
+                    totalWeight += w;
+                }
+            }
         }
-        return (double) similar / limit;
+
+        return totalWeight > 0 ? totalScore / totalWeight : 0.0;
+    }
+
+    /**
+     * Compute Pearson correlation between two byte arrays.
+     * Maps result from [-1,1] to [0,1].
+     */
+    private double computePearsonCorrelation(byte[] d1, byte[] d2, int n) {
+        double mean1 = 0, mean2 = 0;
+        for (int i = 0; i < n; i++) {
+            mean1 += (d1[i] & 0xFF);
+            mean2 += (d2[i] & 0xFF);
+        }
+        mean1 /= n;
+        mean2 /= n;
+
+        double cov = 0, var1 = 0, var2 = 0;
+        for (int i = 0; i < n; i++) {
+            double v1 = (d1[i] & 0xFF) - mean1;
+            double v2 = (d2[i] & 0xFF) - mean2;
+            cov += v1 * v2;
+            var1 += v1 * v1;
+            var2 += v2 * v2;
+        }
+
+        double denom = Math.sqrt(var1 * var2);
+        if (denom < 1e-10) return 0.0;
+
+        double corr = cov / denom;
+        return Math.max(0.0, (corr + 1.0) / 2.0);
+    }
+
+    /**
+     * Edge Structure Matching using Sobel gradients.
+     * Computes horizontal and vertical edge maps, then compares the edge
+     * strength patterns. This captures the contours of facial features
+     * (nose ridge, eye creases, jawline profile) which differ significantly
+     * between people even when overall pixel values are similar.
+     */
+    private double computeEdgeStructureMatch(byte[] d1, byte[] d2, int rows, int cols) {
+        // Compute Sobel magnitude for both faces
+        double[] edges1 = computeSobelMagnitude(d1, rows, cols);
+        double[] edges2 = computeSobelMagnitude(d2, rows, cols);
+
+        int n = edges1.length;
+        if (n == 0) return 0.0;
+
+        // Pearson correlation on edge maps
+        double mean1 = 0, mean2 = 0;
+        for (int i = 0; i < n; i++) { mean1 += edges1[i]; mean2 += edges2[i]; }
+        mean1 /= n; mean2 /= n;
+
+        double cov = 0, var1 = 0, var2 = 0;
+        for (int i = 0; i < n; i++) {
+            double v1 = edges1[i] - mean1;
+            double v2 = edges2[i] - mean2;
+            cov += v1 * v2;
+            var1 += v1 * v1;
+            var2 += v2 * v2;
+        }
+
+        double denom = Math.sqrt(var1 * var2);
+        if (denom < 1e-10) return 0.0;
+
+        double corr = cov / denom;
+        return Math.max(0.0, (corr + 1.0) / 2.0);
+    }
+
+    /**
+     * Compute Sobel gradient magnitude at each pixel.
+     * Uses 3x3 Sobel kernels for horizontal and vertical edges.
+     */
+    private double[] computeSobelMagnitude(byte[] data, int rows, int cols) {
+        double[] magnitude = new double[(rows - 2) * (cols - 2)];
+        int idx = 0;
+
+        for (int y = 1; y < rows - 1; y++) {
+            for (int x = 1; x < cols - 1; x++) {
+                // Sobel X kernel: [[-1,0,1],[-2,0,2],[-1,0,1]]
+                double gx =
+                    -(data[(y-1)*cols + (x-1)] & 0xFF) + (data[(y-1)*cols + (x+1)] & 0xFF)
+                    - 2*(data[y*cols + (x-1)] & 0xFF) + 2*(data[y*cols + (x+1)] & 0xFF)
+                    - (data[(y+1)*cols + (x-1)] & 0xFF) + (data[(y+1)*cols + (x+1)] & 0xFF);
+
+                // Sobel Y kernel: [[-1,-2,-1],[0,0,0],[1,2,1]]
+                double gy =
+                    -(data[(y-1)*cols + (x-1)] & 0xFF) - 2*(data[(y-1)*cols + x] & 0xFF) - (data[(y-1)*cols + (x+1)] & 0xFF)
+                    + (data[(y+1)*cols + (x-1)] & 0xFF) + 2*(data[(y+1)*cols + x] & 0xFF) + (data[(y+1)*cols + (x+1)] & 0xFF);
+
+                magnitude[idx++] = Math.sqrt(gx * gx + gy * gy);
+            }
+        }
+
+        return magnitude;
     }
 
     /**

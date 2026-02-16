@@ -39,7 +39,6 @@ public class DashboardController {
     @FXML private VBox auditPane;
     @FXML private VBox permissionsPane;
     @FXML private VBox settingsPane;
-    @FXML private VBox supportPane;
 
     @FXML private StackPane contentArea;
     @FXML private HBox titleBar;
@@ -51,7 +50,6 @@ public class DashboardController {
     @FXML private Button btnAudit;
     @FXML private Button btnPermissions;
     @FXML private Button btnSettings;
-    @FXML private Button btnSupport;
 
     // Dashboard stats
     @FXML private Label totalUsersLabel;
@@ -96,11 +94,7 @@ public class DashboardController {
     @FXML private ComboBox<String> languageComboBox;
     @FXML private Label settingsMessageLabel;
 
-    // Support
-    @FXML private TextField ticketSubjectField;
-    @FXML private ComboBox<String> ticketPriorityCombo;
-    @FXML private TextArea ticketDescriptionArea;
-    @FXML private Label ticketMessageLabel;
+
 
     // Services
     private final utilisateurServices userService = new utilisateurServices();
@@ -836,7 +830,7 @@ public class DashboardController {
 
     // ================= NAVIGATION =================
     private void setActiveNav(Button active) {
-        Button[] navButtons = {btnDashboard, btnCharts, btnUsers, btnAudit, btnPermissions, btnSettings, btnSupport};
+        Button[] navButtons = {btnDashboard, btnCharts, btnUsers, btnAudit, btnPermissions, btnSettings};
         for (Button b : navButtons) {
             if (b != null) {
                 b.getStyleClass().remove("sidebar-button-active");
@@ -890,11 +884,7 @@ public class DashboardController {
         showPane(settingsPane);
     }
 
-    @FXML
-    private void handleShowSupport() {
-        setActiveNav(btnSupport);
-        showPane(supportPane);
-    }
+
 
     @FXML
     public void handleRefreshDashboard() {
@@ -902,7 +892,7 @@ public class DashboardController {
     }
 
     private void showPane(VBox paneToShow) {
-        VBox[] allPanes = {dashboardPane, chartsPane, usersPane, auditPane, permissionsPane, settingsPane, supportPane};
+        VBox[] allPanes = {dashboardPane, chartsPane, usersPane, auditPane, permissionsPane, settingsPane};
         for (VBox pane : allPanes) {
             if (pane != null) pane.setVisible(false);
         }
@@ -955,7 +945,24 @@ public class DashboardController {
 
     @FXML
     private void handleViewProfile() {
-        showAlert("Profil", "Fonctionnalite de profil administrateur - en cours de developpement.");
+        try {
+            utilisateur adminUser = userService.getUserById(currentAdminId);
+            if (adminUser == null) {
+                showAlert("Erreur", "Impossible de charger le profil administrateur.");
+                return;
+            }
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/userprofile.fxml"));
+            Parent root = loader.load();
+
+            UserProfileController controller = loader.getController();
+            controller.setUser(adminUser);
+
+            Stage stage = (Stage) contentArea.getScene().getWindow();
+            fadeTransition(stage, root, "Tabaani - Mon Profil");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML
@@ -970,58 +977,7 @@ public class DashboardController {
         }
     }
 
-    // ================= SUPPORT =================
-    @FXML
-    private void handleViewFAQ() {
-        showAlert("FAQ - Questions frequentes",
-                "Comment reinitialiser mon mot de passe ?\n" +
-                "-> Cliquez 'Mot de passe oublie' sur la page de connexion.\n\n" +
-                "Comment contacter le support ?\n" +
-                "-> Soumettez un ticket ci-dessous ou envoyez un email.\n\n" +
-                "Comment modifier mes informations ?\n" +
-                "-> Accedez a votre profil via le menu utilisateur.");
-    }
 
-    @FXML
-    private void handleSendEmail() {
-        showAlert("Support par email",
-                "Adresse : support@tabaani.com\n\n" +
-                "Notre equipe vous repondra sous 24 heures ouvrees.\n" +
-                "Merci de preciser votre identifiant et une description detaillee du probleme.");
-    }
-
-    @FXML
-    private void handleStartChat() {
-        showAlert("Chat en direct",
-                "Le chat en direct est actuellement indisponible.\n\n" +
-                "Veuillez soumettre un ticket via le formulaire ci-dessous\n" +
-                "ou contactez-nous par email a support@tabaani.com.");
-    }
-
-    @FXML
-    private void handleSubmitTicket() {
-        String subject = ticketSubjectField != null ? ticketSubjectField.getText().trim() : "";
-        String priority = ticketPriorityCombo != null ? ticketPriorityCombo.getValue() : null;
-        String desc = ticketDescriptionArea != null ? ticketDescriptionArea.getText().trim() : "";
-
-        if (subject.isEmpty() || desc.isEmpty()) {
-            if (ticketMessageLabel != null) {
-                ticketMessageLabel.setText("Veuillez remplir le sujet et la description.");
-                ticketMessageLabel.setStyle("-fx-text-fill: #FF6B6B;");
-            }
-            return;
-        }
-
-        auditService.log(currentAdminId, currentUserName, "SUBMIT_TICKET", "SUPPORT", 0, subject, null, priority);
-
-        if (ticketMessageLabel != null) {
-            ticketMessageLabel.setText("Ticket soumis avec succes !");
-            ticketMessageLabel.setStyle("-fx-text-fill: #51CF66;");
-        }
-        if (ticketSubjectField != null) ticketSubjectField.clear();
-        if (ticketDescriptionArea != null) ticketDescriptionArea.clear();
-        if (ticketPriorityCombo != null) ticketPriorityCombo.setValue(null);
-    }
 
     // ================= SETTINGS =================
     @FXML
@@ -1065,11 +1021,13 @@ public class DashboardController {
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
             newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newScene.setFill(javafx.scene.paint.Color.BLACK);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);
             newRoot.setTranslateY(8);
             stage.setScene(newScene);
+            stage.sizeToScene();
             stage.setTitle(title);
 
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);

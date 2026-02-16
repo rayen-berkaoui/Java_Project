@@ -17,6 +17,7 @@ import javafx.scene.Node;
 
 import com.esprit.entities.utilisateur;
 import com.esprit.services.utilisateurServices;
+import com.esprit.services.AuditLogService;
 
 import java.io.*;
 import java.util.Base64;
@@ -90,9 +91,18 @@ public class UserProfileController {
     @FXML private CheckBox profileVisibleCheck;
     @FXML private CheckBox activityVisibleCheck;
 
+    // ================= SUPPORT / TICKET =================
+    @FXML private VBox ticketFormContainer;
+    @FXML private TextField ticketSubjectField;
+    @FXML private ComboBox<String> ticketPriorityCombo;
+    @FXML private TextArea ticketDescriptionArea;
+    @FXML private Label ticketMessageLabel;
+
     // ================= STATE =================
     private utilisateurServices userService;
+    private AuditLogService auditService;
     private utilisateur currentUser;
+    private boolean isAdmin = false;
     private double xOffset = 0;
     private double yOffset = 0;
     private boolean currentPwVisible = false;
@@ -102,6 +112,7 @@ public class UserProfileController {
     @FXML
     public void initialize() {
         userService = new utilisateurServices();
+        auditService = new AuditLogService();
         showPane(profilePane);
 
         // Window drag
@@ -132,7 +143,16 @@ public class UserProfileController {
 
     public void setUser(utilisateur user) {
         this.currentUser = user;
+        this.isAdmin = userService.isAdmin(user.getRoleId());
         populateAll();
+
+        // Hide ticket submission for admins - only users can submit tickets
+        if (isAdmin) {
+            if (ticketFormContainer != null) {
+                ticketFormContainer.setVisible(false);
+                ticketFormContainer.setManaged(false);
+            }
+        }
     }
 
     private void populateAll() {
@@ -493,6 +513,30 @@ public class UserProfileController {
         }
     }
 
+    // ================= TICKET SUBMISSION =================
+
+    @FXML
+    private void handleSubmitTicket() {
+        String subject = ticketSubjectField != null ? ticketSubjectField.getText().trim() : "";
+        String priority = ticketPriorityCombo != null ? ticketPriorityCombo.getValue() : null;
+        String desc = ticketDescriptionArea != null ? ticketDescriptionArea.getText().trim() : "";
+
+        if (subject.isEmpty() || desc.isEmpty()) {
+            showMessage(ticketMessageLabel, "❌ Veuillez remplir le sujet et la description.", false);
+            return;
+        }
+
+        if (currentUser != null) {
+            auditService.log(currentUser.getId(), currentUser.getPrenom() + " " + currentUser.getNom(),
+                    "SUBMIT_TICKET", "SUPPORT", 0, subject, null, priority);
+        }
+
+        showMessage(ticketMessageLabel, "✅ Ticket soumis avec succès !", true);
+        if (ticketSubjectField != null) ticketSubjectField.clear();
+        if (ticketDescriptionArea != null) ticketDescriptionArea.clear();
+        if (ticketPriorityCombo != null) ticketPriorityCombo.setValue(null);
+    }
+
     // ================= WINDOW CONTROLS =================
 
     @FXML
@@ -519,6 +563,40 @@ public class UserProfileController {
         }
     }
 
+    @FXML
+    private void handleBackToMain() {
+        try {
+            Stage stage = (Stage) contentArea.getScene().getWindow();
+
+            if (isAdmin) {
+                // Admin goes back to dashboard
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/dashboard.fxml"));
+                Parent root = loader.load();
+
+                DashboardController controller = loader.getController();
+                if (currentUser != null) {
+                    controller.setUserName(currentUser.getNom());
+                    controller.setAdminId(currentUser.getId());
+                }
+
+                fadeTransition(stage, root, "Tabaani - Dashboard");
+            } else {
+                // User goes back to main interface
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/maininterface.fxml"));
+                Parent root = loader.load();
+
+                if (currentUser != null) {
+                    MainInterfaceController controller = loader.getController();
+                    controller.setUser(currentUser);
+                }
+
+                fadeTransition(stage, root, "SmartTravel - Accueil");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void fadeTransition(Stage stage, Parent newRoot, String title) {
         Scene oldScene = stage.getScene();
         Node oldRoot = oldScene.getRoot();
@@ -537,11 +615,13 @@ public class UserProfileController {
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
             newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newScene.setFill(javafx.scene.paint.Color.BLACK);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);
             newRoot.setTranslateY(8);
             stage.setScene(newScene);
+            stage.sizeToScene();
             stage.setTitle(title);
 
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);

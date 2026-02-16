@@ -7,8 +7,8 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.esprit.controllers.signupController"
-            prefWidth="1100.0"
-            prefHeight="700.0"
+            prefWidth="1280"
+            prefHeight="820"
             style="-fx-background-color: #000000; -fx-border-width: 0; -fx-padding: 0; -fx-background-insets: 0;"
             styleClass="root">
 
@@ -184,7 +184,11 @@
                         </VBox>
 
                         <!-- Terms -->
-                        <CheckBox fx:id="termsCheckBox" text="J'accepte les conditions d'utilisation" styleClass="custom-checkbox" />
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <CheckBox fx:id="termsCheckBox" text="J'accepte les" styleClass="custom-checkbox" />
+                            <Hyperlink text="conditions d'utilisation" onAction="#handleShowTerms"
+                                       style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-underline: true; -fx-padding: 0; -fx-border-width: 0;" />
+                        </HBox>
 
                         <!-- Signup Button -->
                         <Button fx:id="signupButton" text="CRÉER MON COMPTE  ›" styleClass="login-button-modern"

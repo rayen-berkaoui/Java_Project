@@ -436,11 +436,13 @@ public class ForgotPasswordController {
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
             newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newScene.setFill(javafx.scene.paint.Color.BLACK);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);
             newRoot.setTranslateY(8);
             stage.setScene(newScene);
+            stage.sizeToScene();
             stage.setTitle(title);
 
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);

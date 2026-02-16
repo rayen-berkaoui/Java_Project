@@ -9,7 +9,7 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.esprit.controllers.UserProfileController"
-            prefWidth="1200" prefHeight="760"
+            prefWidth="1280" prefHeight="820"
             style="-fx-background-color: #000000; -fx-border-width: 0; -fx-padding: 0; -fx-background-insets: 0;"
             styleClass="root">
 
@@ -84,9 +84,11 @@
 
                 <Region VBox.vgrow="ALWAYS" />
 
-                <!-- Logout + Version -->
+                <!-- Back + Logout -->
                 <VBox spacing="8" style="-fx-padding: 14;">
                     <Region style="-fx-background-color: rgba(255,255,255,0.03); -fx-pref-height: 1;" />
+                    <Button text="◀  Retour à l'accueil" styleClass="sidebar-button" prefWidth="222" onAction="#handleBackToMain"
+                            style="-fx-padding: 10 20;" />
                     <Button text="🚪  Déconnexion" styleClass="dashboard-button-danger" prefWidth="222" onAction="#handleLogout"
                             style="-fx-padding: 10 20;" />
                     <HBox spacing="8" alignment="CENTER_LEFT" style="-fx-padding: 4 6;">
@@ -433,7 +435,7 @@
                         <VBox spacing="20" style="-fx-padding: 30;">
 
                             <VBox spacing="3">
-                                <Label text="Support" style="-fx-font-size: 24; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
+                                <Label text="Centre de Support" style="-fx-font-size: 24; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
                                 <Label text="Besoin d'aide ? Nous sommes là pour vous" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
                             </VBox>
 
@@ -471,6 +473,45 @@
                                 </VBox>
                             </HBox>
 
+                            <!-- Ticket Submission Form -->
+                            <VBox fx:id="ticketFormContainer" spacing="15" styleClass="content-card">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="🎫" style="-fx-font-size: 15;" />
+                                    <Label text="Soumettre un ticket" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" />
+                                </HBox>
+                                <Separator />
+                                <HBox spacing="15">
+                                    <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                        <Label text="SUJET" style="-fx-text-fill: rgba(255,215,0,0.5); -fx-font-size: 10; -fx-font-weight: bold;" />
+                                        <TextField fx:id="ticketSubjectField" promptText="Décrivez le sujet..." styleClass="text-field-modern" prefHeight="42" />
+                                    </VBox>
+                                    <VBox spacing="6" prefWidth="200">
+                                        <Label text="PRIORITÉ" style="-fx-text-fill: rgba(255,215,0,0.5); -fx-font-size: 10; -fx-font-weight: bold;" />
+                                        <ComboBox fx:id="ticketPriorityCombo" promptText="Sélectionner" prefWidth="200" prefHeight="42"
+                                                  style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;">
+                                            <items>
+                                                <javafx.collections.FXCollections fx:factory="observableArrayList">
+                                                    <java.lang.String fx:value="Faible" />
+                                                    <java.lang.String fx:value="Moyen" />
+                                                    <java.lang.String fx:value="Élevé" />
+                                                    <java.lang.String fx:value="Critique" />
+                                                </javafx.collections.FXCollections>
+                                            </items>
+                                        </ComboBox>
+                                    </VBox>
+                                </HBox>
+                                <VBox spacing="6">
+                                    <Label text="DESCRIPTION" style="-fx-text-fill: rgba(255,215,0,0.5); -fx-font-size: 10; -fx-font-weight: bold;" />
+                                    <TextArea fx:id="ticketDescriptionArea" promptText="Décrivez votre problème en détail..."
+                                              prefHeight="120" wrapText="true"
+                                              style="-fx-background-color: rgba(18,18,18,0.9); -fx-text-fill: #ffffff; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 10; -fx-background-radius: 10;" />
+                                </VBox>
+                                <HBox spacing="15" alignment="CENTER_RIGHT">
+                                    <Label fx:id="ticketMessageLabel" text="" style="-fx-font-size: 12;" />
+                                    <Button text="📤  Soumettre le ticket" styleClass="login-button-modern" onAction="#handleSubmitTicket" style="-fx-font-size: 12; -fx-padding: 10 28;" />
+                                </HBox>
+                            </VBox>
+
                             <!-- FAQ -->
                             <VBox spacing="15" styleClass="content-card">
                                 <HBox spacing="10" alignment="CENTER_LEFT">
@@ -479,7 +520,7 @@
                                 </HBox>
                                 <Separator />
 
-                                <VBox spacing="8" style="-fx-padding: 10 0; -fx-background-color: rgba(255,255,255,0.02); -fx-padding: 14; -fx-background-radius: 10;">
+                                <VBox spacing="8" style="-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 14; -fx-background-radius: 10;">
                                     <Label text="Comment modifier mon mot de passe ?" style="-fx-text-fill: #ffffff; -fx-font-size: 13; -fx-font-weight: bold;" />
                                     <Label text="Allez dans Sécurité › Changer le mot de passe et suivez les instructions." style="-fx-text-fill: #888888; -fx-font-size: 12;" wrapText="true" />
                                 </VBox>

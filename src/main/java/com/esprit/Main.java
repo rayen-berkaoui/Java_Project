@@ -3,6 +3,7 @@ package com.esprit;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
@@ -21,6 +22,9 @@ public class Main extends Application {
         scene.getStylesheets().add(
                 getClass().getResource("/style.css").toExternalForm()
         );
+
+        // ✅ Remove white background
+        scene.setFill(Color.BLACK);
 
         // ✅ Remove white title bar
         stage.initStyle(StageStyle.UNDECORATED);

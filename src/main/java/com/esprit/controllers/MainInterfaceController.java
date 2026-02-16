@@ -8,6 +8,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.animation.*;
@@ -16,6 +18,9 @@ import javafx.scene.Node;
 
 import com.esprit.entities.utilisateur;
 import com.esprit.services.utilisateurServices;
+
+import java.io.ByteArrayInputStream;
+import java.util.Base64;
 
 /**
  * Controller for the main SmartTravel user interface.
@@ -68,6 +73,7 @@ public class MainInterfaceController {
 
     // ═══════ PROFILE EDIT ═══════
     @FXML private Label profilInitials;
+    @FXML private ImageView profilImageView;
     @FXML private Label profilFullName;
     @FXML private Label profilEmail;
     @FXML private Label profilStatut;
@@ -170,6 +176,29 @@ public class MainInterfaceController {
 
         if (profilMessage != null) {
             profilMessage.setText("");
+        }
+
+        // Load profile picture
+        loadProfilePicture(user);
+    }
+
+    private void loadProfilePicture(utilisateur user) {
+        String base64 = user.getProfilePicture();
+        if (base64 != null && !base64.isEmpty()) {
+            try {
+                byte[] imageData = Base64.getDecoder().decode(base64);
+                Image img = new Image(new ByteArrayInputStream(imageData));
+                if (profilImageView != null) {
+                    profilImageView.setImage(img);
+                    profilImageView.setVisible(true);
+                    if (profilInitials != null) profilInitials.setVisible(false);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            if (profilImageView != null) profilImageView.setVisible(false);
+            if (profilInitials != null) profilInitials.setVisible(true);
         }
     }
 
@@ -474,6 +503,7 @@ public class MainInterfaceController {
             newScene.getStylesheets().add(
                 getClass().getResource("/style.css").toExternalForm()
             );
+            newScene.setFill(javafx.scene.paint.Color.BLACK);
 
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
@@ -481,6 +511,7 @@ public class MainInterfaceController {
             newRoot.setTranslateY(8);
 
             stage.setScene(newScene);
+            stage.sizeToScene();
             stage.setTitle(title);
 
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);

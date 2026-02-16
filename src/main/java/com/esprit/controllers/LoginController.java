@@ -21,9 +21,12 @@ import com.esprit.services.FaceRecognitionService;
 
 import org.bytedeco.opencv.opencv_core.Mat;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.prefs.Preferences;
 
 public class LoginController {
 
@@ -33,6 +36,7 @@ public class LoginController {
     @FXML private Button togglePasswordButton;
     @FXML private Label errorLabel;
     @FXML private javafx.scene.layout.HBox titleBar;
+    @FXML private CheckBox rememberMeCheckBox;
 
     // ═══════ FACE RECOGNITION FXML ═══════
     @FXML private ImageView webcamView;
@@ -55,6 +59,11 @@ public class LoginController {
     private double xOffset = 0;
     private double yOffset = 0;
 
+    private static final String PREF_REMEMBER = "remember_me";
+    private static final String PREF_EMAIL = "saved_email";
+    private static final String PREF_PASSWORD = "saved_password";
+    private final Preferences prefs = Preferences.userNodeForPackage(LoginController.class);
+
     public LoginController() {
         utilisateurService = new utilisateurServices();
         faceService = new FaceRecognitionService();
@@ -74,6 +83,9 @@ public class LoginController {
                 stage.setY(event.getScreenY() - yOffset);
             });
         }
+
+        // Load saved credentials if "Remember Me" was checked
+        loadSavedCredentials();
 
         // Entrance animation for the form
         playEntranceAnimation();
@@ -207,23 +219,24 @@ public class LoginController {
         // Run face matching in background
         new Thread(() -> {
             try {
-                // Take multiple captures for reliability
-                String capturedEncoding = null;
-                for (int attempt = 0; attempt < 5; attempt++) {
+                // Take MULTIPLE captures for reliable cross-session matching
+                // Each capture gets its own independent preprocessing
+                List<String> capturedEncodings = new ArrayList<>();
+                for (int attempt = 0; attempt < 10 && capturedEncodings.size() < 3; attempt++) {
                     Mat currentFrame = faceService.grabMat();
                     if (currentFrame == null) continue;
 
                     String enc = faceService.encodeFace(currentFrame);
                     if (enc != null) {
-                        capturedEncoding = enc;
-                        System.out.println("Face captured on attempt " + (attempt + 1));
-                        break;
+                        capturedEncodings.add(enc);
+                        System.out.println("Face captured on attempt " + (attempt + 1)
+                            + " (" + capturedEncodings.size() + "/3)");
                     }
-                    // Small delay between attempts
-                    Thread.sleep(100);
+                    // Delay between attempts for variation
+                    Thread.sleep(200);
                 }
 
-                if (capturedEncoding == null) {
+                if (capturedEncodings.isEmpty()) {
                     Platform.runLater(() -> {
                         faceStatusLabel.setText("Visage non detecte dans la capture. Reessayez.");
                         faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
@@ -231,8 +244,24 @@ public class LoginController {
                     return;
                 }
 
-                // Get all users with face encodings
-                utilisateur matchedUser = utilisateurService.findUserByFace(capturedEncoding, faceService);
+                // Try each captured encoding against all users, take best match
+                utilisateur bestMatchUser = null;
+                double overallBestScore = 0.0;
+                for (String capturedEncoding : capturedEncodings) {
+                    utilisateur candidate = utilisateurService.findUserByFace(capturedEncoding, faceService);
+                    if (candidate != null) {
+                        double score = faceService.compareFaces(candidate.getFaceEncoding(), capturedEncoding);
+                        if (score > overallBestScore) {
+                            overallBestScore = score;
+                            bestMatchUser = candidate;
+                        }
+                    }
+                }
+                System.out.println("Face login: best overall score = " + overallBestScore
+                    + " from " + capturedEncodings.size() + " captures");
+
+                // Copy to effectively final variable for use inside lambda
+                final utilisateur matchedUser = bestMatchUser;
 
                 Platform.runLater(() -> {
                     if (matchedUser != null) {
@@ -321,9 +350,9 @@ public class LoginController {
 
         new Thread(() -> {
             try {
-                // Use multi-capture for more robust registration (3 samples)
+                // Use multi-capture for more robust registration (5 samples)
                 Platform.runLater(() -> {
-                    faceStatusLabel.setText("Capture 1/3... Restez immobile.");
+                    faceStatusLabel.setText("Capture en cours (5 echantillons)... Restez immobile.");
                     faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 11;");
                 });
 
@@ -450,6 +479,9 @@ public class LoginController {
 
         if (user != null) {
 
+            // Save or clear "Remember Me" credentials
+            saveCredentials(email, password);
+
             errorLabel.setText("✅ Bienvenue " + user.getNom());
             errorLabel.setStyle("-fx-text-fill: #51CF66;");
 
@@ -568,6 +600,46 @@ public class LoginController {
     }
 
     // =========================
+    // REMEMBER ME
+    // =========================
+
+    /**
+     * Load saved credentials from preferences if "Remember Me" was previously checked.
+     */
+    private void loadSavedCredentials() {
+        boolean remembered = prefs.getBoolean(PREF_REMEMBER, false);
+        if (remembered) {
+            String savedEmail = prefs.get(PREF_EMAIL, "");
+            String savedPassword = prefs.get(PREF_PASSWORD, "");
+
+            if (!savedEmail.isEmpty()) {
+                emailField.setText(savedEmail);
+            }
+            if (!savedPassword.isEmpty()) {
+                passwordField.setText(savedPassword);
+            }
+            if (rememberMeCheckBox != null) {
+                rememberMeCheckBox.setSelected(true);
+            }
+        }
+    }
+
+    /**
+     * Save or clear credentials based on "Remember Me" checkbox state.
+     */
+    private void saveCredentials(String email, String password) {
+        if (rememberMeCheckBox != null && rememberMeCheckBox.isSelected()) {
+            prefs.putBoolean(PREF_REMEMBER, true);
+            prefs.put(PREF_EMAIL, email);
+            prefs.put(PREF_PASSWORD, password);
+        } else {
+            prefs.putBoolean(PREF_REMEMBER, false);
+            prefs.remove(PREF_EMAIL);
+            prefs.remove(PREF_PASSWORD);
+        }
+    }
+
+    // =========================
     // ERROR DISPLAY
     // =========================
     private void showError(String msg) {
@@ -642,6 +714,7 @@ public class LoginController {
             newScene.getStylesheets().add(
                 getClass().getResource("/style.css").toExternalForm()
             );
+            newScene.setFill(javafx.scene.paint.Color.BLACK);
 
             // Prepare entrance state
             newRoot.setOpacity(0);
@@ -650,6 +723,7 @@ public class LoginController {
             newRoot.setTranslateY(8);
 
             stage.setScene(newScene);
+            stage.sizeToScene();
             stage.setTitle(title);
 
             // Fade in + scale to normal + slide up

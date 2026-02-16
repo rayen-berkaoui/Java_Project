@@ -50,6 +50,7 @@ public class AdminController {
     @FXML private Label activeUsersLabel;
     @FXML private Label blockedUsersLabel;
     @FXML private TextField userSearchField;
+    @FXML private ComboBox<String> sortCombo;
     @FXML private Label userCountLabel;
     @FXML private TableView<utilisateur> usersTable;
     @FXML private TableColumn<utilisateur, Integer> colId;
@@ -89,6 +90,8 @@ public class AdminController {
     private int currentPage = 1;
     private int totalPages = 1;
     private String currentSearchQuery = "";
+    private String currentSortColumn = "id";
+    private String currentSortDirection = "DESC";
 
     private double xOffset = 0;
     private double yOffset = 0;
@@ -97,6 +100,7 @@ public class AdminController {
     @FXML
     public void initialize() {
         setupTableColumns();
+        setupSortCombo();
         showPane(usersPane);
         setActiveNav(navUsers);
         loadUsersPage();
@@ -114,6 +118,36 @@ public class AdminController {
         if (userSearchField != null) {
             userSearchField.setOnAction(e -> handleSearchUsers());
         }
+    }
+
+    // ================= SORT SETUP =================
+    private void setupSortCombo() {
+        if (sortCombo == null) return;
+        sortCombo.getItems().addAll(
+            "Nom (A-Z)", "Nom (Z-A)",
+            "Email (A-Z)", "Email (Z-A)",
+            "Date (récent)", "Date (ancien)",
+            "Statut (A-Z)", "Statut (Z-A)",
+            "Rôle"
+        );
+        sortCombo.setOnAction(e -> {
+            String selected = sortCombo.getValue();
+            if (selected == null) return;
+            switch (selected) {
+                case "Nom (A-Z)" -> { currentSortColumn = "nom"; currentSortDirection = "ASC"; }
+                case "Nom (Z-A)" -> { currentSortColumn = "nom"; currentSortDirection = "DESC"; }
+                case "Email (A-Z)" -> { currentSortColumn = "email"; currentSortDirection = "ASC"; }
+                case "Email (Z-A)" -> { currentSortColumn = "email"; currentSortDirection = "DESC"; }
+                case "Date (récent)" -> { currentSortColumn = "date_creation"; currentSortDirection = "DESC"; }
+                case "Date (ancien)" -> { currentSortColumn = "date_creation"; currentSortDirection = "ASC"; }
+                case "Statut (A-Z)" -> { currentSortColumn = "statut"; currentSortDirection = "ASC"; }
+                case "Statut (Z-A)" -> { currentSortColumn = "statut"; currentSortDirection = "DESC"; }
+                case "Rôle" -> { currentSortColumn = "role_id"; currentSortDirection = "ASC"; }
+                default -> { currentSortColumn = "id"; currentSortDirection = "DESC"; }
+            }
+            currentPage = 1;
+            loadUsersPage();
+        });
     }
 
     // ================= TABLE SETUP =================
@@ -170,10 +204,10 @@ public class AdminController {
         int totalCount;
 
         if (currentSearchQuery.isEmpty()) {
-            users = userService.getPage(currentPage, PAGE_SIZE);
+            users = userService.getPageSorted(currentPage, PAGE_SIZE, currentSortColumn, currentSortDirection);
             totalCount = userService.countAll();
         } else {
-            users = userService.searchUsers(currentSearchQuery, currentPage, PAGE_SIZE);
+            users = userService.searchUsersSorted(currentSearchQuery, currentPage, PAGE_SIZE, currentSortColumn, currentSortDirection);
             totalCount = userService.countSearch(currentSearchQuery);
         }
 
@@ -606,7 +640,10 @@ public class AdminController {
         setActiveNav(navUsers);
         currentPage = 1;
         currentSearchQuery = "";
+        currentSortColumn = "id";
+        currentSortDirection = "DESC";
         if (userSearchField != null) userSearchField.clear();
+        if (sortCombo != null) sortCombo.setValue(null);
         loadUsersPage();
         loadStats();
         showPane(usersPane);
@@ -720,11 +757,13 @@ public class AdminController {
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
             newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newScene.setFill(javafx.scene.paint.Color.BLACK);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);
             newRoot.setTranslateY(8);
             stage.setScene(newScene);
+            stage.sizeToScene();
             stage.setTitle(title);
 
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);

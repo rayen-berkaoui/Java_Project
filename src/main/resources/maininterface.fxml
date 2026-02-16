@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.shape.*?>
 <?import javafx.geometry.Insets?>
@@ -8,7 +9,7 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.esprit.controllers.MainInterfaceController"
-            prefWidth="1400" prefHeight="860"
+            prefWidth="1280" prefHeight="820"
             style="-fx-padding: 0; -fx-border-width: 0;"
             styleClass="root">
 
@@ -43,22 +44,6 @@
                 </HBox>
 
                 <Region prefWidth="15" />
-
-                <!-- Notifications -->
-                <StackPane style="-fx-cursor: hand;">
-                    <StackPane prefWidth="36" prefHeight="36"
-                               style="-fx-background-color: rgba(255,215,0,0.06); -fx-background-radius: 18;">
-                        <Label text="&#x1F514;" style="-fx-font-size: 14;" />
-                    </StackPane>
-                    <StackPane prefWidth="16" prefHeight="16"
-                               style="-fx-background-color: #FF6B6B; -fx-background-radius: 8;"
-                               StackPane.alignment="TOP_RIGHT"
-                               translateX="4" translateY="-2">
-                        <Label text="3" style="-fx-font-size: 8; -fx-text-fill: white; -fx-font-weight: bold;" />
-                    </StackPane>
-                </StackPane>
-
-                <Region prefWidth="12" />
 
                 <!-- User badge (clickable to profile) -->
                 <HBox spacing="8" alignment="CENTER" onMouseClicked="#handleShowProfil"
@@ -909,6 +894,9 @@
                                 <Circle radius="50" style="-fx-fill: rgba(18,18,18,0.8); -fx-stroke: rgba(255,215,0,0.4); -fx-stroke-width: 2;" />
                                 <Circle radius="47" style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.1); -fx-stroke-width: 1; -fx-stroke-dash-array: 4 3;" />
                                 <Label fx:id="profilInitials" text="?" style="-fx-font-size: 32; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                                <ImageView fx:id="profilImageView" fitWidth="96" fitHeight="96" preserveRatio="false" visible="false">
+                                    <clip><Circle radius="48" centerX="48" centerY="48" /></clip>
+                                </ImageView>
                             </StackPane>
 
                             <Label fx:id="profilFullName" text="Nom Prenom" style="-fx-font-size: 20; -fx-text-fill: white; -fx-font-weight: bold;" />

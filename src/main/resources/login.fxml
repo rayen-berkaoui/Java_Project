@@ -9,8 +9,8 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.esprit.controllers.LoginController"
-            prefWidth="1100.0"
-            prefHeight="650.0"
+            prefWidth="1280"
+            prefHeight="820"
             style="-fx-background-color: #000000; -fx-border-width: 0; -fx-padding: 0; -fx-background-insets: 0;"
             styleClass="root">
 
@@ -188,7 +188,7 @@
 
                     <!-- Options Row -->
                     <HBox alignment="CENTER_LEFT" spacing="0">
-                        <CheckBox text="Se souvenir de moi" styleClass="custom-checkbox" />
+                        <CheckBox fx:id="rememberMeCheckBox" text="Se souvenir de moi" styleClass="custom-checkbox" />
                         <Region HBox.hgrow="ALWAYS" />
                         <Hyperlink text="Mot de passe oublié ?"
                                    styleClass="hyperlink-modern"
