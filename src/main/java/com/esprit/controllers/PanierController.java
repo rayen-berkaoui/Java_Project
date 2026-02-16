@@ -731,7 +731,7 @@ public class PanierController {
         r.setDatePaiement(LocalDateTime.now());
         r.setMontantTotal(finalPrice);
         r.setModePaiement("Especes");
-        r.setStatutPaiement("Paye");
+        r.setStatutPaiement("En cours de paiement");
 
         if (reservationService.ajouter(r)) {
             panierService.modifier(updatePanierStatut(p, "confirme"));

@@ -11,7 +11,7 @@
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.esprit.controllers.DashboardController"
-            prefWidth="1280" prefHeight="820"
+            prefWidth="1400" prefHeight="860"
             style="-fx-padding: 0; -fx-border-width: 0;"
             styleClass="root">
 
@@ -69,6 +69,16 @@
                 <Region prefHeight="8" />
 
                 <VBox spacing="4" style="-fx-padding: 8 14;">
+                    <Label text="SERVICES" style="-fx-text-fill: rgba(255,215,0,0.4); -fx-font-size: 10; -fx-font-weight: bold; -fx-padding: 0 6 8 6;" />
+                    <Button fx:id="btnPanierAdmin" text="&#x1F6D2;  Paniers Clients" styleClass="sidebar-button" prefWidth="212" onAction="#handleShowPanierAdmin" />
+                    <Button fx:id="btnReservationAdmin" text="&#x1F4B3;  Reservations" styleClass="sidebar-button" prefWidth="212" onAction="#handleShowReservationAdmin" />
+                </VBox>
+
+                <Region prefHeight="8" />
+                <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.1), transparent); -fx-pref-height: 1;" />
+                <Region prefHeight="8" />
+
+                <VBox spacing="4" style="-fx-padding: 8 14;">
                     <Label text="ADMINISTRATION" style="-fx-text-fill: rgba(255,215,0,0.4); -fx-font-size: 10; -fx-font-weight: bold; -fx-padding: 0 6 8 6;" />
                     <Button fx:id="btnAudit" text="&#x1F4CB;  Journal d'audit" styleClass="sidebar-button" prefWidth="212" onAction="#handleShowAudit" />
                     <Button fx:id="btnPermissions" text="&#x1F6E1;  Permissions" styleClass="sidebar-button" prefWidth="212" onAction="#handleShowPermissions" />
@@ -119,171 +129,79 @@
                         <Region HBox.hgrow="ALWAYS" />
                         <Button text="&#x1F504; Rafraichir" styleClass="dashboard-button" onAction="#handleRefreshDashboard" style="-fx-padding: 8 20; -fx-font-size: 11;" />
                     </HBox>
-
-                    <!-- Stat Cards -->
                     <HBox spacing="14">
                         <VBox spacing="10" styleClass="stat-card" HBox.hgrow="ALWAYS">
                             <HBox spacing="12" alignment="CENTER_LEFT">
-                                <StackPane prefWidth="42" prefHeight="42" style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 12;">
-                                    <Label text="&#x1F465;" style="-fx-font-size: 18;" />
-                                </StackPane>
-                                <VBox spacing="2">
-                                    <Label text="Total Utilisateurs" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
-                                    <Label fx:id="totalUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
-                                </VBox>
+                                <StackPane prefWidth="42" prefHeight="42" style="-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 12;"><Label text="&#x1F465;" style="-fx-font-size: 18;" /></StackPane>
+                                <VBox spacing="2"><Label text="Total Utilisateurs" style="-fx-text-fill: #888888; -fx-font-size: 11;" /><Label fx:id="totalUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #FFD700; -fx-font-weight: bold;" /></VBox>
                             </HBox>
                         </VBox>
                         <VBox spacing="10" styleClass="stat-card" HBox.hgrow="ALWAYS">
                             <HBox spacing="12" alignment="CENTER_LEFT">
-                                <StackPane prefWidth="42" prefHeight="42" style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 12;">
-                                    <Label text="&#x2705;" style="-fx-font-size: 18;" />
-                                </StackPane>
-                                <VBox spacing="2">
-                                    <Label text="Utilisateurs Actifs" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
-                                    <Label fx:id="activeUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #51CF66; -fx-font-weight: bold;" />
-                                </VBox>
+                                <StackPane prefWidth="42" prefHeight="42" style="-fx-background-color: rgba(81,207,102,0.1); -fx-background-radius: 12;"><Label text="&#x2705;" style="-fx-font-size: 18;" /></StackPane>
+                                <VBox spacing="2"><Label text="Utilisateurs Actifs" style="-fx-text-fill: #888888; -fx-font-size: 11;" /><Label fx:id="activeUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #51CF66; -fx-font-weight: bold;" /></VBox>
                             </HBox>
                         </VBox>
                         <VBox spacing="10" styleClass="stat-card" HBox.hgrow="ALWAYS">
                             <HBox spacing="12" alignment="CENTER_LEFT">
-                                <StackPane prefWidth="42" prefHeight="42" style="-fx-background-color: rgba(255,107,107,0.1); -fx-background-radius: 12;">
-                                    <Label text="&#x1F6AB;" style="-fx-font-size: 18;" />
-                                </StackPane>
-                                <VBox spacing="2">
-                                    <Label text="Utilisateurs Bloques" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
-                                    <Label fx:id="blockedUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #FF6B6B; -fx-font-weight: bold;" />
-                                </VBox>
+                                <StackPane prefWidth="42" prefHeight="42" style="-fx-background-color: rgba(255,107,107,0.1); -fx-background-radius: 12;"><Label text="&#x1F6AB;" style="-fx-font-size: 18;" /></StackPane>
+                                <VBox spacing="2"><Label text="Utilisateurs Bloques" style="-fx-text-fill: #888888; -fx-font-size: 11;" /><Label fx:id="blockedUsersLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #FF6B6B; -fx-font-weight: bold;" /></VBox>
                             </HBox>
                         </VBox>
                         <VBox spacing="10" styleClass="stat-card" HBox.hgrow="ALWAYS">
                             <HBox spacing="12" alignment="CENTER_LEFT">
-                                <StackPane prefWidth="42" prefHeight="42" style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 12;">
-                                    <Label text="&#x1F3F7;" style="-fx-font-size: 18;" />
-                                </StackPane>
-                                <VBox spacing="2">
-                                    <Label text="Total Roles" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
-                                    <Label fx:id="totalRolesLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #64B5F6; -fx-font-weight: bold;" />
-                                </VBox>
+                                <StackPane prefWidth="42" prefHeight="42" style="-fx-background-color: rgba(100,181,246,0.1); -fx-background-radius: 12;"><Label text="&#x1F3F7;" style="-fx-font-size: 18;" /></StackPane>
+                                <VBox spacing="2"><Label text="Total Roles" style="-fx-text-fill: #888888; -fx-font-size: 11;" /><Label fx:id="totalRolesLabel" text="0" style="-fx-font-size: 24; -fx-text-fill: #64B5F6; -fx-font-weight: bold;" /></VBox>
                             </HBox>
                         </VBox>
                     </HBox>
-
-                    <!-- Mini Charts Row -->
                     <HBox spacing="14">
-                        <VBox spacing="8" styleClass="content-card" HBox.hgrow="ALWAYS">
-                            <Label text="Repartition par statut" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;" />
-                            <PieChart fx:id="miniPieChart" prefHeight="180" legendVisible="false"
-                                      style="-fx-padding: 0;" />
-                        </VBox>
-                        <VBox spacing="8" styleClass="content-card" HBox.hgrow="ALWAYS">
-                            <Label text="Utilisateurs par role" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;" />
-                            <BarChart fx:id="miniBarChart" prefHeight="180" legendVisible="false">
-                                <xAxis><CategoryAxis label="" /></xAxis>
-                                <yAxis><NumberAxis label="" /></yAxis>
-                            </BarChart>
-                        </VBox>
+                        <VBox spacing="8" styleClass="content-card" HBox.hgrow="ALWAYS"><Label text="Repartition par statut" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;" /><PieChart fx:id="miniPieChart" prefHeight="180" legendVisible="false" style="-fx-padding: 0;" /></VBox>
+                        <VBox spacing="8" styleClass="content-card" HBox.hgrow="ALWAYS"><Label text="Utilisateurs par role" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;" /><BarChart fx:id="miniBarChart" prefHeight="180" legendVisible="false"><xAxis><CategoryAxis label="" /></xAxis><yAxis><NumberAxis label="" /></yAxis></BarChart></VBox>
                     </HBox>
-
-                    <!-- Recent Users -->
                     <VBox spacing="12" styleClass="content-card" VBox.vgrow="ALWAYS">
-                        <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label text="&#x1F4DD;" style="-fx-font-size: 15;" />
-                            <Label text="Derniers inscrits" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
-                            <Region HBox.hgrow="ALWAYS" />
-                            <Label styleClass="badge-gold" text="Recent" />
-                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="10"><Label text="&#x1F4DD;" style="-fx-font-size: 15;" /><Label text="Derniers inscrits" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" /><Region HBox.hgrow="ALWAYS" /><Label styleClass="badge-gold" text="Recent" /></HBox>
                         <Separator />
-                        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
-                            <VBox fx:id="recentUsersContainer" spacing="8" />
-                        </ScrollPane>
+                        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS"><VBox fx:id="recentUsersContainer" spacing="8" /></ScrollPane>
                     </VBox>
                 </VBox>
 
                 <!-- ============ CHARTS PANEL ============ -->
                 <VBox fx:id="chartsPane" spacing="22" style="-fx-background-color: #0a0a0a; -fx-padding: 28;" visible="false">
-                    <VBox spacing="3">
-                        <Label text="&#x1F4CA; Statistiques Interactives" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
-                        <Label text="Visualisation des donnees en temps reel" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
-                    </VBox>
-
+                    <VBox spacing="3"><Label text="&#x1F4CA; Statistiques Interactives" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" /><Label text="Visualisation des donnees en temps reel" style="-fx-text-fill: #666666; -fx-font-size: 12;" /></VBox>
                     <HBox spacing="14">
-                        <VBox spacing="10" styleClass="content-card" HBox.hgrow="ALWAYS">
-                            <Label text="Repartition par statut" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
-                            <PieChart fx:id="statusPieChart" prefHeight="280" legendVisible="true" labelsVisible="true" />
-                        </VBox>
-                        <VBox spacing="10" styleClass="content-card" HBox.hgrow="ALWAYS">
-                            <Label text="Utilisateurs par role" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
-                            <BarChart fx:id="roleBarChart" prefHeight="280" legendVisible="false">
-                                <xAxis><CategoryAxis label="Role" /></xAxis>
-                                <yAxis><NumberAxis label="Nombre" /></yAxis>
-                            </BarChart>
-                        </VBox>
+                        <VBox spacing="10" styleClass="content-card" HBox.hgrow="ALWAYS"><Label text="Repartition par statut" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" /><PieChart fx:id="statusPieChart" prefHeight="280" legendVisible="true" labelsVisible="true" /></VBox>
+                        <VBox spacing="10" styleClass="content-card" HBox.hgrow="ALWAYS"><Label text="Utilisateurs par role" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" /><BarChart fx:id="roleBarChart" prefHeight="280" legendVisible="false"><xAxis><CategoryAxis label="Role" /></xAxis><yAxis><NumberAxis label="Nombre" /></yAxis></BarChart></VBox>
                     </HBox>
-
                     <VBox spacing="10" styleClass="content-card" VBox.vgrow="ALWAYS">
-                        <HBox spacing="15" alignment="CENTER_LEFT">
-                            <Label text="Activite recente (30 jours)" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
-                            <Region HBox.hgrow="ALWAYS" />
-                            <Button text="&#x1F504; Actualiser" styleClass="dashboard-button" onAction="#handleRefreshCharts" style="-fx-padding: 6 16; -fx-font-size: 10;" />
-                        </HBox>
-                        <LineChart fx:id="activityLineChart" prefHeight="250" VBox.vgrow="ALWAYS" legendVisible="false" createSymbols="true">
-                            <xAxis><CategoryAxis label="Date" /></xAxis>
-                            <yAxis><NumberAxis label="Actions" /></yAxis>
-                        </LineChart>
+                        <HBox spacing="15" alignment="CENTER_LEFT"><Label text="Activite recente (30 jours)" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" /><Region HBox.hgrow="ALWAYS" /><Button text="&#x1F504; Actualiser" styleClass="dashboard-button" onAction="#handleRefreshCharts" style="-fx-padding: 6 16; -fx-font-size: 10;" /></HBox>
+                        <LineChart fx:id="activityLineChart" prefHeight="250" VBox.vgrow="ALWAYS" legendVisible="false" createSymbols="true"><xAxis><CategoryAxis label="Date" /></xAxis><yAxis><NumberAxis label="Actions" /></yAxis></LineChart>
                     </VBox>
                 </VBox>
 
-                <!-- ============ USERS PANEL (Bulk Actions + Export/Import) ============ -->
+                <!-- ============ USERS PANEL ============ -->
                 <VBox fx:id="usersPane" spacing="16" style="-fx-background-color: #0a0a0a; -fx-padding: 28;" visible="false">
-                    <VBox spacing="3">
-                        <Label text="&#x1F465; Gestion des Utilisateurs" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
-                        <Label text="Export, import et actions en masse" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
-                    </VBox>
-
-                    <!-- Toolbar -->
+                    <VBox spacing="3"><Label text="&#x1F465; Gestion des Utilisateurs" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" /><Label text="Export, import et actions en masse" style="-fx-text-fill: #666666; -fx-font-size: 12;" /></VBox>
                     <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 12 16; -fx-background-color: rgba(18,18,18,0.95); -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 10;">
                         <TextField fx:id="userSearchField" promptText="Rechercher un utilisateur..." styleClass="text-field-modern" prefWidth="250" prefHeight="36" onAction="#handleUserSearch" />
                         <Region HBox.hgrow="ALWAYS" />
-
-                        <!-- Bulk Actions -->
                         <Label text="Actions:" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
                         <Button text="&#x2705; Activer" styleClass="dashboard-button" onAction="#handleBulkActivate" style="-fx-padding: 6 14; -fx-font-size: 10;" />
                         <Button text="&#x1F6AB; Bloquer" styleClass="dashboard-button-danger" onAction="#handleBulkBlock" style="-fx-padding: 6 14; -fx-font-size: 10;" />
                         <Button text="&#x1F5D1; Supprimer" onAction="#handleBulkDelete" style="-fx-padding: 6 14; -fx-font-size: 10; -fx-background-color: #FF4444; -fx-text-fill: white; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: bold;" />
-                        <ComboBox fx:id="bulkRoleCombo" promptText="Role..." prefWidth="130"
-                                  style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;" />
+                        <ComboBox fx:id="bulkRoleCombo" promptText="Role..." prefWidth="130" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;" />
                         <Button text="&#x1F3F7; Changer Role" styleClass="dashboard-button" onAction="#handleBulkRoleChange" style="-fx-padding: 6 14; -fx-font-size: 10;" />
-
-                        <Region prefWidth="8" />
-                        <Region prefHeight="28" style="-fx-background-color: rgba(255,215,0,0.1); -fx-pref-width: 1; -fx-min-width: 1;" />
-                        <Region prefWidth="8" />
-
-                        <!-- Export/Import -->
+                        <Region prefWidth="8" /><Region prefHeight="28" style="-fx-background-color: rgba(255,215,0,0.1); -fx-pref-width: 1; -fx-min-width: 1;" /><Region prefWidth="8" />
                         <Button text="&#x1F4E5; Import" styleClass="dashboard-button" onAction="#handleImportUsers" style="-fx-padding: 6 14; -fx-font-size: 10;" />
-                        <MenuButton text="&#x1F4E4; Export" styleClass="dashboard-button" style="-fx-padding: 6 14; -fx-font-size: 10;">
-                            <items>
-                                <MenuItem text="Export PDF" onAction="#handleExportPDF" />
-                                <MenuItem text="Export Excel" onAction="#handleExportExcel" />
-                                <MenuItem text="Export CSV" onAction="#handleExportCSV" />
-                            </items>
-                        </MenuButton>
+                        <MenuButton text="&#x1F4E4; Export" styleClass="dashboard-button" style="-fx-padding: 6 14; -fx-font-size: 10;"><items><MenuItem text="Export PDF" onAction="#handleExportPDF" /><MenuItem text="Export Excel" onAction="#handleExportExcel" /><MenuItem text="Export CSV" onAction="#handleExportCSV" /></items></MenuButton>
                     </HBox>
-
-                    <!-- Select All -->
                     <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 4 8;">
-                        <CheckBox fx:id="selectAllCheckbox" text="Tout selectionner" onAction="#handleSelectAll"
-                                  style="-fx-text-fill: #888888; -fx-font-size: 11;" styleClass="custom-checkbox" />
+                        <CheckBox fx:id="selectAllCheckbox" text="Tout selectionner" onAction="#handleSelectAll" style="-fx-text-fill: #888888; -fx-font-size: 11;" styleClass="custom-checkbox" />
                         <Label fx:id="selectionCountLabel" text="" style="-fx-text-fill: #FFD700; -fx-font-size: 11;" />
                         <Region HBox.hgrow="ALWAYS" />
                         <Label fx:id="userStatusLabel" text="" style="-fx-font-size: 11;" />
                     </HBox>
-
-                    <!-- User Table -->
-                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
-                        <VBox fx:id="userTableContainer" spacing="4" />
-                    </ScrollPane>
-
-                    <!-- Pagination -->
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS"><VBox fx:id="userTableContainer" spacing="4" /></ScrollPane>
                     <HBox spacing="10" alignment="CENTER" style="-fx-padding: 8 0;">
                         <Button text="&#x25C0; Precedent" styleClass="dashboard-button" onAction="#handlePrevPage" style="-fx-padding: 6 16; -fx-font-size: 10;" />
                         <Label fx:id="pageLabel" text="Page 1" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
@@ -291,200 +209,89 @@
                     </HBox>
                 </VBox>
 
+                <!-- ============ PANIER ADMIN PANEL ============ -->
+                <VBox fx:id="panierAdminPane" spacing="16" style="-fx-background-color: #0a0a0a; -fx-padding: 28;" visible="false">
+                    <VBox spacing="3"><Label text="&#x1F6D2; Paniers Clients" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" /><Label text="Voir et gerer les paniers de tous les utilisateurs" style="-fx-text-fill: #666666; -fx-font-size: 12;" /></VBox>
+                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 12 16; -fx-background-color: rgba(18,18,18,0.95); -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 10;">
+                        <ComboBox fx:id="panierUserFilter" promptText="Filtrer par utilisateur..." prefWidth="280" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;" />
+                        <Button text="&#x1F50D; Filtrer" styleClass="dashboard-button" onAction="#handleFilterPanierByUser" style="-fx-padding: 6 16; -fx-font-size: 10;" />
+                        <Button text="&#x1F504; Tous" styleClass="dashboard-button" onAction="#handleShowAllPaniers" style="-fx-padding: 6 16; -fx-font-size: 10;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="panierAdminCountLabel" text="" style="-fx-text-fill: #888; -fx-font-size: 11;" />
+                    </HBox>
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS"><VBox fx:id="panierAdminContainer" spacing="6" /></ScrollPane>
+                </VBox>
+
+                <!-- ============ RESERVATION ADMIN PANEL ============ -->
+                <VBox fx:id="reservationAdminPane" spacing="16" style="-fx-background-color: #0a0a0a; -fx-padding: 28;" visible="false">
+                    <VBox spacing="3"><Label text="&#x1F4B3; Gestion des Reservations" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" /><Label text="Approuver les paiements en especes et gerer les reservations" style="-fx-text-fill: #666666; -fx-font-size: 12;" /></VBox>
+                    <HBox spacing="14">
+                        <VBox spacing="4" styleClass="stat-card" HBox.hgrow="ALWAYS"><Label text="Total Reservations" style="-fx-text-fill: #888; -fx-font-size: 10;" /><Label fx:id="adminTotalResLabel" text="0" style="-fx-text-fill: #FFD700; -fx-font-size: 22; -fx-font-weight: bold;" /></VBox>
+                        <VBox spacing="4" styleClass="stat-card" HBox.hgrow="ALWAYS"><Label text="En attente approbation" style="-fx-text-fill: #888; -fx-font-size: 10;" /><Label fx:id="adminPendingResLabel" text="0" style="-fx-text-fill: #FFA726; -fx-font-size: 22; -fx-font-weight: bold;" /></VBox>
+                        <VBox spacing="4" styleClass="stat-card" HBox.hgrow="ALWAYS"><Label text="Payees" style="-fx-text-fill: #888; -fx-font-size: 10;" /><Label fx:id="adminPaidResLabel" text="0" style="-fx-text-fill: #51CF66; -fx-font-size: 22; -fx-font-weight: bold;" /></VBox>
+                        <VBox spacing="4" styleClass="stat-card" HBox.hgrow="ALWAYS"><Label text="Revenu total" style="-fx-text-fill: #888; -fx-font-size: 10;" /><Label fx:id="adminRevenueLabel" text="0 DT" style="-fx-text-fill: #64B5F6; -fx-font-size: 22; -fx-font-weight: bold;" /></VBox>
+                    </HBox>
+                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 12 16; -fx-background-color: rgba(18,18,18,0.95); -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 10;">
+                        <ComboBox fx:id="resUserFilter" promptText="Filtrer par utilisateur..." prefWidth="280" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;" />
+                        <ComboBox fx:id="resStatusFilter" promptText="Statut..." prefWidth="200" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;">
+                            <items><FXCollections fx:factory="observableArrayList"><String fx:value="Tous" /><String fx:value="En cours de paiement" /><String fx:value="Pay&#x00E9;" /><String fx:value="Rembours&#x00E9;" /></FXCollections></items>
+                        </ComboBox>
+                        <Button text="&#x1F50D; Filtrer" styleClass="dashboard-button" onAction="#handleFilterReservations" style="-fx-padding: 6 16; -fx-font-size: 10;" />
+                        <Button text="&#x1F504; Tous" styleClass="dashboard-button" onAction="#handleShowAllReservations" style="-fx-padding: 6 16; -fx-font-size: 10;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="resAdminCountLabel" text="" style="-fx-text-fill: #888; -fx-font-size: 11;" />
+                    </HBox>
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS"><VBox fx:id="reservationAdminContainer" spacing="6" /></ScrollPane>
+                </VBox>
+
                 <!-- ============ AUDIT TRAIL PANEL ============ -->
                 <VBox fx:id="auditPane" spacing="16" style="-fx-background-color: #0a0a0a; -fx-padding: 28;" visible="false">
-                    <VBox spacing="3">
-                        <Label text="&#x1F4CB; Journal d'Audit Avance" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
-                        <Label text="Suivi complet des actions : qui, quoi, quand, avant/apres" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
-                    </VBox>
-
-                    <!-- Filters -->
+                    <VBox spacing="3"><Label text="&#x1F4CB; Journal d'Audit Avance" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" /><Label text="Suivi complet des actions : qui, quoi, quand, avant/apres" style="-fx-text-fill: #666666; -fx-font-size: 12;" /></VBox>
                     <HBox spacing="12" alignment="CENTER_LEFT" style="-fx-padding: 12 16; -fx-background-color: rgba(18,18,18,0.95); -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 10;">
-                        <VBox spacing="4">
-                            <Label text="ACTION" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 9; -fx-font-weight: bold;" />
-                            <ComboBox fx:id="auditActionFilter" promptText="Toutes" prefWidth="160"
-                                      style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 6; -fx-background-radius: 6;" />
-                        </VBox>
-                        <VBox spacing="4">
-                            <Label text="DATE DEBUT" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 9; -fx-font-weight: bold;" />
-                            <DatePicker fx:id="auditDateFrom" promptText="Du..." prefWidth="150"
-                                        style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 6; -fx-background-radius: 6;" />
-                        </VBox>
-                        <VBox spacing="4">
-                            <Label text="DATE FIN" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 9; -fx-font-weight: bold;" />
-                            <DatePicker fx:id="auditDateTo" promptText="Au..." prefWidth="150"
-                                        style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 6; -fx-background-radius: 6;" />
-                        </VBox>
-                        <VBox spacing="4">
-                            <Label text="RECHERCHE" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 9; -fx-font-weight: bold;" />
-                            <TextField fx:id="auditSearchField" promptText="Chercher..." styleClass="text-field-modern" prefWidth="200" prefHeight="32" />
-                        </VBox>
+                        <VBox spacing="4"><Label text="ACTION" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 9; -fx-font-weight: bold;" /><ComboBox fx:id="auditActionFilter" promptText="Toutes" prefWidth="160" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 6; -fx-background-radius: 6;" /></VBox>
+                        <VBox spacing="4"><Label text="DATE DEBUT" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 9; -fx-font-weight: bold;" /><DatePicker fx:id="auditDateFrom" promptText="Du..." prefWidth="150" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 6; -fx-background-radius: 6;" /></VBox>
+                        <VBox spacing="4"><Label text="DATE FIN" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 9; -fx-font-weight: bold;" /><DatePicker fx:id="auditDateTo" promptText="Au..." prefWidth="150" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 6; -fx-background-radius: 6;" /></VBox>
+                        <VBox spacing="4"><Label text="RECHERCHE" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 9; -fx-font-weight: bold;" /><TextField fx:id="auditSearchField" promptText="Chercher..." styleClass="text-field-modern" prefWidth="200" prefHeight="32" /></VBox>
                         <Region HBox.hgrow="ALWAYS" />
-                        <VBox spacing="4">
-                            <Label text=" " style="-fx-font-size: 9;" />
-                            <Button text="&#x1F50D; Filtrer" styleClass="dashboard-button" onAction="#handleFilterAudit" style="-fx-padding: 6 16; -fx-font-size: 10;" />
-                        </VBox>
-                        <VBox spacing="4">
-                            <Label text=" " style="-fx-font-size: 9;" />
-                            <Button text="&#x1F504; Reset" styleClass="button-outline" onAction="#handleResetAuditFilter" style="-fx-padding: 6 14; -fx-font-size: 10;" />
-                        </VBox>
+                        <VBox spacing="4"><Label text=" " style="-fx-font-size: 9;" /><Button text="&#x1F50D; Filtrer" styleClass="dashboard-button" onAction="#handleFilterAudit" style="-fx-padding: 6 16; -fx-font-size: 10;" /></VBox>
+                        <VBox spacing="4"><Label text=" " style="-fx-font-size: 9;" /><Button text="&#x1F504; Reset" styleClass="button-outline" onAction="#handleResetAuditFilter" style="-fx-padding: 6 14; -fx-font-size: 10;" /></VBox>
                     </HBox>
-
-                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 2 4;">
-                        <Label fx:id="auditCountLabel" text="" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
-                    </HBox>
-
-                    <!-- Audit Table -->
-                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
-                        <VBox fx:id="auditTableContainer" spacing="4" />
-                    </ScrollPane>
+                    <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 2 4;"><Label fx:id="auditCountLabel" text="" style="-fx-text-fill: #888888; -fx-font-size: 11;" /></HBox>
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS"><VBox fx:id="auditTableContainer" spacing="4" /></ScrollPane>
                 </VBox>
 
                 <!-- ============ PERMISSIONS PANEL ============ -->
                 <VBox fx:id="permissionsPane" spacing="16" style="-fx-background-color: #0a0a0a; -fx-padding: 28;" visible="false">
-                    <VBox spacing="3">
-                        <Label text="&#x1F6E1; Matrice de Permissions" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
-                        <Label text="Gerer les permissions granulaires pour chaque role" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
-                    </VBox>
-
-                    <VBox spacing="0" styleClass="content-card" VBox.vgrow="ALWAYS">
-                        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
-                            <VBox fx:id="permissionsGrid" spacing="0" />
-                        </ScrollPane>
-                    </VBox>
-
-                    <HBox spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 5 0;">
-                        <Label fx:id="permissionsMessageLabel" text="" style="-fx-font-size: 12;" />
-                        <Button text="&#x1F4BE; Sauvegarder les permissions" styleClass="login-button-modern" onAction="#handleSavePermissions" style="-fx-font-size: 12; -fx-padding: 10 28;" />
-                    </HBox>
+                    <VBox spacing="3"><Label text="&#x1F6E1; Matrice de Permissions" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" /><Label text="Gerer les permissions granulaires pour chaque role" style="-fx-text-fill: #666666; -fx-font-size: 12;" /></VBox>
+                    <VBox spacing="0" styleClass="content-card" VBox.vgrow="ALWAYS"><ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS"><VBox fx:id="permissionsGrid" spacing="0" /></ScrollPane></VBox>
+                    <HBox spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 5 0;"><Label fx:id="permissionsMessageLabel" text="" style="-fx-font-size: 12;" /><Button text="&#x1F4BE; Sauvegarder les permissions" styleClass="login-button-modern" onAction="#handleSavePermissions" style="-fx-font-size: 12; -fx-padding: 10 28;" /></HBox>
                 </VBox>
 
                 <!-- ============ SETTINGS PANEL ============ -->
                 <VBox fx:id="settingsPane" spacing="22" style="-fx-background-color: #0a0a0a; -fx-padding: 28;" visible="false">
-                    <VBox spacing="3">
-                        <Label text="Parametres" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
-                        <Label text="Configurer les preferences du systeme" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
-                    </VBox>
+                    <VBox spacing="3"><Label text="Parametres" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" /><Label text="Configurer les preferences du systeme" style="-fx-text-fill: #666666; -fx-font-size: 12;" /></VBox>
                     <ScrollPane style="-fx-background-color: transparent; -fx-padding: 0;" fitToWidth="true" VBox.vgrow="ALWAYS">
                         <VBox spacing="18">
-                            <VBox spacing="15" styleClass="content-card">
-                                <HBox spacing="10" alignment="CENTER_LEFT">
-                                    <Label text="&#x1F514;" style="-fx-font-size: 15;" />
-                                    <Label text="Notifications" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
-                                </HBox>
-                                <Separator />
-                                <HBox spacing="15" alignment="CENTER_LEFT">
-                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                                        <Label text="Notifications Email" style="-fx-text-fill: #ffffff; -fx-font-size: 13;" />
-                                        <Label text="Recevoir les alertes par email" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
-                                    </VBox>
-                                    <CheckBox fx:id="emailNotifCheckbox" selected="true" styleClass="custom-checkbox" />
-                                </HBox>
-                                <HBox spacing="15" alignment="CENTER_LEFT">
-                                    <VBox spacing="4" HBox.hgrow="ALWAYS">
-                                        <Label text="Authentification a deux facteurs" style="-fx-text-fill: #ffffff; -fx-font-size: 13;" />
-                                        <Label text="Ajouter une couche de securite supplementaire" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
-                                    </VBox>
-                                    <CheckBox fx:id="twoFactorCheckbox" styleClass="custom-checkbox" />
-                                </HBox>
-                            </VBox>
-                            <VBox spacing="15" styleClass="content-card">
-                                <HBox spacing="10" alignment="CENTER_LEFT">
-                                    <Label text="&#x1F3A8;" style="-fx-font-size: 15;" />
-                                    <Label text="Apparence" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
-                                </HBox>
-                                <Separator />
-                                <HBox spacing="15" alignment="CENTER_LEFT">
-                                    <Label text="Langue" style="-fx-text-fill: #cccccc; -fx-font-size: 13;" prefWidth="150" />
-                                    <Region HBox.hgrow="ALWAYS" />
-                                    <ComboBox fx:id="languageComboBox" prefWidth="200"
-                                              style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;">
-                                        <items>
-                                            <FXCollections fx:factory="observableArrayList">
-                                                <String fx:value="Francais" />
-                                                <String fx:value="English" />
-                                                <String fx:value="&#x0627;&#x0644;&#x0639;&#x0631;&#x0628;&#x064A;&#x0629;" />
-                                            </FXCollections>
-                                        </items>
-                                    </ComboBox>
-                                </HBox>
-                            </VBox>
-                            <HBox spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 5 0;">
-                                <Label fx:id="settingsMessageLabel" text="" style="-fx-font-size: 12;" />
-                                <Button text="&#x1F4BE; Sauvegarder" styleClass="login-button-modern" onAction="#handleSaveSettings" style="-fx-font-size: 12; -fx-padding: 10 28;" />
-                            </HBox>
+                            <VBox spacing="15" styleClass="content-card"><HBox spacing="10" alignment="CENTER_LEFT"><Label text="&#x1F514;" style="-fx-font-size: 15;" /><Label text="Notifications" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" /></HBox><Separator /><HBox spacing="15" alignment="CENTER_LEFT"><VBox spacing="4" HBox.hgrow="ALWAYS"><Label text="Notifications Email" style="-fx-text-fill: #ffffff; -fx-font-size: 13;" /><Label text="Recevoir les alertes par email" style="-fx-text-fill: #666666; -fx-font-size: 11;" /></VBox><CheckBox fx:id="emailNotifCheckbox" selected="true" styleClass="custom-checkbox" /></HBox><HBox spacing="15" alignment="CENTER_LEFT"><VBox spacing="4" HBox.hgrow="ALWAYS"><Label text="Authentification a deux facteurs" style="-fx-text-fill: #ffffff; -fx-font-size: 13;" /><Label text="Ajouter une couche de securite supplementaire" style="-fx-text-fill: #666666; -fx-font-size: 11;" /></VBox><CheckBox fx:id="twoFactorCheckbox" styleClass="custom-checkbox" /></HBox></VBox>
+                            <VBox spacing="15" styleClass="content-card"><HBox spacing="10" alignment="CENTER_LEFT"><Label text="&#x1F3A8;" style="-fx-font-size: 15;" /><Label text="Apparence" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" /></HBox><Separator /><HBox spacing="15" alignment="CENTER_LEFT"><Label text="Langue" style="-fx-text-fill: #cccccc; -fx-font-size: 13;" prefWidth="150" /><Region HBox.hgrow="ALWAYS" /><ComboBox fx:id="languageComboBox" prefWidth="200" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;"><items><FXCollections fx:factory="observableArrayList"><String fx:value="Francais" /><String fx:value="English" /><String fx:value="&#x0627;&#x0644;&#x0639;&#x0631;&#x0628;&#x064A;&#x0629;" /></FXCollections></items></ComboBox></HBox></VBox>
+                            <HBox spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 5 0;"><Label fx:id="settingsMessageLabel" text="" style="-fx-font-size: 12;" /><Button text="&#x1F4BE; Sauvegarder" styleClass="login-button-modern" onAction="#handleSaveSettings" style="-fx-font-size: 12; -fx-padding: 10 28;" /></HBox>
                         </VBox>
                     </ScrollPane>
                 </VBox>
 
                 <!-- ============ SUPPORT PANEL ============ -->
                 <VBox fx:id="supportPane" spacing="22" style="-fx-background-color: #0a0a0a; -fx-padding: 28;" visible="false">
-                    <VBox spacing="3">
-                        <Label text="Centre de Support" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" />
-                        <Label text="Aide et assistance technique" style="-fx-text-fill: #666666; -fx-font-size: 12;" />
-                    </VBox>
+                    <VBox spacing="3"><Label text="Centre de Support" style="-fx-font-size: 22; -fx-text-fill: #ffffff; -fx-font-weight: bold;" /><Label text="Aide et assistance technique" style="-fx-text-fill: #666666; -fx-font-size: 12;" /></VBox>
                     <HBox spacing="14">
-                        <VBox spacing="12" styleClass="stat-card" HBox.hgrow="ALWAYS" alignment="CENTER">
-                            <StackPane prefWidth="48" prefHeight="48" style="-fx-background-color: rgba(255,215,0,0.08); -fx-background-radius: 14;">
-                                <Label text="&#x1F4DA;" style="-fx-font-size: 22;" />
-                            </StackPane>
-                            <Label text="FAQ" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
-                            <Label text="Questions frequentes" style="-fx-text-fill: #888888; -fx-font-size: 11;" textAlignment="CENTER" wrapText="true" />
-                            <Button text="Consulter" styleClass="button-outline" onAction="#handleViewFAQ" style="-fx-padding: 7 20;" />
-                        </VBox>
-                        <VBox spacing="12" styleClass="stat-card" HBox.hgrow="ALWAYS" alignment="CENTER">
-                            <StackPane prefWidth="48" prefHeight="48" style="-fx-background-color: rgba(81,207,102,0.08); -fx-background-radius: 14;">
-                                <Label text="&#x1F4E7;" style="-fx-font-size: 22;" />
-                            </StackPane>
-                            <Label text="Email Support" style="-fx-text-fill: #51CF66; -fx-font-size: 14; -fx-font-weight: bold;" />
-                            <Label text="support@tabaani.com" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
-                            <Button text="Envoyer" styleClass="button-outline" onAction="#handleSendEmail" style="-fx-padding: 7 20;" />
-                        </VBox>
-                        <VBox spacing="12" styleClass="stat-card" HBox.hgrow="ALWAYS" alignment="CENTER">
-                            <StackPane prefWidth="48" prefHeight="48" style="-fx-background-color: rgba(255,183,77,0.08); -fx-background-radius: 14;">
-                                <Label text="&#x1F4AC;" style="-fx-font-size: 22;" />
-                            </StackPane>
-                            <Label text="Chat en direct" style="-fx-text-fill: #FFB74D; -fx-font-size: 14; -fx-font-weight: bold;" />
-                            <Label text="Discuter avec notre equipe" style="-fx-text-fill: #888888; -fx-font-size: 11;" textAlignment="CENTER" wrapText="true" />
-                            <Button text="Demarrer" styleClass="button-outline" onAction="#handleStartChat" style="-fx-padding: 7 20;" />
-                        </VBox>
+                        <VBox spacing="12" styleClass="stat-card" HBox.hgrow="ALWAYS" alignment="CENTER"><StackPane prefWidth="48" prefHeight="48" style="-fx-background-color: rgba(255,215,0,0.08); -fx-background-radius: 14;"><Label text="&#x1F4DA;" style="-fx-font-size: 22;" /></StackPane><Label text="FAQ" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" /><Label text="Questions frequentes" style="-fx-text-fill: #888888; -fx-font-size: 11;" textAlignment="CENTER" wrapText="true" /><Button text="Consulter" styleClass="button-outline" onAction="#handleViewFAQ" style="-fx-padding: 7 20;" /></VBox>
+                        <VBox spacing="12" styleClass="stat-card" HBox.hgrow="ALWAYS" alignment="CENTER"><StackPane prefWidth="48" prefHeight="48" style="-fx-background-color: rgba(81,207,102,0.08); -fx-background-radius: 14;"><Label text="&#x1F4E7;" style="-fx-font-size: 22;" /></StackPane><Label text="Email Support" style="-fx-text-fill: #51CF66; -fx-font-size: 14; -fx-font-weight: bold;" /><Label text="support@tabaani.com" style="-fx-text-fill: #888888; -fx-font-size: 11;" /><Button text="Envoyer" styleClass="button-outline" onAction="#handleSendEmail" style="-fx-padding: 7 20;" /></VBox>
+                        <VBox spacing="12" styleClass="stat-card" HBox.hgrow="ALWAYS" alignment="CENTER"><StackPane prefWidth="48" prefHeight="48" style="-fx-background-color: rgba(255,183,77,0.08); -fx-background-radius: 14;"><Label text="&#x1F4AC;" style="-fx-font-size: 22;" /></StackPane><Label text="Chat en direct" style="-fx-text-fill: #FFB74D; -fx-font-size: 14; -fx-font-weight: bold;" /><Label text="Discuter avec notre equipe" style="-fx-text-fill: #888888; -fx-font-size: 11;" textAlignment="CENTER" wrapText="true" /><Button text="Demarrer" styleClass="button-outline" onAction="#handleStartChat" style="-fx-padding: 7 20;" /></VBox>
                     </HBox>
                     <VBox spacing="15" styleClass="content-card" VBox.vgrow="ALWAYS">
-                        <HBox spacing="10" alignment="CENTER_LEFT">
-                            <Label text="&#x1F3AB;" style="-fx-font-size: 15;" />
-                            <Label text="Soumettre un ticket" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" />
-                        </HBox>
-                        <Separator />
-                        <HBox spacing="15">
-                            <VBox spacing="6" HBox.hgrow="ALWAYS">
-                                <Label text="SUJET" styleClass="field-label" />
-                                <TextField fx:id="ticketSubjectField" promptText="Decrivez le sujet..." styleClass="text-field-modern" prefHeight="42" />
-                            </VBox>
-                            <VBox spacing="6" prefWidth="200">
-                                <Label text="PRIORITE" styleClass="field-label" />
-                                <ComboBox fx:id="ticketPriorityCombo" promptText="Selectionner" prefWidth="200"
-                                          style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;">
-                                    <items>
-                                        <FXCollections fx:factory="observableArrayList">
-                                            <String fx:value="Faible" />
-                                            <String fx:value="Moyen" />
-                                            <String fx:value="Eleve" />
-                                            <String fx:value="Critique" />
-                                        </FXCollections>
-                                    </items>
-                                </ComboBox>
-                            </VBox>
-                        </HBox>
-                        <VBox spacing="6" VBox.vgrow="ALWAYS">
-                            <Label text="DESCRIPTION" styleClass="field-label" />
-                            <TextArea fx:id="ticketDescriptionArea" promptText="Decrivez votre probleme en detail..."
-                                      VBox.vgrow="ALWAYS" wrapText="true"
-                                      style="-fx-background-color: rgba(18,18,18,0.9); -fx-text-fill: #ffffff; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 10; -fx-background-radius: 10;" />
-                        </VBox>
-                        <HBox spacing="15" alignment="CENTER_RIGHT">
-                            <Label fx:id="ticketMessageLabel" text="" style="-fx-font-size: 12;" />
-                            <Button text="&#x1F4E4; Soumettre" styleClass="login-button-modern" onAction="#handleSubmitTicket" style="-fx-font-size: 12; -fx-padding: 10 28;" />
-                        </HBox>
+                        <HBox spacing="10" alignment="CENTER_LEFT"><Label text="&#x1F3AB;" style="-fx-font-size: 15;" /><Label text="Soumettre un ticket" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" /></HBox><Separator />
+                        <HBox spacing="15"><VBox spacing="6" HBox.hgrow="ALWAYS"><Label text="SUJET" styleClass="field-label" /><TextField fx:id="ticketSubjectField" promptText="Decrivez le sujet..." styleClass="text-field-modern" prefHeight="42" /></VBox><VBox spacing="6" prefWidth="200"><Label text="PRIORITE" styleClass="field-label" /><ComboBox fx:id="ticketPriorityCombo" promptText="Selectionner" prefWidth="200" style="-fx-background-color: rgba(18,18,18,0.9); -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8; -fx-background-radius: 8;"><items><FXCollections fx:factory="observableArrayList"><String fx:value="Faible" /><String fx:value="Moyen" /><String fx:value="Eleve" /><String fx:value="Critique" /></FXCollections></items></ComboBox></VBox></HBox>
+                        <VBox spacing="6" VBox.vgrow="ALWAYS"><Label text="DESCRIPTION" styleClass="field-label" /><TextArea fx:id="ticketDescriptionArea" promptText="Decrivez votre probleme en detail..." VBox.vgrow="ALWAYS" wrapText="true" style="-fx-background-color: rgba(18,18,18,0.9); -fx-text-fill: #ffffff; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 10; -fx-background-radius: 10;" /></VBox>
+                        <HBox spacing="15" alignment="CENTER_RIGHT"><Label fx:id="ticketMessageLabel" text="" style="-fx-font-size: 12;" /><Button text="&#x1F4E4; Soumettre" styleClass="login-button-modern" onAction="#handleSubmitTicket" style="-fx-font-size: 12; -fx-padding: 10 28;" /></HBox>
                     </VBox>
                 </VBox>
 

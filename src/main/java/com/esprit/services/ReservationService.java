@@ -44,7 +44,7 @@ public class ReservationService {
     // =====================================================
     public List<Reservation> getAll() {
         List<Reservation> list = new ArrayList<>();
-        String sql = "SELECT r.*, p.type_service, p.nb_personnes, p.id_etablissement " +
+        String sql = "SELECT r.*, p.type_service, p.nb_personnes, p.id_etablissement, p.id_client " +
                      "FROM reservation r " +
                      "JOIN panier p ON r.id_panier = p.id_panier " +
                      "ORDER BY r.date_paiement DESC";
@@ -52,7 +52,9 @@ public class ReservationService {
             Statement st = con.createStatement();
             ResultSet rs = st.executeQuery(sql);
             while (rs.next()) {
-                list.add(mapReservation(rs));
+                Reservation rr = mapReservation(rs);
+                try { rr.setIdClient(rs.getInt("id_client")); } catch (SQLException ignored) {}
+                list.add(rr);
             }
         } catch (SQLException e) {
             e.printStackTrace();

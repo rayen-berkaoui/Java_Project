@@ -16,6 +16,7 @@ public class Reservation {
     private String typeService;
     private String nomEtablissement;
     private int nbPersonnes;
+    private int idClient;
 
     public Reservation() {}
 
@@ -59,6 +60,9 @@ public class Reservation {
 
     public int getNbPersonnes() { return nbPersonnes; }
     public void setNbPersonnes(int nbPersonnes) { this.nbPersonnes = nbPersonnes; }
+
+    public int getIdClient() { return idClient; }
+    public void setIdClient(int idClient) { this.idClient = idClient; }
 
     @Override
     public String toString() {
