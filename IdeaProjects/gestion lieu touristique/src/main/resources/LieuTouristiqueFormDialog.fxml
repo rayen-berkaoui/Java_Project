@@ -73,13 +73,13 @@
                         </VBox>
 
                         <VBox spacing="10" styleClass="form-group">
-                            <Label text="ID Catégorie" styleClass="form-field-label"/>
-                            <TextField fx:id="tfIdCategorie" promptText="ID de la catégorie..." styleClass="form-input" prefHeight="48"/>
+                            <Label text="Catégorie" styleClass="form-field-label"/>
+                            <ComboBox fx:id="cbCategorie" promptText="Sélectionner une catégorie..." styleClass="form-combo" prefHeight="48" maxWidth="1.7976931348623157E308"/>
                         </VBox>
 
                         <VBox spacing="10" styleClass="form-group">
-                            <Label text="ID Adresse" styleClass="form-field-label"/>
-                            <TextField fx:id="tfIdAdresse" promptText="ID de l'adresse..." styleClass="form-input" prefHeight="48"/>
+                            <Label text="Adresse" styleClass="form-field-label"/>
+                            <ComboBox fx:id="cbAdresse" promptText="Sélectionner une adresse..." styleClass="form-combo" prefHeight="48" maxWidth="1.7976931348623157E308"/>
                         </VBox>
 
                         <!-- Image Preview -->

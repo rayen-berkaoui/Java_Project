@@ -12,22 +12,29 @@
     <top>
         <VBox spacing="0">
             <!-- Main Navigation Bar -->
-            <HBox styleClass="nav-bar" prefHeight="70" alignment="CENTER_LEFT">
-                <padding><Insets top="0" right="30" bottom="0" left="30"/></padding>
+            <HBox styleClass="nav-bar" prefHeight="72" alignment="CENTER_LEFT">
+                <padding><Insets top="0" right="35" bottom="0" left="28"/></padding>
 
-                <Label styleClass="nav-title" text="🗺️ GESTION TOURISTIQUE"/>
+                <!-- Brand Logo -->
+                <HBox spacing="10" alignment="CENTER_LEFT" styleClass="nav-brand">
+                    <Label text="🗺️" style="-fx-font-size: 30px;"/>
+                    <VBox spacing="0" alignment="CENTER_LEFT">
+                        <Label styleClass="nav-title" text="GESTION"/>
+                        <Label styleClass="nav-title-sub" text="TOURISTIQUE"/>
+                    </VBox>
+                </HBox>
 
                 <Region HBox.hgrow="ALWAYS"/>
 
-                <HBox spacing="12" alignment="CENTER">
-                    <Button styleClass="nav-button" text="📂 Catégories" onAction="#selectCategoriesTab" prefHeight="42" minWidth="140"/>
-                    <Button styleClass="nav-button" text="📍 Adresses" onAction="#selectAddressesTab" prefHeight="42" minWidth="140"/>
-                    <Button styleClass="nav-button" text="🏛️ Lieux" onAction="#selectLocationsTab" prefHeight="42" minWidth="140"/>
+                <HBox spacing="10" alignment="CENTER">
+                    <Button styleClass="nav-button" text="📂  Catégories" onAction="#selectCategoriesTab" prefHeight="42" minWidth="150"/>
+                    <Button styleClass="nav-button" text="📍  Adresses" onAction="#selectAddressesTab" prefHeight="42" minWidth="150"/>
+                    <Button styleClass="nav-button" text="🏛️  Lieux" onAction="#selectLocationsTab" prefHeight="42" minWidth="150"/>
                 </HBox>
 
-                <Region prefWidth="30"/>
+                <Region prefWidth="25"/>
 
-                <Button styleClass="nav-button fullscreen-btn" text="⛶" onAction="#toggleFullScreen" prefHeight="42" prefWidth="50"/>
+                <Button styleClass="nav-button fullscreen-btn" text="⛶" onAction="#toggleFullScreen" prefHeight="42" prefWidth="48"/>
             </HBox>
 
             <!-- Gold accent line -->

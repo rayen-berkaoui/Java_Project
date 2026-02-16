@@ -2,30 +2,31 @@ package com.esprit.controllers;
 
 import com.esprit.entities.LieuTouristique;
 import com.esprit.services.LieuTouristiqueServices;
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.CycleMethod;
-import javafx.scene.paint.LinearGradient;
-import javafx.scene.paint.Stop;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LieuTouristiqueController {
 
@@ -36,9 +37,11 @@ public class LieuTouristiqueController {
     @FXML private VBox emptyState;
     @FXML private HBox pageIndicator;
     @FXML private Label lblPageInfo;
+    @FXML private TextField searchField;
 
     private LieuTouristiqueServices lieuServices;
     private List<LieuTouristique> lieuList = new ArrayList<>();
+    private List<LieuTouristique> filteredList = new ArrayList<>();
     private int currentPage = 0;
     private int selectedIndex = -1;
     private static final int CARDS_PER_PAGE = 4;
@@ -49,50 +52,81 @@ public class LieuTouristiqueController {
         try {
             lieuServices = new LieuTouristiqueServices();
 
-            if (btnAjouter != null) btnAjouter.setOnAction(e -> openAddDialog());
-            if (btnModifier != null) btnModifier.setOnAction(e -> openEditDialog());
-            if (btnSupprimer != null) btnSupprimer.setOnAction(e -> deleteLieu());
-            if (btnPrev != null) btnPrev.setOnAction(e -> navigate(-1));
-            if (btnNext != null) btnNext.setOnAction(e -> navigate(1));
+            if (btnAjouter != null) btnAjouter.setOnAction(e -> { animateButton(btnAjouter); openAddDialog(); });
+            if (btnModifier != null) btnModifier.setOnAction(e -> { animateButton(btnModifier); openEditDialog(); });
+            if (btnSupprimer != null) btnSupprimer.setOnAction(e -> { animateButton(btnSupprimer); deleteLieu(); });
+            if (btnPrev != null) btnPrev.setOnAction(e -> { animateButton(btnPrev); navigate(-1); });
+            if (btnNext != null) btnNext.setOnAction(e -> { animateButton(btnNext); navigate(1); });
 
-            Platform.runLater(this::loadData);
-            System.out.println("\u2705 LieuTouristiqueController initialized successfully");
+            // Search listener — filters cards in real time
+            if (searchField != null) {
+                searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+                    currentPage = 0;
+                    selectedIndex = -1;
+                    applyFilter(newVal);
+                });
+            }
+
+            Platform.runLater(() -> {
+                loadData();
+                playEntranceAnimation();
+            });
+            System.out.println("✅ LieuTouristiqueController initialized successfully");
         } catch (Exception e) {
-            System.err.println("\u274c Error initializing LieuTouristiqueController: " + e.getMessage());
+            System.err.println("❌ Error initializing LieuTouristiqueController: " + e.getMessage());
             e.printStackTrace();
-            showErrorAlert("Initialization Error", "Failed to initialize: " + e.getMessage());
+            showToast("Erreur d'initialisation: " + e.getMessage(), false);
         }
+    }
+
+    private void applyFilter(String query) {
+        filteredList.clear();
+        if (query == null || query.trim().isEmpty()) {
+            filteredList.addAll(lieuList);
+        } else {
+            String lower = query.toLowerCase().trim();
+            filteredList.addAll(lieuList.stream().filter(l -> {
+                if (l.getNom() != null && l.getNom().toLowerCase().contains(lower)) return true;
+                if (l.getVille() != null && l.getVille().toLowerCase().contains(lower)) return true;
+                if (l.getDescription() != null && l.getDescription().toLowerCase().contains(lower)) return true;
+                return false;
+            }).collect(Collectors.toList()));
+        }
+        if (lblCount != null) lblCount.setText(String.valueOf(filteredList.size()));
+        buildCards();
     }
 
     private void loadData() {
         try {
             if (lieuServices == null) {
-                showErrorAlert("Error", "Database service not available.");
+                showToast("Service de base de données non disponible", false);
                 return;
             }
             lieuList.clear();
             lieuList.addAll(lieuServices.afficher());
-            if (lblCount != null) lblCount.setText(String.valueOf(lieuList.size()));
+            filteredList.clear();
+            filteredList.addAll(lieuList);
+            if (lblCount != null) animateCounter(lblCount, lieuList.size());
 
             int maxPage = getMaxPage();
             if (currentPage > maxPage) currentPage = maxPage;
-            if (selectedIndex >= lieuList.size()) selectedIndex = lieuList.isEmpty() ? -1 : 0;
+            if (selectedIndex >= filteredList.size()) selectedIndex = filteredList.isEmpty() ? -1 : 0;
 
             buildCards();
-            System.out.println("\u2705 Loaded " + lieuList.size() + " tourist locations");
+            System.out.println("✅ Loaded " + lieuList.size() + " tourist locations");
         } catch (SQLException e) {
-            System.err.println("\u274c SQL Error: " + e.getMessage());
-            showErrorAlert("Database Error", "Error loading locations: " + e.getMessage());
+            System.err.println("❌ SQL Error: " + e.getMessage());
+            showToast("Erreur de chargement: " + e.getMessage(), false);
         }
     }
 
     private int getMaxPage() {
-        if (lieuList.isEmpty()) return 0;
-        return (lieuList.size() - 1) / CARDS_PER_PAGE;
+        if (filteredList.isEmpty()) return 0;
+        return (filteredList.size() - 1) / CARDS_PER_PAGE;
     }
 
     private void navigate(int direction) {
-        if (lieuList.isEmpty()) return;
+        if (filteredList.isEmpty()) return;
         currentPage += direction;
         int maxPage = getMaxPage();
         if (currentPage < 0) currentPage = maxPage;
@@ -103,7 +137,7 @@ public class LieuTouristiqueController {
     private void buildCards() {
         cardsContainer.getChildren().clear();
 
-        if (lieuList.isEmpty()) {
+        if (filteredList.isEmpty()) {
             cardsContainer.setVisible(false);
             cardsContainer.setManaged(false);
             emptyState.setVisible(true);
@@ -123,11 +157,36 @@ public class LieuTouristiqueController {
         if (btnNext != null) btnNext.setDisable(false);
 
         int startIdx = currentPage * CARDS_PER_PAGE;
-        int endIdx = Math.min(startIdx + CARDS_PER_PAGE, lieuList.size());
+        int endIdx = Math.min(startIdx + CARDS_PER_PAGE, filteredList.size());
 
         for (int i = startIdx; i < endIdx; i++) {
-            StackPane card = createCard(lieuList.get(i), i);
+            StackPane card = createCard(filteredList.get(i), i);
             cardsContainer.getChildren().add(card);
+
+            // Staggered card entrance animation
+            int delay = (i - startIdx) * 120;
+            card.setOpacity(0);
+            card.setTranslateY(40);
+            card.setScaleX(0.9);
+            card.setScaleY(0.9);
+
+            FadeTransition fade = new FadeTransition(Duration.millis(400), card);
+            fade.setToValue(1.0);
+            fade.setDelay(Duration.millis(delay));
+            fade.setInterpolator(Interpolator.EASE_OUT);
+
+            TranslateTransition slide = new TranslateTransition(Duration.millis(450), card);
+            slide.setToY(0);
+            slide.setDelay(Duration.millis(delay));
+            slide.setInterpolator(Interpolator.EASE_OUT);
+
+            ScaleTransition scale = new ScaleTransition(Duration.millis(400), card);
+            scale.setToX(1.0);
+            scale.setToY(1.0);
+            scale.setDelay(Duration.millis(delay));
+            scale.setInterpolator(Interpolator.EASE_OUT);
+
+            new ParallelTransition(fade, slide, scale).play();
         }
 
         int totalPages = getMaxPage() + 1;
@@ -217,31 +276,44 @@ public class LieuTouristiqueController {
         if (index == selectedIndex) {
             card.setStyle("-fx-border-color: #FFD700; -fx-border-width: 2.5; -fx-border-radius: 12; "
                     + "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.6), 20, 0.7, 0, 0);");
-            // Re-clip because border changes rendering
             Rectangle selClip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
             selClip.setArcWidth(24);
             selClip.setArcHeight(24);
             card.setClip(selClip);
         }
 
-        // Click handler — select this card
+        // Click handler — select this card with scale pulse
         card.setOnMouseClicked(e -> {
             selectedIndex = index;
-            buildCards(); // Rebuild to show selection
+            ScaleTransition pop = new ScaleTransition(Duration.millis(150), card);
+            pop.setToX(0.95);
+            pop.setToY(0.95);
+            ScaleTransition back = new ScaleTransition(Duration.millis(200), card);
+            back.setToX(1.0);
+            back.setToY(1.0);
+            back.setInterpolator(Interpolator.EASE_OUT);
+            pop.setOnFinished(ev -> { back.play(); back.setOnFinished(ev2 -> buildCards()); });
+            pop.play();
         });
 
-        // Hover effect
+        // Hover effect with smooth scaling
         card.setOnMouseEntered(e -> {
             if (index != selectedIndex) {
-                card.setScaleX(1.04);
-                card.setScaleY(1.04);
+                ScaleTransition hover = new ScaleTransition(Duration.millis(200), card);
+                hover.setToX(1.04);
+                hover.setToY(1.04);
+                hover.setInterpolator(Interpolator.EASE_OUT);
+                hover.play();
                 card.setEffect(new DropShadow(25, Color.rgb(255, 215, 0, 0.4)));
             }
         });
         card.setOnMouseExited(e -> {
             if (index != selectedIndex) {
-                card.setScaleX(1.0);
-                card.setScaleY(1.0);
+                ScaleTransition unhover = new ScaleTransition(Duration.millis(200), card);
+                unhover.setToX(1.0);
+                unhover.setToY(1.0);
+                unhover.setInterpolator(Interpolator.EASE_OUT);
+                unhover.play();
                 card.setEffect(null);
             }
         });
@@ -278,24 +350,127 @@ public class LieuTouristiqueController {
         for (int i = 0; i < maxDots; i++) {
             Circle dot = new Circle(5);
             dot.setStyle(i == currentPage ? "-fx-fill: #FFD700;" : "-fx-fill: rgba(255,215,0,0.25);");
+            final int page = i;
+            dot.setCursor(javafx.scene.Cursor.HAND);
+            dot.setOnMouseClicked(e -> {
+                currentPage = page;
+                buildCards();
+            });
             pageIndicator.getChildren().add(pageIndicator.getChildren().size() - 1, dot);
         }
     }
 
     private LieuTouristique getSelectedLieu() {
-        if (selectedIndex < 0 || selectedIndex >= lieuList.size()) return null;
-        return lieuList.get(selectedIndex);
+        if (selectedIndex < 0 || selectedIndex >= filteredList.size()) return null;
+        return filteredList.get(selectedIndex);
     }
+
+    // ========== ANIMATIONS ==========
+
+    private void playEntranceAnimation() {
+        Node root = cardsContainer.getParent();
+        if (root == null) return;
+
+        root.setOpacity(0);
+        FadeTransition fade = new FadeTransition(Duration.millis(600), root);
+        fade.setFromValue(0);
+        fade.setToValue(1);
+        fade.setInterpolator(Interpolator.EASE_OUT);
+        fade.play();
+
+        if (lblCount != null && lblCount.getParent() != null) {
+            ScaleTransition pulse = new ScaleTransition(Duration.millis(500), lblCount.getParent());
+            pulse.setFromX(0.85);
+            pulse.setFromY(0.85);
+            pulse.setToX(1.0);
+            pulse.setToY(1.0);
+            pulse.setInterpolator(Interpolator.EASE_OUT);
+            pulse.setDelay(Duration.millis(300));
+            pulse.play();
+        }
+    }
+
+    private void animateButton(Button btn) {
+        ScaleTransition press = new ScaleTransition(Duration.millis(100), btn);
+        press.setToX(0.9);
+        press.setToY(0.9);
+        ScaleTransition release = new ScaleTransition(Duration.millis(150), btn);
+        release.setToX(1.0);
+        release.setToY(1.0);
+        release.setInterpolator(Interpolator.EASE_OUT);
+        press.setOnFinished(e -> release.play());
+        press.play();
+    }
+
+    private void animateCounter(Label label, int targetValue) {
+        Timeline timeline = new Timeline();
+        int steps = 20;
+        for (int i = 0; i <= steps; i++) {
+            int val = (int) Math.round((double) targetValue * i / steps);
+            KeyFrame kf = new KeyFrame(Duration.millis(i * 30), e -> label.setText(String.valueOf(val)));
+            timeline.getKeyFrames().add(kf);
+        }
+        timeline.play();
+    }
+
+    private void showToast(String message, boolean isSuccess) {
+        try {
+            if (cardsContainer.getScene() == null) return;
+            Node sceneRoot = cardsContainer.getScene().getRoot();
+            if (sceneRoot instanceof StackPane) {
+                StackPane overlay = (StackPane) sceneRoot;
+                HBox toast = new HBox(10);
+                toast.setAlignment(Pos.CENTER);
+                toast.getStyleClass().add(isSuccess ? "toast-success" : "toast-error");
+                toast.setMaxWidth(450);
+                toast.setMaxHeight(50);
+
+                Label icon = new Label(isSuccess ? "✓" : "✕");
+                icon.getStyleClass().add("toast-icon");
+                Label msg = new Label(message);
+                msg.getStyleClass().add("toast-label");
+                msg.setWrapText(true);
+                toast.getChildren().addAll(icon, msg);
+                StackPane.setAlignment(toast, Pos.TOP_CENTER);
+                StackPane.setMargin(toast, new Insets(20, 0, 0, 0));
+                toast.setOpacity(0);
+                toast.setTranslateY(-30);
+                overlay.getChildren().add(toast);
+
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(350), toast);
+                fadeIn.setToValue(1.0);
+                TranslateTransition slideIn = new TranslateTransition(Duration.millis(350), toast);
+                slideIn.setToY(0);
+                slideIn.setInterpolator(Interpolator.EASE_OUT);
+                ParallelTransition in = new ParallelTransition(fadeIn, slideIn);
+                FadeTransition fadeOut = new FadeTransition(Duration.millis(400), toast);
+                fadeOut.setToValue(0);
+                fadeOut.setDelay(Duration.millis(2500));
+                fadeOut.setOnFinished(e -> overlay.getChildren().remove(toast));
+                in.setOnFinished(e -> fadeOut.play());
+                in.play();
+                return;
+            }
+        } catch (Exception ignored) {}
+
+        Alert alert = new Alert(isSuccess ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
+        alert.setTitle(isSuccess ? "Succès" : "Erreur");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    // ========== CRUD DIALOGS ==========
 
     @FXML
     private void openAddDialog() {
-        if (lieuServices == null) { showErrorAlert("Error", "Database service not available"); return; }
+        if (lieuServices == null) { showToast("Service non disponible", false); return; }
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/LieuTouristiqueFormDialog.fxml"));
             DialogPane dialogPane = loader.load();
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setDialogPane(dialogPane);
-            dialog.setTitle("Add Tourist Location");
+            dialog.setTitle("Ajouter un Lieu Touristique");
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.setResizable(true);
             String css = getClass().getResource("/style.css").toExternalForm();
@@ -312,27 +487,27 @@ public class LieuTouristiqueController {
                 if (newLieu != null) {
                     lieuServices.ajouter(newLieu);
                     loadData();
-                    showSuccessAlert("Success", "Location added successfully");
+                    showToast("Lieu touristique ajouté avec succès !", true);
                 }
             }
         } catch (IOException e) {
-            showErrorAlert("Error", "Error opening form: " + e.getMessage());
+            showToast("Erreur d'ouverture du formulaire", false);
         } catch (SQLException e) {
-            showErrorAlert("Error", "Error adding location: " + e.getMessage());
+            showToast("Erreur d'ajout: " + e.getMessage(), false);
         }
     }
 
     @FXML
     private void openEditDialog() {
-        if (lieuServices == null) { showErrorAlert("Error", "Database service not available"); return; }
+        if (lieuServices == null) { showToast("Service non disponible", false); return; }
         LieuTouristique selected = getSelectedLieu();
-        if (selected == null) { showErrorAlert("Error", "Cliquez sur une carte pour la sélectionner d'abord"); return; }
+        if (selected == null) { showToast("Cliquez sur une carte pour la sélectionner d'abord", false); return; }
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/LieuTouristiqueFormDialog.fxml"));
             DialogPane dialogPane = loader.load();
             Dialog<ButtonType> dialog = new Dialog<>();
             dialog.setDialogPane(dialogPane);
-            dialog.setTitle("Edit Tourist Location");
+            dialog.setTitle("Modifier le Lieu Touristique");
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.setResizable(true);
             String css = getClass().getResource("/style.css").toExternalForm();
@@ -351,24 +526,24 @@ public class LieuTouristiqueController {
                     updatedLieu.setId_lieu(selected.getId_lieu());
                     lieuServices.modifier(updatedLieu);
                     loadData();
-                    showSuccessAlert("Success", "Location updated successfully");
+                    showToast("Lieu touristique modifié avec succès !", true);
                 }
             }
         } catch (IOException e) {
-            showErrorAlert("Error", "Error opening form: " + e.getMessage());
+            showToast("Erreur d'ouverture du formulaire", false);
         } catch (SQLException e) {
-            showErrorAlert("Error", "Error updating location: " + e.getMessage());
+            showToast("Erreur de modification: " + e.getMessage(), false);
         }
     }
 
     @FXML
     private void deleteLieu() {
-        if (lieuServices == null) { showErrorAlert("Error", "Database service not available"); return; }
+        if (lieuServices == null) { showToast("Service non disponible", false); return; }
         LieuTouristique selected = getSelectedLieu();
-        if (selected == null) { showErrorAlert("Error", "Cliquez sur une carte pour la sélectionner d'abord"); return; }
+        if (selected == null) { showToast("Cliquez sur une carte pour la sélectionner d'abord", false); return; }
 
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmAlert.setTitle("Confirm Deletion");
+        confirmAlert.setTitle("Confirmation");
         confirmAlert.setHeaderText("Supprimer ce lieu ?");
         confirmAlert.setContentText("Êtes-vous sûr de vouloir supprimer \"" + selected.getNom() + "\" ?");
         java.util.Optional<ButtonType> result = confirmAlert.showAndWait();
@@ -377,22 +552,10 @@ public class LieuTouristiqueController {
                 lieuServices.supprimer(selected.getId_lieu());
                 selectedIndex = -1;
                 loadData();
-                showSuccessAlert("Success", "Location deleted successfully");
+                showToast("Lieu touristique supprimé !", true);
             } catch (SQLException e) {
-                showErrorAlert("Error", "Error deleting location: " + e.getMessage());
+                showToast("Erreur de suppression: " + e.getMessage(), false);
             }
         }
-    }
-
-    private void showSuccessAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title); alert.setHeaderText(null); alert.setContentText(message);
-        alert.showAndWait();
-    }
-
-    private void showErrorAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title); alert.setHeaderText(null); alert.setContentText(message);
-        alert.showAndWait();
     }
 }

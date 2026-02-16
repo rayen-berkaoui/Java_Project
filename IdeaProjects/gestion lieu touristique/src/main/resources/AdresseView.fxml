@@ -7,32 +7,56 @@
 <ScrollPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.AdresseController"
             fitToWidth="true" fitToHeight="true" styleClass="content-scroll" prefHeight="1010" prefWidth="1920">
     <VBox styleClass="content-root" VBox.vgrow="ALWAYS">
-        <padding><Insets top="30" right="40" bottom="30" left="40"/></padding>
+        <padding><Insets top="25" right="40" bottom="25" left="40"/></padding>
 
         <!-- Page Header -->
-        <HBox alignment="CENTER_LEFT" spacing="15" styleClass="page-header">
-            <Label text="📍" style="-fx-font-size: 36px;"/>
-            <VBox spacing="2">
-                <Label text="Gestion des Adresses" styleClass="title-label"/>
-                <Label text="Gérer les adresses et coordonnées géographiques" styleClass="subtitle-label"/>
+        <HBox alignment="CENTER_LEFT" spacing="0" styleClass="page-header-banner">
+            <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+            <!-- Icon Badge -->
+            <VBox alignment="CENTER" styleClass="header-icon-badge">
+                <Label text="📍" styleClass="header-icon-emoji"/>
+            </VBox>
+            <!-- Title Block -->
+            <VBox spacing="6" styleClass="header-title-block">
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Label text="GÉOLOCALISATION" styleClass="header-tag"/>
+                </HBox>
+                <Label text="Adresses" styleClass="header-main-title"/>
+                <Label text="Gérer les adresses et coordonnées géographiques" styleClass="header-description"/>
             </VBox>
             <Region HBox.hgrow="ALWAYS"/>
-            <VBox alignment="CENTER_RIGHT" styleClass="stat-card">
-                <Label fx:id="lblCount" text="--" styleClass="stat-number"/>
-                <Label text="Adresses" styleClass="stat-label"/>
+            <!-- Stat Card -->
+            <VBox alignment="CENTER" styleClass="header-stat-card">
+                <Label fx:id="lblCount" text="--" styleClass="header-stat-number"/>
+                <Label text="Total Adresses" styleClass="header-stat-label"/>
+                <Region styleClass="header-stat-underline" prefHeight="2" maxHeight="2"/>
             </VBox>
         </HBox>
 
         <!-- Decorative separator -->
         <Region styleClass="accent-line" prefHeight="2" maxHeight="2"/>
 
-        <!-- Action Buttons -->
+        <!-- Action Bar + Search -->
         <HBox spacing="15" alignment="CENTER_LEFT" styleClass="action-bar">
-            <padding><Insets top="15" right="0" bottom="15" left="0"/></padding>
-            <Button text="✦ Ajouter" fx:id="btnAjouter" styleClass="btn-add"/>
-            <Button text="✎ Modifier" fx:id="btnModifier" styleClass="btn-edit"/>
-            <Button text="✕ Supprimer" fx:id="btnSupprimer" styleClass="btn-delete"/>
+            <padding><Insets top="10" right="0" bottom="8" left="0"/></padding>
+            <Button text="✦ Ajouter" fx:id="btnAjouter" styleClass="btn-add">
+                <tooltip><Tooltip text="Ajouter une nouvelle adresse"/></tooltip>
+            </Button>
+            <Button text="✎ Modifier" fx:id="btnModifier" styleClass="btn-edit">
+                <tooltip><Tooltip text="Modifier l'adresse sélectionnée"/></tooltip>
+            </Button>
+            <Button text="✕ Supprimer" fx:id="btnSupprimer" styleClass="btn-delete">
+                <tooltip><Tooltip text="Supprimer l'adresse sélectionnée"/></tooltip>
+            </Button>
+            <Region HBox.hgrow="ALWAYS"/>
+            <HBox alignment="CENTER_RIGHT" spacing="6" styleClass="search-container">
+                <Label text="🔍" styleClass="search-icon"/>
+                <TextField fx:id="searchField" promptText="Rechercher une adresse..." styleClass="search-field"/>
+            </HBox>
         </HBox>
+
+        <!-- Thin separator -->
+        <Region styleClass="accent-line-thin" prefHeight="1" maxHeight="1"/>
 
         <!-- Table wrapped in styled card -->
         <VBox styleClass="table-card" VBox.vgrow="ALWAYS">
