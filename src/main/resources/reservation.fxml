@@ -4,14 +4,14 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
+<BorderPane xmlns="http://javafx.com/javafx/22"
+            xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.esprit.controllers.ReservationController"
             prefWidth="1400" prefHeight="860"
-            style="-fx-padding: 0; -fx-border-width: 0;"
+            style="-fx-background-color: #0a0a0a; -fx-padding: 0; -fx-border-width: 0;"
             styleClass="root">
 
-    <!-- ═══════ TOP BAR ═══════ -->
+    <!--  TOP BAR  UNIFIED HEADER  -->
     <top>
         <VBox spacing="0">
             <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="0"
@@ -21,17 +21,17 @@
                 <HBox spacing="10" alignment="CENTER_LEFT">
                     <StackPane prefWidth="36" prefHeight="36"
                                style="-fx-background-color: rgba(255,215,0,0.12); -fx-background-radius: 10;">
-                        <Label text="&#x1F4B3;" style="-fx-font-size: 16;" />
+                        <Label text="&#x1F30D;" style="-fx-font-size: 16;" />
                     </StackPane>
                     <VBox spacing="0">
-                        <Label text="SMARTTRAVEL" style="-fx-font-size: 16; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
-                        <Label text="Mes Paiements" style="-fx-font-size: 9; -fx-text-fill: #666666;" />
+                        <Label text="TABAANI" style="-fx-font-size: 16; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="SMARTTRAVEL" style="-fx-font-size: 9; -fx-text-fill: #666666;" />
                     </VBox>
                 </HBox>
 
                 <Region HBox.hgrow="ALWAYS" />
 
-                <!-- User badge -->
+                <!-- User badge pill -->
                 <HBox spacing="8" alignment="CENTER"
                       style="-fx-background-color: rgba(255,215,0,0.05); -fx-padding: 6 16; -fx-background-radius: 20;">
                     <StackPane prefWidth="26" prefHeight="26"
@@ -43,6 +43,7 @@
 
                 <Region prefWidth="12" />
 
+                <!-- Nav buttons -->
                 <HBox spacing="8" alignment="CENTER">
                     <Button text="&#x1F3E0; Accueil" styleClass="dashboard-button" onAction="#handleBackToMain"
                             style="-fx-padding: 8 16; -fx-font-size: 11;" />
@@ -64,7 +65,7 @@
         </VBox>
     </top>
 
-    <!-- ═══════ CENTER ═══════ -->
+    <!--  CENTER  -->
     <center>
         <ScrollPane fitToWidth="true" hbarPolicy="NEVER"
                     style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a; -fx-padding: 0;">
@@ -154,7 +155,7 @@
                     </HBox>
 
                     <HBox fx:id="reservationCarousel" spacing="16" alignment="CENTER_LEFT"
-                          style="-fx-padding: 6 0;" />
+                          style="-fx-padding: 6 0; -fx-min-height: 220;" />
 
                 </VBox>
 

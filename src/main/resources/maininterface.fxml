@@ -4,32 +4,52 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.MainInterfaceController" style="-fx-background-color: #0a0a0a;">
+<BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.MainInterfaceController" prefWidth="1400" prefHeight="860" style="-fx-background-color: #0a0a0a; -fx-padding: 0; -fx-border-width: 0;" styleClass="root">
 
-    <!-- TOP BAR -->
+    <!-- TOP BAR - same style as panier/reservation -->
     <top>
-        <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: rgba(10,10,10,0.98); -fx-padding: 10 20; -fx-border-color: rgba(255,215,0,0.08); -fx-border-width: 0 0 1 0;">
-            <Label text="TABAANI" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;"/>
-            <Label text="SMARTTRAVEL" style="-fx-text-fill: #555555; -fx-font-size: 11; -fx-font-weight: bold;"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <fx:define><Label fx:id="welcomeLabel" text="Bienvenue !"/></fx:define>
-            <!-- Panier Icon -->
-            <StackPane onMouseClicked="#handleGoToPanier" style="-fx-cursor: hand;">
-                <Label text="&#x1F6D2;" style="-fx-font-size: 20;"/>
-                <StackPane fx:id="panierBadge" alignment="TOP_RIGHT" translateX="10" translateY="-5" visible="false">
-                    <Label fx:id="panierCountLabel" text="0" style="-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-font-size: 9; -fx-font-weight: bold; -fx-padding: 1 5; -fx-background-radius: 10;"/>
+        <VBox spacing="0">
+            <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="0" style="-fx-background-color: #080808; -fx-padding: 12 25;">
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <StackPane prefWidth="36" prefHeight="36" style="-fx-background-color: rgba(255,215,0,0.12); -fx-background-radius: 10;">
+                        <Label text="&#x1F30D;" style="-fx-font-size: 16;" />
+                    </StackPane>
+                    <VBox spacing="0">
+                        <Label text="TABAANI" style="-fx-font-size: 16; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="SMARTTRAVEL" style="-fx-font-size: 9; -fx-text-fill: #666666;" />
+                    </VBox>
+                </HBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <fx:define><Label fx:id="welcomeLabel" text="Bienvenue !"/></fx:define>
+                <!-- Panier Icon -->
+                <StackPane onMouseClicked="#handleGoToPanier" style="-fx-cursor: hand;">
+                    <Label text="&#x1F6D2;" style="-fx-font-size: 18;"/>
+                    <StackPane fx:id="panierBadge" alignment="TOP_RIGHT" translateX="10" translateY="-5" visible="false">
+                        <Label fx:id="panierCountLabel" text="0" style="-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-font-size: 9; -fx-font-weight: bold; -fx-padding: 1 5; -fx-background-radius: 10;"/>
+                    </StackPane>
                 </StackPane>
-            </StackPane>
-            <HBox spacing="6" alignment="CENTER">
-                <StackPane prefWidth="32" prefHeight="32" style="-fx-background-color: linear-gradient(to bottom right, #FFD700, #FF8C00); -fx-background-radius: 16;">
-                    <Label fx:id="userNameLabel" text="U" style="-fx-text-fill: black; -fx-font-size: 12; -fx-font-weight: bold;"/>
-                </StackPane>
+                <Region prefWidth="12" />
+                <!-- User badge - same style as reservation -->
+                <HBox spacing="8" alignment="CENTER" style="-fx-background-color: rgba(255,215,0,0.05); -fx-padding: 6 16; -fx-background-radius: 20;">
+                    <StackPane prefWidth="26" prefHeight="26" style="-fx-background-color: rgba(255,215,0,0.15); -fx-background-radius: 13;">
+                        <Label text="&#x1F464;" style="-fx-font-size: 11;" />
+                    </StackPane>
+                    <Label fx:id="userNameLabel" text="Voyageur" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                </HBox>
+                <Region prefWidth="12" />
+                <HBox spacing="8" alignment="CENTER">
+                    <Button text="&#x1F6D2; Panier" styleClass="dashboard-button" onAction="#handleGoToPanier" style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                    <Button text="&#x1F4B3; Mes Paiements" styleClass="dashboard-button" onAction="#handleGoToMesPaiements" style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                    <Button text="&#x1F6AA; Deconnexion" styleClass="dashboard-button-danger" onAction="#handleLogout" style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                </HBox>
+                <Region prefWidth="10" />
+                <HBox spacing="2">
+                    <Button text="&#x2014;" onAction="#handleMinimize" styleClass="window-button" />
+                    <Button text="&#x2715;" onAction="#handleClose" styleClass="window-button-close" />
+                </HBox>
             </HBox>
-            <HBox spacing="4">
-                <Button text="&#x2014;" onAction="#handleMinimize" style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-font-size: 11; -fx-cursor: hand;"/>
-                <Button text="&#x2716;" onAction="#handleClose" style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-font-size: 11; -fx-cursor: hand;"/>
-            </HBox>
-        </HBox>
+            <Region style="-fx-background-color: linear-gradient(to right, rgba(255,215,0,0.5), rgba(255,215,0,0.15), rgba(255,215,0,0.02), transparent); -fx-pref-height: 1.5;" />
+        </VBox>
     </top>
 
     <!-- CENTER: SIDEBAR + CONTENT -->
@@ -54,12 +74,10 @@
                 <!-- PANEL ACCUEIL -->
                 <ScrollPane fx:id="panelAccueil" fitToWidth="true" style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;" hbarPolicy="NEVER">
                     <VBox spacing="24" style="-fx-padding: 28;">
-                        <!-- Welcome -->
                         <VBox spacing="6">
                             <Label text="&#x1F30D; Bienvenue sur SmartTravel" style="-fx-text-fill: white; -fx-font-size: 22; -fx-font-weight: bold;"/>
                             <Label text="Decouvrez les meilleures destinations et etablissements" style="-fx-text-fill: #666; -fx-font-size: 12;"/>
                         </VBox>
-                        <!-- Stats Cards -->
                         <HBox spacing="16">
                             <VBox spacing="4" style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 12; -fx-border-width: 1;" HBox.hgrow="ALWAYS">
                                 <Label text="&#x1F30D; Destinations" style="-fx-text-fill: #888; -fx-font-size: 10;"/>
@@ -78,7 +96,6 @@
                                 <Label fx:id="statPaiementsLabel" text="0 reservations" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;"/>
                             </VBox>
                         </HBox>
-                        <!-- Lieux Accueil Carousel -->
                         <VBox spacing="12">
                             <HBox alignment="CENTER_LEFT" spacing="10">
                                 <Label text="&#x2B50; Destinations Populaires" style="-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;"/>
@@ -88,7 +105,6 @@
                             </HBox>
                             <HBox fx:id="lieuxAccueilCarousel" spacing="16"/>
                         </VBox>
-                        <!-- Etab Accueil Carousel -->
                         <VBox spacing="12">
                             <HBox alignment="CENTER_LEFT" spacing="10">
                                 <Label text="&#x1F37D; Restaurants &amp; Loisirs" style="-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;"/>
@@ -115,7 +131,6 @@
                         <HBox fx:id="lieuxCarousel" spacing="16"/>
                     </VBox>
                 </ScrollPane>
-
                 <!-- PANEL RESTAURANTS -->
                 <ScrollPane fx:id="panelRestaurants" fitToWidth="true" visible="false" style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;" hbarPolicy="NEVER">
                     <VBox spacing="20" style="-fx-padding: 28;">
@@ -139,7 +154,6 @@
                             <Label text="Gerez vos informations personnelles" style="-fx-text-fill: #666; -fx-font-size: 12;"/>
                         </VBox>
                         <HBox spacing="24">
-                            <!-- Profile Card -->
                             <VBox spacing="12" alignment="CENTER" style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 30; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-pref-width: 280;">
                                 <StackPane prefWidth="70" prefHeight="70" style="-fx-background-color: linear-gradient(to bottom right, #FFD700, #FF8C00); -fx-background-radius: 35;">
                                     <Label fx:id="profilInitials" text="U" style="-fx-text-fill: black; -fx-font-size: 24; -fx-font-weight: bold;"/>
@@ -149,7 +163,6 @@
                                 <Label fx:id="profilStatut" text="Statut: ACTIF" style="-fx-text-fill: #51CF66; -fx-font-size: 10;"/>
                                 <Label fx:id="profilDate" text="Membre depuis: --" style="-fx-text-fill: #555; -fx-font-size: 10;"/>
                             </VBox>
-                            <!-- Edit Form -->
                             <VBox spacing="14" style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 24; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1;" HBox.hgrow="ALWAYS">
                                 <Label text="Modifier mes informations" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;"/>
                                 <VBox spacing="4">

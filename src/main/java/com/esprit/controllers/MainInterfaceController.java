@@ -4,24 +4,14 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.animation.FadeTransition;
-import javafx.animation.Interpolator;
-import javafx.animation.ParallelTransition;
-import javafx.animation.ScaleTransition;
-import javafx.animation.TranslateTransition;
+import javafx.animation.*;
 import javafx.util.Duration;
 import javafx.scene.Node;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import com.esprit.entities.Lieu;
 import com.esprit.entities.Etablissement;
 import com.esprit.entities.Panier;
@@ -31,8 +21,10 @@ import com.esprit.services.EtablissementService;
 import com.esprit.services.PanierService;
 import com.esprit.services.ReservationService;
 import com.esprit.services.utilisateurServices;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public class MainInterfaceController {
     @FXML private HBox titleBar;
@@ -165,7 +157,7 @@ public class MainInterfaceController {
         String icon = index < LIEU_ICONS.length ? LIEU_ICONS[index] : "\uD83C\uDFDB";
         String color = index < LIEU_COLORS.length ? LIEU_COLORS[index] : "rgba(100,181,246,0.1)";
         HBox header = new HBox(12);
-        header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        header.setAlignment(Pos.CENTER_LEFT);
         StackPane iconPane = new StackPane(); iconPane.setPrefSize(50, 50);
         iconPane.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 12;");
         Label iconLbl = new Label(icon); iconLbl.setStyle("-fx-font-size: 24;");
@@ -174,7 +166,7 @@ public class MainInterfaceController {
         Label nameLbl = new Label(lieu.getNom()); nameLbl.setStyle("-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;");
         Label villeLbl = new Label(lieu.getVille()); villeLbl.setStyle("-fx-text-fill: #888888; -fx-font-size: 11;");
         nameBox.getChildren().addAll(nameLbl, villeLbl);
-        VBox priceBox = new VBox(2); priceBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        VBox priceBox = new VBox(2); priceBox.setAlignment(Pos.CENTER_RIGHT);
         Label prixLbl = new Label(lieu.getPrix() > 0 ? String.format("%.0f DT", lieu.getPrix()) : "Gratuit");
         prixLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
         Label catLbl = new Label(lieu.getNomCategorie() != null ? lieu.getNomCategorie() : "");
@@ -183,13 +175,13 @@ public class MainInterfaceController {
         header.getChildren().addAll(iconPane, nameBox, priceBox);
         Label descLbl = new Label(lieu.getDescription() != null ? lieu.getDescription() : "");
         descLbl.setStyle("-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;"); descLbl.setWrapText(true);
-        HBox footer = new HBox(8); footer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        HBox footer = new HBox(8); footer.setAlignment(Pos.CENTER_LEFT);
         Label catBadge = new Label(lieu.getNomCategorie() != null ? lieu.getNomCategorie() : "Lieu");
         catBadge.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 3 10; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
         Button addBtn = new Button("\uD83D\uDED2 Ajouter au panier");
         addBtn.getStyleClass().add("dashboard-button"); addBtn.setStyle("-fx-padding: 6 14; -fx-font-size: 10;");
-        addBtn.setOnAction(e -> addLieuToPanier(lieu));
+        addBtn.setOnAction(e -> showBookingDialog(lieu.getNom(), lieu.getPrix() > 0 ? lieu.getPrix() : 50.0, "Voyage", 0, true));
         footer.getChildren().addAll(catBadge, spacer, addBtn);
         card.getChildren().addAll(header, descLbl, footer);
         return card;
@@ -201,7 +193,7 @@ public class MainInterfaceController {
         card.setStyle("-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand;");
         String icon = index < ETAB_ICONS.length ? ETAB_ICONS[index] : "\uD83C\uDF55";
         String color = index < ETAB_COLORS.length ? ETAB_COLORS[index] : "rgba(255,167,38,0.1)";
-        HBox header = new HBox(12); header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        HBox header = new HBox(12); header.setAlignment(Pos.CENTER_LEFT);
         StackPane iconPane = new StackPane(); iconPane.setPrefSize(50, 50);
         iconPane.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 12;");
         Label iconLbl = new Label(icon); iconLbl.setStyle("-fx-font-size: 24;");
@@ -210,7 +202,7 @@ public class MainInterfaceController {
         Label nameLbl = new Label(etab.getNom()); nameLbl.setStyle("-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;");
         Label villeLbl = new Label(etab.getVille() + " - " + etab.getHoraires()); villeLbl.setStyle("-fx-text-fill: #888888; -fx-font-size: 11;");
         nameBox.getChildren().addAll(nameLbl, villeLbl);
-        VBox priceBox = new VBox(2); priceBox.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        VBox priceBox = new VBox(2); priceBox.setAlignment(Pos.CENTER_RIGHT);
         String prixColor = "Eleve".equals(etab.getGammePrix()) ? "#FF6B6B" : "#51CF66";
         Label prixLbl = new Label("Prix: " + (etab.getGammePrix() != null ? etab.getGammePrix() : "N/A"));
         prixLbl.setStyle("-fx-text-fill: " + prixColor + "; -fx-font-size: 10;");
@@ -218,34 +210,123 @@ public class MainInterfaceController {
         header.getChildren().addAll(iconPane, nameBox, priceBox);
         Label descLbl = new Label(etab.getDescription() != null ? etab.getDescription() : "");
         descLbl.setStyle("-fx-text-fill: #777777; -fx-font-size: 11; -fx-wrap-text: true;"); descLbl.setWrapText(true);
-        HBox footer = new HBox(8); footer.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        HBox footer = new HBox(8); footer.setAlignment(Pos.CENTER_LEFT);
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
         Button addBtn = new Button("\uD83D\uDED2 Ajouter au panier");
         addBtn.getStyleClass().add("dashboard-button"); addBtn.setStyle("-fx-padding: 6 14; -fx-font-size: 10;");
-        addBtn.setOnAction(e -> addEtabToPanier(etab));
+        double basePrice = "Eleve".equals(etab.getGammePrix()) ? 120.0 : ("Moyen".equals(etab.getGammePrix()) ? 80.0 : 50.0);
+        addBtn.setOnAction(e -> showBookingDialog(etab.getNom(), basePrice, "Restaurant", etab.getIdEtablissement(), false));
         footer.getChildren().addAll(spacer, addBtn);
         card.getChildren().addAll(header, descLbl, footer);
         return card;
     }
 
-    private void addLieuToPanier(Lieu lieu) {
+    // ================================================================
+    // BOOKING DIALOG - date, people, days (if hotel/voyage), total price
+    // ================================================================
+    private void showBookingDialog(String itemName, double pricePerUnit, String typeService, int etabId, boolean isLieu) {
         if (currentUser == null) return;
-        Panier p = new Panier();
-        p.setIdClient(currentUser.getId()); p.setIdEtablissement(1); p.setTypeService("Voyage");
-        p.setDateDebut(LocalDateTime.now().plusDays(7)); p.setDateFin(LocalDateTime.now().plusDays(8));
-        p.setNbPersonnes(2); p.setPrixEstime(lieu.getPrix() > 0 ? lieu.getPrix() : 50.0);
-        p.setStatutItem("en_attente"); p.setNomEtablissement(lieu.getNom());
-        if (panierService.ajouter(p)) { updatePanierBadge(); updateStats(); showAlert("Ajoute au panier !", lieu.getNom() + " a ete ajoute a votre panier."); }
-    }
 
-    private void addEtabToPanier(Etablissement etab) {
-        if (currentUser == null) return;
-        Panier p = new Panier();
-        p.setIdClient(currentUser.getId()); p.setIdEtablissement(etab.getIdEtablissement()); p.setTypeService("Restaurant");
-        p.setDateDebut(LocalDateTime.now().plusDays(3)); p.setDateFin(LocalDateTime.now().plusDays(3).plusHours(2));
-        p.setNbPersonnes(2); p.setPrixEstime(80.0);
-        p.setStatutItem("en_attente"); p.setNomEtablissement(etab.getNom());
-        if (panierService.ajouter(p)) { updatePanierBadge(); updateStats(); showAlert("Ajoute au panier !", etab.getNom() + " a ete ajoute a votre panier."); }
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Reservation");
+        dialog.setHeaderText("Reserver: " + itemName);
+
+        // Style the dialog
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+
+        // Title
+        Label titleLbl = new Label("\uD83D\uDCC5 Details de la reservation");
+        titleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+
+        // Date picker
+        VBox dateBox = new VBox(4);
+        Label dateLbl = new Label("Date de debut");
+        dateLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
+        DatePicker datePicker = new DatePicker(LocalDate.now().plusDays(3));
+        datePicker.setStyle("-fx-background-color: #222; -fx-text-fill: white;");
+        dateBox.getChildren().addAll(dateLbl, datePicker);
+
+        // Number of people
+        VBox peopleBox = new VBox(4);
+        Label peopleLbl = new Label("\uD83D\uDC65 Nombre de personnes");
+        peopleLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
+        Spinner<Integer> peopleSpinner = new Spinner<>(1, 20, 2);
+        peopleSpinner.setEditable(true);
+        peopleSpinner.setStyle("-fx-background-color: #222;");
+        peopleBox.getChildren().addAll(peopleLbl, peopleSpinner);
+
+        // Number of days (only for Voyage / hotel)
+        VBox daysBox = new VBox(4);
+        Label daysLbl = new Label("\uD83C\uDFE8 Nombre de jours");
+        daysLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
+        Spinner<Integer> daysSpinner = new Spinner<>(1, 30, 1);
+        daysSpinner.setEditable(true);
+        daysSpinner.setStyle("-fx-background-color: #222;");
+        daysBox.getChildren().addAll(daysLbl, daysSpinner);
+        daysBox.setVisible(isLieu);
+        daysBox.setManaged(isLieu);
+
+        // Price display
+        VBox priceDisplayBox = new VBox(6);
+        priceDisplayBox.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-padding: 14; -fx-background-radius: 10;");
+        priceDisplayBox.setAlignment(Pos.CENTER);
+        Label priceInfoLbl = new Label("Prix unitaire: " + String.format("%.2f DT", pricePerUnit));
+        priceInfoLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
+        Label totalLabel = new Label();
+        totalLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 22; -fx-font-weight: bold;");
+        priceDisplayBox.getChildren().addAll(priceInfoLbl, totalLabel);
+
+        // Calculate total price
+        Runnable updateTotal = () -> {
+            int people = peopleSpinner.getValue();
+            int days = isLieu ? daysSpinner.getValue() : 1;
+            double total = pricePerUnit * people * days;
+            totalLabel.setText(String.format("Total: %.2f DT", total));
+        };
+        updateTotal.run();
+        peopleSpinner.valueProperty().addListener((obs, o, n) -> updateTotal.run());
+        if (isLieu) daysSpinner.valueProperty().addListener((obs, o, n) -> updateTotal.run());
+
+        content.getChildren().addAll(titleLbl, dateBox, peopleBox, daysBox, priceDisplayBox);
+        dp.setContent(content);
+        dp.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        // Style buttons
+        Button okButton = (Button) dp.lookupButton(ButtonType.OK);
+        okButton.setText("\uD83D\uDED2 Ajouter au Panier");
+        okButton.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 8 20; -fx-background-radius: 8;");
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            LocalDate selectedDate = datePicker.getValue();
+            if (selectedDate == null) selectedDate = LocalDate.now().plusDays(3);
+            int people = peopleSpinner.getValue();
+            int days = isLieu ? daysSpinner.getValue() : 1;
+            double totalPrice = pricePerUnit * people * days;
+
+            Panier p = new Panier();
+            p.setIdClient(currentUser.getId());
+            p.setIdEtablissement(etabId > 0 ? etabId : 1);
+            p.setTypeService(typeService);
+            p.setDateDebut(selectedDate.atStartOfDay());
+            p.setDateFin(selectedDate.plusDays(days).atStartOfDay());
+            p.setNbPersonnes(people);
+            p.setPrixEstime(totalPrice);
+            p.setStatutItem("en_attente");
+            p.setNomEtablissement(itemName);
+
+            if (panierService.ajouter(p)) {
+                updatePanierBadge();
+                updateStats();
+                showAlert("Ajoute au panier !", itemName + " a ete ajoute.\nTotal: " + String.format("%.2f DT", totalPrice));
+            }
+        }
     }
 
     private void showAlert(String title, String msg) {
