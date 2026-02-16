@@ -20,6 +20,8 @@ import com.esprit.entities.Etablissement;
 import com.esprit.entities.utilisateur;
 import com.esprit.services.ReservationService;
 import com.esprit.services.EtablissementService;
+import com.esprit.services.EmailService;
+import com.esprit.services.utilisateurServices;
 
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -43,6 +45,8 @@ public class ReservationController {
     private utilisateur currentUser;
     private final ReservationService reservationService = new ReservationService();
     private final EtablissementService etabService = new EtablissementService();
+    private final EmailService emailService = new EmailService();
+    private final utilisateurServices userService = new utilisateurServices();
 
     private List<Reservation> reservations;
     private int currentPage = 0;
@@ -70,6 +74,7 @@ public class ReservationController {
         this.currentUser = user;
         if (user != null) {
             if (userNameLabel != null) userNameLabel.setText(user.getNom() + " " + user.getPrenom());
+            user.setLoyaltyPoints(userService.getLoyaltyPoints(user.getId()));
             loadData();
         }
     }
@@ -132,7 +137,7 @@ public class ReservationController {
     }
 
     // ================================================================
-    // BUILD RESERVATION CARD  PROFESSIONAL DESIGN
+    // BUILD RESERVATION CARD - PROFESSIONAL DESIGN
     // ================================================================
     private VBox buildReservationCard(Reservation r, int index) {
         VBox card = new VBox(10);
@@ -146,7 +151,7 @@ public class ReservationController {
         card.setStyle("-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 14; " +
                 "-fx-border-color: " + bgColor.replace("0.08", "0.15") + "; -fx-border-radius: 14; -fx-border-width: 1;");
 
-        //  TOP: icon + name + price 
+        // TOP: icon + name + price
         HBox header = new HBox(12);
         header.setAlignment(Pos.CENTER_LEFT);
 
@@ -177,7 +182,7 @@ public class ReservationController {
 
         header.getChildren().addAll(iconPane, nameBox, priceBox);
 
-        //  CONFIRMATION CODE BADGE 
+        // CONFIRMATION CODE BADGE
         HBox codeBadge = new HBox(8);
         codeBadge.setAlignment(Pos.CENTER);
         codeBadge.setStyle("-fx-background-color: rgba(255,215,0,0.06); -fx-padding: 8 14; -fx-background-radius: 8;");
@@ -187,17 +192,16 @@ public class ReservationController {
         codeLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold; -fx-font-family: 'Consolas';");
         Region codeSpacer = new Region();
         HBox.setHgrow(codeSpacer, Priority.ALWAYS);
-        // Statut badge inline
         Label statutBadge = new Label(statutIcon + " " + (r.getStatutPaiement() != null ? r.getStatutPaiement() : "Inconnu"));
         String sbBg = statutColor.replace("rgb(", "rgba(").replace(")", ",0.12)");
         statutBadge.setStyle("-fx-background-color: " + sbBg + "; -fx-text-fill: " + statutColor +
                 "; -fx-padding: 4 12; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
         codeBadge.getChildren().addAll(codeIcon, codeLabel, codeSpacer, statutBadge);
 
-        //  PROGRESS TRACKER 
+        // PROGRESS TRACKER
         HBox progressTracker = buildProgressTracker(r);
 
-        //  DETAIL GRID 
+        // DETAIL GRID
         VBox details = new VBox(6);
         details.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 12; -fx-background-radius: 8;");
 
@@ -213,7 +217,7 @@ public class ReservationController {
         );
         details.getChildren().addAll(row1, row2);
 
-        //  ACTION BUTTONS 
+        // ACTION BUTTONS
         HBox buttons = new HBox(6);
         buttons.setAlignment(Pos.CENTER);
 
@@ -225,16 +229,26 @@ public class ReservationController {
             buttons.getChildren().add(payerBtn);
         }
 
+        // Upgrade button: Cash -> Card (one-way only!)
+        boolean isCash = "Especes".equalsIgnoreCase(r.getModePaiement());
+        boolean isPaid = r.getStatutPaiement() != null && (r.getStatutPaiement().toLowerCase().contains("pay"));
+        if (isCash && isPaid) {
+            Button upgradeBtn = new Button("\uD83D\uDCB3 Passer en Carte");
+            upgradeBtn.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-text-fill: #64B5F6; -fx-padding: 7 12; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
+            upgradeBtn.setOnAction(e -> showUpgradeToCardDialog(r));
+            buttons.getChildren().add(upgradeBtn);
+        }
+
         Button modifyBtn = new Button("\u270F Modifier");
-        modifyBtn.setStyle("-fx-background-color: rgba(255,167,38,0.12); -fx-text-fill: #FFA726; -fx-padding: 7 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
+        modifyBtn.setStyle("-fx-background-color: rgba(255,167,38,0.12); -fx-text-fill: #FFA726; -fx-padding: 7 12; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
         modifyBtn.setOnAction(e -> showModifyReservationDialog(r));
 
         Button detailBtn = new Button("\uD83D\uDCCB Detail");
-        detailBtn.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-text-fill: #64B5F6; -fx-padding: 7 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
+        detailBtn.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-text-fill: #64B5F6; -fx-padding: 7 12; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
         detailBtn.setOnAction(e -> showReservationDetail(r));
 
-        Button deleteBtn = new Button("\uD83D\uDDD1 Supprimer");
-        deleteBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-padding: 7 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
+        Button deleteBtn = new Button("\uD83D\uDDD1");
+        deleteBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-padding: 7 12; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
         deleteBtn.setOnAction(e -> deleteReservation(r));
 
         buttons.getChildren().addAll(modifyBtn, detailBtn, deleteBtn);
@@ -258,6 +272,7 @@ public class ReservationController {
     private String getServiceIcon(String type) {
         if (type == null) return "\uD83D\uDCB3";
         if (type.toLowerCase().contains("voyage")) return "\uD83C\uDFDD";
+        if (type.toLowerCase().contains("hotel")) return "\uD83C\uDFE8";
         if (type.toLowerCase().contains("caf")) return "\u2615";
         if (type.toLowerCase().contains("rest")) return "\uD83C\uDF55";
         return "\uD83C\uDFAF";
@@ -364,7 +379,158 @@ public class ReservationController {
     }
 
     // ================================================================
-    // MODIFY RESERVATION DIALOG
+    // UPGRADE CASH -> CARD (ONE-WAY ONLY)
+    // ================================================================
+    private void showUpgradeToCardDialog(Reservation r) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Passer en Carte Bancaire");
+        dialog.setHeaderText(null);
+
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(16);
+        content.setPadding(new Insets(24));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(460);
+
+        // Header
+        HBox headerRow = new HBox(14);
+        headerRow.setAlignment(Pos.CENTER_LEFT);
+        StackPane headerIcon = new StackPane();
+        headerIcon.setPrefSize(50, 50);
+        headerIcon.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-background-radius: 14;");
+        Label hIcon = new Label("\uD83D\uDCB3");
+        hIcon.setStyle("-fx-font-size: 22;");
+        headerIcon.getChildren().add(hIcon);
+        VBox headerText = new VBox(2);
+        Label titleLbl = new Label("Passer de Especes a Carte");
+        titleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+        Label subLbl = new Label(r.getCodeConfirmation() + " | " + String.format("%.2f DT", r.getMontantTotal()));
+        subLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+        headerText.getChildren().addAll(titleLbl, subLbl);
+        headerRow.getChildren().addAll(headerIcon, headerText);
+
+        // Info box
+        VBox infoBox = new VBox(8);
+        infoBox.setStyle("-fx-background-color: rgba(100,181,246,0.04); -fx-padding: 14; -fx-background-radius: 10;");
+        Label infoTitle = new Label("\u2139 Pourquoi passer en Carte ?");
+        infoTitle.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 12; -fx-font-weight: bold;");
+        int pointsToEarn = (int)(r.getMontantTotal() * 10);
+        Label infoPts = new Label("\u2B50 Gagnez " + pointsToEarn + " points de fidelite");
+        infoPts.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 11;");
+        Label infoSecurity = new Label("\uD83D\uDD12 Paiement securise et tracable");
+        infoSecurity.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+        Label infoWarning = new Label("\u26A0 Cette action est irreversible : vous ne pourrez pas revenir aux especes");
+        infoWarning.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 10;");
+        infoWarning.setWrapText(true);
+        infoBox.getChildren().addAll(infoTitle, infoPts, infoSecurity, infoWarning);
+
+        // Card form
+        VBox cardVisual = new VBox(12);
+        cardVisual.setStyle("-fx-background-color: linear-gradient(to bottom right, #1a1a2e, #16213e); -fx-padding: 18; -fx-background-radius: 14; -fx-border-color: rgba(100,181,246,0.3); -fx-border-radius: 14; -fx-border-width: 1;");
+
+        VBox numBox = new VBox(4);
+        Label numLbl = new Label("Numero de carte");
+        numLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        TextField cardNumField = new TextField();
+        cardNumField.setPromptText("1234 5678 9012 3456");
+        cardNumField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-font-size: 13; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
+        numBox.getChildren().addAll(numLbl, cardNumField);
+
+        VBox holderBox = new VBox(4);
+        Label holderLbl = new Label("Titulaire");
+        holderLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        TextField holderField = new TextField();
+        if (currentUser != null) holderField.setText((currentUser.getNom() + " " + currentUser.getPrenom()).toUpperCase());
+        holderField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
+        holderBox.getChildren().addAll(holderLbl, holderField);
+
+        HBox expiryRow = new HBox(12);
+        VBox expiryBox = new VBox(4);
+        HBox.setHgrow(expiryBox, Priority.ALWAYS);
+        Label expiryLbl = new Label("Expiration (MM/AA)");
+        expiryLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        TextField expiryField = new TextField();
+        expiryField.setPromptText("MM/AA");
+        expiryField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
+        expiryBox.getChildren().addAll(expiryLbl, expiryField);
+
+        VBox cvvBox = new VBox(4);
+        HBox.setHgrow(cvvBox, Priority.ALWAYS);
+        Label cvvLbl = new Label("CVV");
+        cvvLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        PasswordField cvvField = new PasswordField();
+        cvvField.setPromptText("123");
+        cvvField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
+        cvvBox.getChildren().addAll(cvvLbl, cvvField);
+        expiryRow.getChildren().addAll(expiryBox, cvvBox);
+
+        cardVisual.getChildren().addAll(numBox, holderBox, expiryRow);
+
+        Label errorLbl = new Label("");
+        errorLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+
+        content.getChildren().addAll(headerRow, infoBox, cardVisual, errorLbl);
+        dp.setContent(content);
+
+        ButtonType upgradeType = new ButtonType("\uD83D\uDCB3 Confirmer le passage en Carte", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dp.getButtonTypes().addAll(upgradeType, cancelType);
+
+        Button upgradeBtn = (Button) dp.lookupButton(upgradeType);
+        upgradeBtn.setStyle("-fx-background-color: linear-gradient(to right, #64B5F6, #42A5F5); -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 8; -fx-font-size: 12;");
+
+        upgradeBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            String cardNum = cardNumField.getText().trim().replaceAll("\\s", "");
+            String holder = holderField.getText().trim();
+            String expiry = expiryField.getText().trim();
+            String cvv = cvvField.getText().trim();
+            if (cardNum.length() < 13 || cardNum.length() > 19) {
+                errorLbl.setText("Numero de carte invalide (13-19 chiffres)"); event.consume(); return;
+            }
+            if (holder.isEmpty()) {
+                errorLbl.setText("Veuillez saisir le nom du titulaire"); event.consume(); return;
+            }
+            if (!expiry.matches("\\d{2}/\\d{2}")) {
+                errorLbl.setText("Format de date invalide (MM/AA)"); event.consume(); return;
+            }
+            if (cvv.length() < 3 || cvv.length() > 4) {
+                errorLbl.setText("CVV invalide (3-4 chiffres)"); event.consume(); return;
+            }
+
+            // Upgrade to card
+            r.setModePaiement("Carte Bancaire");
+            if (reservationService.modifier(r)) {
+                // Award loyalty points
+                if (currentUser != null) {
+                    userService.addLoyaltyPoints(currentUser.getId(), pointsToEarn);
+                    currentUser.setLoyaltyPoints(currentUser.getLoyaltyPoints() + pointsToEarn);
+                }
+                // Send confirmation email
+                if (currentUser != null && currentUser.getEmail() != null) {
+                    new Thread(() -> {
+                        String name = currentUser.getPrenom() + " " + currentUser.getNom();
+                        int totalPts = userService.getLoyaltyPoints(currentUser.getId());
+                        emailService.sendPaymentConfirmationEmail(currentUser.getEmail(), name,
+                            r.getNomEtablissement(), r.getCodeConfirmation(), r.getMontantTotal(),
+                            "Carte Bancaire (upgrade)", pointsToEarn, totalPts);
+                    }).start();
+                }
+                showMessage("\u2705 Paiement passe en Carte Bancaire ! +" + pointsToEarn + " points gagnes \u2B50", true);
+                loadData();
+            } else {
+                errorLbl.setText("\u274C Echec de la mise a jour."); event.consume();
+            }
+        });
+
+        dialog.setResultConverter(bt -> null);
+        dialog.showAndWait();
+    }
+
+    // ================================================================
+    // MODIFY RESERVATION DIALOG (with one-way card restriction)
     // ================================================================
     private void showModifyReservationDialog(Reservation r) {
         Dialog<ButtonType> dialog = new Dialog<>();
@@ -409,7 +575,7 @@ public class ReservationController {
         HBox curRow3 = buildInfoChip("\uD83D\uDCCA Statut", r.getStatutPaiement() != null ? r.getStatutPaiement() : "N/A");
         currentInfo.getChildren().addAll(curTitle, curRow1, curRow2, curRow3);
 
-        //  Editable fields 
+        // Editable fields
         VBox editSection = new VBox(14);
         editSection.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 16; -fx-background-radius: 10;");
         Label editTitle = new Label("\u2728 Nouvelles valeurs");
@@ -423,16 +589,28 @@ public class ReservationController {
         montantField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-padding: 10 14; -fx-background-radius: 8; -fx-font-size: 13; -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8;");
         montantBox.getChildren().addAll(montantLbl, montantField);
 
-        // Mode de paiement
+        // Mode de paiement - ONE-WAY RESTRICTION
+        boolean isCurrentlyCard = "Carte Bancaire".equalsIgnoreCase(r.getModePaiement());
         VBox modeBox = new VBox(4);
         Label modeLbl = new Label("Mode de Paiement");
         modeLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
         ComboBox<String> modeCombo = new ComboBox<>();
-        modeCombo.getItems().addAll("Especes", "Carte Bancaire");
-        modeCombo.setValue(r.getModePaiement() != null ? r.getModePaiement() : "Especes");
-        modeCombo.setMaxWidth(Double.MAX_VALUE);
+        if (isCurrentlyCard) {
+            // If already card, can ONLY stay as card - no downgrade
+            modeCombo.getItems().add("Carte Bancaire");
+            modeCombo.setValue("Carte Bancaire");
+            modeCombo.setDisable(true);
+            Label lockLbl = new Label("\uD83D\uDD12 Le mode Carte ne peut pas etre change en Especes");
+            lockLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 9;");
+            modeBox.getChildren().addAll(modeLbl, modeCombo, lockLbl);
+        } else {
+            // Cash can upgrade to card
+            modeCombo.getItems().addAll("Especes", "Carte Bancaire");
+            modeCombo.setValue(r.getModePaiement() != null ? r.getModePaiement() : "Especes");
+            modeCombo.setMaxWidth(Double.MAX_VALUE);
+            modeBox.getChildren().addAll(modeLbl, modeCombo);
+        }
         modeCombo.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-font-size: 12;");
-        modeBox.getChildren().addAll(modeLbl, modeCombo);
 
         // Statut paiement
         VBox statutBox = new VBox(4);
@@ -467,17 +645,27 @@ public class ReservationController {
                 newMontant = Double.parseDouble(montantStr);
                 if (newMontant <= 0) {
                     errorLbl.setText("\u274C Le montant doit etre positif");
-                    event.consume();
-                    return;
+                    event.consume(); return;
                 }
             } catch (NumberFormatException ex) {
                 errorLbl.setText("\u274C Montant invalide. Entrez un nombre valide.");
-                event.consume();
-                return;
+                event.consume(); return;
+            }
+
+            String oldMode = r.getModePaiement();
+            String newMode = modeCombo.getValue();
+
+            // Award points if upgrading from Especes to Carte
+            boolean upgrading = "Especes".equalsIgnoreCase(oldMode) && "Carte Bancaire".equalsIgnoreCase(newMode);
+            if (upgrading && currentUser != null) {
+                int pts = (int)(newMontant * 10);
+                userService.addLoyaltyPoints(currentUser.getId(), pts);
+                currentUser.setLoyaltyPoints(currentUser.getLoyaltyPoints() + pts);
+                showMessage("\u2B50 +" + pts + " points de fidelite pour le passage en carte !", true);
             }
 
             r.setMontantTotal(newMontant);
-            r.setModePaiement(modeCombo.getValue());
+            r.setModePaiement(newMode);
             r.setStatutPaiement(statutCombo.getValue());
 
             if (reservationService.modifier(r)) {
@@ -507,7 +695,7 @@ public class ReservationController {
     }
 
     // ================================================================
-    // RESERVATION DETAIL DIALOG
+    // RESERVATION DETAIL DIALOG (with loyalty points)
     // ================================================================
     private void showReservationDetail(Reservation r) {
         Dialog<ButtonType> dialog = new Dialog<>();
@@ -524,7 +712,6 @@ public class ReservationController {
         content.setAlignment(Pos.CENTER);
         content.setMinWidth(460);
 
-        // Header
         StackPane headerIcon = new StackPane();
         headerIcon.setPrefSize(60, 60);
         headerIcon.setStyle("-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 30;");
@@ -554,6 +741,20 @@ public class ReservationController {
         addDetailRow(detailRows, "\uD83D\uDCC5 Date", r.getDatePaiement() != null ? r.getDatePaiement().format(DTF) : "N/A", "#999");
         addDetailRow(detailRows, "\u23F0 Temps", getTimeAgo(r), "#888");
 
+        // Payment mode badge with lock info
+        boolean isCard = "Carte Bancaire".equalsIgnoreCase(r.getModePaiement());
+        if (isCard) {
+            HBox cardBadge = new HBox(8);
+            cardBadge.setAlignment(Pos.CENTER);
+            cardBadge.setStyle("-fx-background-color: rgba(100,181,246,0.06); -fx-padding: 8; -fx-background-radius: 8;");
+            Label lockIcon = new Label("\uD83D\uDD12");
+            lockIcon.setStyle("-fx-font-size: 11;");
+            Label lockLbl = new Label("Paiement par carte verrouille - impossible de revenir en especes");
+            lockLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 10;");
+            cardBadge.getChildren().addAll(lockIcon, lockLbl);
+            detailRows.getChildren().add(cardBadge);
+        }
+
         String statutColor = getStatutColor(r.getStatutPaiement());
         String statutIcon = getStatutIcon(r.getStatutPaiement());
         HBox statutRow = new HBox(8);
@@ -563,7 +764,16 @@ public class ReservationController {
         statutLabel.setStyle("-fx-text-fill: " + statutColor + "; -fx-font-size: 14; -fx-font-weight: bold;");
         statutRow.getChildren().add(statutLabel);
 
-        content.getChildren().addAll(headerIcon, titleLbl, nameLbl, progressInDetail, detailRows, statutRow);
+        // Loyalty info
+        VBox loyaltyInfo = new VBox(6);
+        loyaltyInfo.setAlignment(Pos.CENTER);
+        loyaltyInfo.setStyle("-fx-background-color: rgba(178,102,255,0.06); -fx-padding: 12; -fx-background-radius: 10;");
+        int userPoints = currentUser != null ? userService.getLoyaltyPoints(currentUser.getId()) : 0;
+        Label loyaltyLbl = new Label("\u2B50 Votre solde fidelite: " + userPoints + " points");
+        loyaltyLbl.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 12; -fx-font-weight: bold;");
+        loyaltyInfo.getChildren().add(loyaltyLbl);
+
+        content.getChildren().addAll(headerIcon, titleLbl, nameLbl, progressInDetail, detailRows, statutRow, loyaltyInfo);
         dp.setContent(content);
 
         ButtonType closeType = new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE);

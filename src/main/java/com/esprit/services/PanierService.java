@@ -64,8 +64,8 @@ public class PanierService {
     // ADD ITEM TO PANIER
     // =====================================================
     public boolean ajouter(Panier p) {
-        String sql = "INSERT INTO panier (id_client, id_etablissement, type_service, date_debut, date_fin, nb_personnes, prix_estime, statut_item) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO panier (id_client, id_etablissement, type_service, date_debut, date_fin, nb_personnes, prix_estime, statut_item, nb_adultes, nb_enfants) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setInt(1, p.getIdClient());
@@ -76,6 +76,8 @@ public class PanierService {
             ps.setInt(6, p.getNbPersonnes());
             ps.setDouble(7, p.getPrixEstime());
             ps.setString(8, p.getStatutItem() != null ? p.getStatutItem() : "en_attente");
+            ps.setInt(9, p.getNbAdultes() > 0 ? p.getNbAdultes() : 1);
+            ps.setInt(10, p.getNbEnfants());
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 ResultSet keys = ps.getGeneratedKeys();
@@ -95,7 +97,7 @@ public class PanierService {
     // =====================================================
     public boolean modifier(Panier p) {
         String sql = "UPDATE panier SET id_etablissement = ?, type_service = ?, date_debut = ?, date_fin = ?, " +
-                     "nb_personnes = ?, prix_estime = ?, statut_item = ? WHERE id_panier = ?";
+                     "nb_personnes = ?, prix_estime = ?, statut_item = ?, nb_adultes = ?, nb_enfants = ? WHERE id_panier = ?";
         try {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, p.getIdEtablissement());
@@ -105,7 +107,9 @@ public class PanierService {
             ps.setInt(5, p.getNbPersonnes());
             ps.setDouble(6, p.getPrixEstime());
             ps.setString(7, p.getStatutItem());
-            ps.setInt(8, p.getIdPanier());
+            ps.setInt(8, p.getNbAdultes() > 0 ? p.getNbAdultes() : 1);
+            ps.setInt(9, p.getNbEnfants());
+            ps.setInt(10, p.getIdPanier());
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -195,11 +199,14 @@ public class PanierService {
         p.setPrixEstime(rs.getDouble("prix_estime"));
         p.setStatutItem(rs.getString("statut_item"));
 
+        try { p.setNbAdultes(rs.getInt("nb_adultes")); } catch (SQLException e) { p.setNbAdultes(1); }
+        try { p.setNbEnfants(rs.getInt("nb_enfants")); } catch (SQLException e) { p.setNbEnfants(0); }
+
         try {
             String nom = rs.getString("nom_client");
             String prenom = rs.getString("prenom_client");
             p.setNomClient((nom != null ? nom : "") + " " + (prenom != null ? prenom : ""));
-        } catch (SQLException ignored) {}
+        } catch (SQLException ignored) { /* joined fields may not exist */ }
 
         return p;
     }

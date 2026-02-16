@@ -397,7 +397,50 @@ public class utilisateurServices implements ICrud<utilisateur> {
     }
 
     // =====================================================
-    // ✅ RESET PASSWORD BY EMAIL
+    // LOYALTY POINTS SYSTEM
+    // =====================================================
+    public int getLoyaltyPoints(int userId) {
+        String sql = "SELECT loyalty_points FROM utilisateur WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("loyalty_points");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public boolean addLoyaltyPoints(int userId, int points) {
+        String sql = "UPDATE utilisateur SET loyalty_points = loyalty_points + ? WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, points);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean deductLoyaltyPoints(int userId, int points) {
+        String sql = "UPDATE utilisateur SET loyalty_points = GREATEST(loyalty_points - ?, 0) WHERE id = ? AND loyalty_points >= ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, points);
+            ps.setInt(2, userId);
+            ps.setInt(3, points);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // =====================================================
+    // RESET PASSWORD BY EMAIL
     // =====================================================
     public boolean resetPassword(String email, String newPassword) {
         String sql = "UPDATE utilisateur SET mot_de_passe = ? WHERE email = ?";

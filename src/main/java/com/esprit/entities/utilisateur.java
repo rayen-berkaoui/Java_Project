@@ -19,6 +19,7 @@ public class utilisateur {
     private int numTel;
     private String profilePicture;   // base64 encoded image
     private String faceEncoding;      // stored face encoding for face recognition
+    private int loyaltyPoints;        // loyalty points earned from card payments
 
     // =========================
     // Constructeur vide
@@ -162,6 +163,14 @@ public class utilisateur {
 
     public void setFaceEncoding(String faceEncoding) {
         this.faceEncoding = faceEncoding;
+    }
+
+    public int getLoyaltyPoints() {
+        return loyaltyPoints;
+    }
+
+    public void setLoyaltyPoints(int loyaltyPoints) {
+        this.loyaltyPoints = loyaltyPoints;
     }
 
     // =========================
