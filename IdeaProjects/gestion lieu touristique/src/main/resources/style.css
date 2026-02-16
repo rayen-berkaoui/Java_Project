@@ -3,7 +3,7 @@
    ================================================================= */
 
 .root, .root-pane {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-font-family: "Segoe UI", Arial, sans-serif;
     -fx-font-smoothing-type: gray;
 }
@@ -12,13 +12,13 @@
    GOLDEN ACCENT LINE (animated separator)
    ================================================================= */
 .accent-line {
-    -fx-background-color: linear-gradient(to right, transparent 0%, #FFD700 20%, #FFED4E 50%, #FFD700 80%, transparent 100%);
+    -fx-background-color: linear-gradient(to right, transparent 0%, #BFA200 20%, #D4B530 50%, #BFA200 80%, transparent 100%);
     -fx-opacity: 0.9;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 8, 0.6, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 8, 0.6, 0, 0);
 }
 
 .accent-line-thin {
-    -fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.4), transparent);
+    -fx-background-color: linear-gradient(to right, transparent, rgba(191,162,0,0.4), transparent);
     -fx-pref-height: 1;
     -fx-max-height: 1;
 }
@@ -28,7 +28,7 @@
    ================================================================= */
 .nav-bar {
     -fx-background-color: linear-gradient(to right, rgba(10,10,18,0.98), rgba(18,18,30,0.98), rgba(10,10,18,0.98));
-    -fx-border-color: transparent transparent rgba(255,215,0,0.12) transparent;
+    -fx-border-color: transparent transparent rgba(191,162,0,0.12) transparent;
     -fx-border-width: 0 0 1 0;
     -fx-padding: 8 35;
     -fx-spacing: 14;
@@ -43,29 +43,29 @@
 .nav-title {
     -fx-font-size: 20px;
     -fx-font-weight: bold;
-    -fx-text-fill: #FFD700;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 10, 0.5, 0, 0);
+    -fx-text-fill: #BFA200;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 10, 0.5, 0, 0);
 }
 
 .nav-title-sub {
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-text-fill: rgba(255,215,0,0.45);
+    -fx-text-fill: rgba(191,162,0,0.45);
     -fx-letter-spacing: 4;
 }
 
 .nav-title:hover {
     -fx-scaleX: 1.03;
     -fx-scaleY: 1.03;
-    -fx-effect: dropshadow(gaussian, #FFD700, 25, 0.85, 0, 0);
+    -fx-effect: dropshadow(gaussian, #BFA200, 25, 0.85, 0, 0);
 }
 
 .nav-button {
     -fx-font-size: 13px;
     -fx-font-weight: bold;
-    -fx-background-color: linear-gradient(to bottom, rgba(255,215,0,0.05), rgba(255,215,0,0.01));
+    -fx-background-color: linear-gradient(to bottom, rgba(191,162,0,0.05), rgba(191,162,0,0.01));
     -fx-text-fill: rgba(200,200,200,0.85);
-    -fx-border-color: rgba(255, 215, 0, 0.18);
+    -fx-border-color: rgba(191, 162, 0, 0.18);
     -fx-border-radius: 25;
     -fx-background-radius: 25;
     -fx-padding: 9 24;
@@ -74,18 +74,18 @@
 }
 
 .nav-button:hover {
-    -fx-background-color: linear-gradient(to bottom, #FFE44D, #FFD700);
+    -fx-background-color: linear-gradient(to bottom, #CCAB28, #BFA200);
     -fx-text-fill: #0a0a0a;
     -fx-scaleX: 1.08;
     -fx-scaleY: 1.08;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.7), 22, 0.8, 0, 3);
-    -fx-border-color: #FFD700;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.7), 22, 0.8, 0, 3);
+    -fx-border-color: #BFA200;
 }
 
 .nav-button:pressed {
     -fx-scaleX: 0.94;
     -fx-scaleY: 0.94;
-    -fx-background-color: #e6c200;
+    -fx-background-color: #9E8500;
 }
 
 .fullscreen-btn {
@@ -97,17 +97,17 @@
    CONTENT AREAS
    ================================================================= */
 .content-scroll {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-border-color: transparent;
-    -fx-background: #080810;
+    -fx-background: #030308;
 }
 
 .content-scroll .viewport {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
 }
 
 .content-root {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-spacing: 12;
 }
 
@@ -120,19 +120,19 @@
         rgba(22,22,38,0.9) 40%,
         rgba(30,28,20,0.85) 75%,
         rgba(40,35,15,0.8) 100%);
-    -fx-border-color: rgba(255,215,0,0.15);
+    -fx-border-color: rgba(191,162,0,0.15);
     -fx-border-width: 1;
     -fx-border-radius: 18;
     -fx-background-radius: 18;
     -fx-padding: 0;
     -fx-spacing: 0;
-    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.08), 30, 0.3, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.08), 30, 0.3, 0, 5);
 }
 
 /* Icon Badge — circular glowing icon area */
 .header-icon-badge {
-    -fx-background-color: linear-gradient(to bottom right, rgba(255,215,0,0.15), rgba(255,185,0,0.08));
-    -fx-border-color: rgba(255,215,0,0.25);
+    -fx-background-color: linear-gradient(to bottom right, rgba(191,162,0,0.15), rgba(191,155,0,0.08));
+    -fx-border-color: rgba(191,162,0,0.25);
     -fx-border-width: 0 1 0 0;
     -fx-background-radius: 18 0 0 18;
     -fx-min-width: 100;
@@ -143,18 +143,18 @@
 
 .header-icon-emoji {
     -fx-font-size: 44px;
-    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.6), 18, 0.7, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.6), 18, 0.7, 0, 0);
 }
 
 /* Tag — small category label */
 .header-tag {
-    -fx-background-color: rgba(255,215,0,0.12);
-    -fx-text-fill: #FFD700;
+    -fx-background-color: rgba(191,162,0,0.12);
+    -fx-text-fill: #BFA200;
     -fx-font-size: 10px;
     -fx-font-weight: bold;
     -fx-padding: 3 14;
     -fx-background-radius: 10;
-    -fx-border-color: rgba(255,215,0,0.25);
+    -fx-border-color: rgba(191,162,0,0.25);
     -fx-border-radius: 10;
 }
 
@@ -171,8 +171,8 @@
 }
 
 .header-main-title:hover {
-    -fx-text-fill: #FFD700;
-    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.5), 18, 0.5, 0, 1);
+    -fx-text-fill: #BFA200;
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.5), 18, 0.5, 0, 1);
 }
 
 .header-description {
@@ -183,8 +183,8 @@
 
 /* Stat Card — inside header */
 .header-stat-card {
-    -fx-background-color: linear-gradient(to bottom, rgba(255,215,0,0.08), rgba(255,215,0,0.03));
-    -fx-border-color: rgba(255,215,0,0.3);
+    -fx-background-color: linear-gradient(to bottom, rgba(191,162,0,0.08), rgba(191,162,0,0.03));
+    -fx-border-color: rgba(191,162,0,0.3);
     -fx-border-width: 0 0 0 1;
     -fx-background-radius: 0 18 18 0;
     -fx-min-width: 140;
@@ -195,24 +195,24 @@
 }
 
 .header-stat-card:hover {
-    -fx-background-color: linear-gradient(to bottom, rgba(255,215,0,0.15), rgba(255,215,0,0.06));
+    -fx-background-color: linear-gradient(to bottom, rgba(191,162,0,0.15), rgba(191,162,0,0.06));
 }
 
 .header-stat-number {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-size: 38px;
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.55), 12, 0.5, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.55), 12, 0.5, 0, 0);
 }
 
 .header-stat-label {
-    -fx-text-fill: rgba(255,215,0,0.55);
+    -fx-text-fill: rgba(191,162,0,0.55);
     -fx-font-size: 11px;
     -fx-font-weight: bold;
 }
 
 .header-stat-underline {
-    -fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.5), transparent);
+    -fx-background-color: linear-gradient(to right, transparent, rgba(191,162,0,0.5), transparent);
     -fx-pref-width: 70;
     -fx-max-width: 70;
 }
@@ -231,33 +231,33 @@
    ================================================================= */
 .stat-card {
     -fx-background-color: linear-gradient(to bottom right, rgba(30,30,45,0.9), rgba(18,18,28,0.95));
-    -fx-border-color: rgba(255, 215, 0, 0.4);
+    -fx-border-color: rgba(191, 162, 0, 0.4);
     -fx-border-width: 1;
     -fx-border-radius: 14;
     -fx-background-radius: 14;
     -fx-padding: 14 28;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.15), 18, 0.5, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.15), 18, 0.5, 0, 3);
 }
 
 .stat-card:hover {
-    -fx-border-color: #FFD700;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 30, 0.8, 0, 4);
+    -fx-border-color: #BFA200;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 30, 0.8, 0, 4);
     -fx-scaleX: 1.06;
     -fx-scaleY: 1.06;
 }
 
 .stat-number {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-size: 34px;
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.55), 10, 0.5, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.55), 10, 0.5, 0, 0);
 }
 
 .stat-label {
     -fx-text-fill: #999;
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-text-fill: rgba(255,215,0,0.6);
+    -fx-text-fill: rgba(191,162,0,0.6);
 }
 
 /* =================================================================
@@ -269,20 +269,20 @@
 }
 
 .title-label {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-size: 28px;
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 18, 0.5, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 18, 0.5, 0, 0);
 }
 
 .title-label:hover {
     -fx-scaleX: 1.02;
     -fx-scaleY: 1.02;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.8), 25, 0.7, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.8), 25, 0.7, 0, 0);
 }
 
 .field-label {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
 }
@@ -292,7 +292,7 @@
    ================================================================= */
 .search-container {
     -fx-background-color: linear-gradient(to right, rgba(20,20,30,0.8), rgba(15,15,22,0.9));
-    -fx-border-color: rgba(255,215,0,0.2);
+    -fx-border-color: rgba(191,162,0,0.2);
     -fx-border-radius: 30;
     -fx-background-radius: 30;
     -fx-padding: 2 6 2 16;
@@ -300,8 +300,8 @@
 }
 
 .search-container:hover {
-    -fx-border-color: rgba(255,215,0,0.5);
-    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.12), 15, 0.5, 0, 3);
+    -fx-border-color: rgba(191,162,0,0.5);
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.12), 15, 0.5, 0, 3);
 }
 
 .search-field {
@@ -323,7 +323,7 @@
 }
 
 .search-icon {
-    -fx-text-fill: rgba(255,215,0,0.6);
+    -fx-text-fill: rgba(191,162,0,0.6);
     -fx-font-size: 16px;
 }
 
@@ -365,19 +365,19 @@
 
 /* --- Edit --- */
 .btn-edit {
-    -fx-background-color: linear-gradient(to bottom right, #FFE44D, #FFD700);
+    -fx-background-color: linear-gradient(to bottom right, #CCAB28, #BFA200);
     -fx-text-fill: #0a0a0a;
 }
 .btn-edit:hover {
-    -fx-background-color: linear-gradient(to bottom right, #FFED80, #FFE44D);
+    -fx-background-color: linear-gradient(to bottom right, #FFED80, #CCAB28);
     -fx-scaleX: 1.10;
     -fx-scaleY: 1.10;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.65), 28, 0.9, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.65), 28, 0.9, 0, 4);
 }
 .btn-edit:pressed {
     -fx-scaleX: 0.92;
     -fx-scaleY: 0.92;
-    -fx-background-color: #e6c200;
+    -fx-background-color: #9E8500;
 }
 
 /* --- Delete --- */
@@ -409,7 +409,7 @@
     -fx-background-color: rgba(18,18,28,0.9);
     -fx-text-fill: white;
     -fx-prompt-text-fill: #555;
-    -fx-border-color: rgba(255, 215, 0, 0.2);
+    -fx-border-color: rgba(191, 162, 0, 0.2);
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-padding: 10 14;
@@ -418,14 +418,14 @@
 }
 
 .text-field:hover {
-    -fx-border-color: rgba(255, 215, 0, 0.55);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.12), 12, 0.5, 0, 2);
+    -fx-border-color: rgba(191, 162, 0, 0.55);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.12), 12, 0.5, 0, 2);
 }
 
 .text-field:focused {
-    -fx-border-color: #FFD700;
+    -fx-border-color: #BFA200;
     -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.4), 18, 0.6, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.4), 18, 0.6, 0, 2);
     -fx-background-color: rgba(22,22,35,0.95);
 }
 
@@ -434,17 +434,17 @@
    ================================================================= */
 .table-card {
     -fx-background-color: linear-gradient(to bottom, rgba(16,16,25,0.95), rgba(11,11,18,0.98));
-    -fx-border-color: rgba(255, 215, 0, 0.25);
+    -fx-border-color: rgba(191, 162, 0, 0.25);
     -fx-border-width: 1;
     -fx-border-radius: 14;
     -fx-background-radius: 14;
     -fx-padding: 3;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.08), 22, 0.5, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.08), 22, 0.5, 0, 5);
 }
 
 .table-card:hover {
-    -fx-border-color: rgba(255, 215, 0, 0.4);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.15), 28, 0.6, 0, 5);
+    -fx-border-color: rgba(191, 162, 0, 0.4);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.15), 28, 0.6, 0, 5);
 }
 
 /* =================================================================
@@ -458,9 +458,9 @@
 }
 
 .table-view .column-header-background {
-    -fx-background-color: linear-gradient(to bottom, #FFE44D, #FFD700);
+    -fx-background-color: linear-gradient(to bottom, #CCAB28, #BFA200);
     -fx-background-radius: 10 10 0 0;
-    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 6, 0.3, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.2), 6, 0.3, 0, 2);
 }
 
 .table-view .column-header {
@@ -468,7 +468,7 @@
 }
 
 .table-view .filler {
-    -fx-background-color: linear-gradient(to bottom, #FFE44D, #FFD700);
+    -fx-background-color: linear-gradient(to bottom, #CCAB28, #BFA200);
 }
 
 .table-row-cell {
@@ -476,7 +476,7 @@
     -fx-text-fill: #d8d8d8;
     -fx-padding: 7 4;
     -fx-font-size: 13px;
-    -fx-border-color: transparent transparent rgba(255, 215, 0, 0.05) transparent;
+    -fx-border-color: transparent transparent rgba(191, 162, 0, 0.05) transparent;
     -fx-border-width: 0 0 1 0;
     -fx-cell-size: 40;
 }
@@ -486,21 +486,21 @@
 }
 
 .table-row-cell:hover {
-    -fx-background-color: rgba(255, 215, 0, 0.07);
-    -fx-text-fill: #FFD700;
+    -fx-background-color: rgba(191, 162, 0, 0.07);
+    -fx-text-fill: #BFA200;
     -fx-scaleX: 1.005;
     -fx-scaleY: 1.005;
 }
 
 .table-row-cell:selected {
-    -fx-background-color: linear-gradient(to right, rgba(255,215,0,0.85), rgba(255,228,77,0.85));
+    -fx-background-color: linear-gradient(to right, rgba(191,162,0,0.85), rgba(255,228,77,0.85));
     -fx-text-fill: #0a0a0a;
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.3), 8, 0.4, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.3), 8, 0.4, 0, 0);
 }
 
 .table-row-cell:selected:hover {
-    -fx-background-color: linear-gradient(to right, #FFD700, #FFE44D);
+    -fx-background-color: linear-gradient(to right, #BFA200, #CCAB28);
 }
 
 .table-row-cell .text {
@@ -512,7 +512,7 @@
 }
 
 .table-row-cell:hover .text {
-    -fx-fill: #FFD700;
+    -fx-fill: #BFA200;
 }
 
 .table-row-cell:selected:hover .text {
@@ -539,7 +539,7 @@
    TABPANE (hidden — navigation uses top bar)
    ================================================================= */
 .main-tab-pane, .tab-pane {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
 }
 
 .tab-pane .tab-header-area {
@@ -572,19 +572,19 @@
 }
 
 .tab-pane .tab-content-area {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
 }
 
 /* =================================================================
    SCROLLPANE & SCROLLBAR — Sleek
    ================================================================= */
 .scroll-pane {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-border-color: transparent;
 }
 
 .scroll-pane .viewport {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
 }
 
 .scroll-bar {
@@ -615,13 +615,13 @@
 
 .scroll-bar:vertical .thumb,
 .scroll-bar:horizontal .thumb {
-    -fx-background-color: rgba(255, 215, 0, 0.3);
+    -fx-background-color: rgba(191, 162, 0, 0.3);
     -fx-background-radius: 10;
 }
 
 .scroll-bar:vertical .thumb:hover,
 .scroll-bar:horizontal .thumb:hover {
-    -fx-background-color: rgba(255, 215, 0, 0.6);
+    -fx-background-color: rgba(191, 162, 0, 0.6);
 }
 
 /* =================================================================
@@ -684,7 +684,7 @@ GridPane {
 
 /* Main Dialog Pane */
 .dialog-pane {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-border-color: transparent;
     -fx-border-width: 0;
     -fx-padding: 0;
@@ -692,32 +692,32 @@ GridPane {
 
 /* Dialog ScrollPane */
 .dialog-scroll {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-border-color: transparent;
-    -fx-background: #080810;
+    -fx-background: #030308;
 }
 
 .dialog-scroll .viewport {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
 }
 
 /* Dialog Content Root */
 .dialog-content-root {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-spacing: 0;
 }
 
 /* Dialog Header Section */
 .dialog-header-section {
     -fx-background-color: linear-gradient(to right, rgba(12,12,20,0.97), rgba(22,22,35,0.97), rgba(12,12,20,0.97));
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.1), 18, 0.5, 0, 4);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.1), 18, 0.5, 0, 4);
 }
 
 .dialog-page-title {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-size: 30px;
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 15, 0.5, 0, 0);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 15, 0.5, 0, 0);
 }
 
 .dialog-page-subtitle {
@@ -728,51 +728,51 @@ GridPane {
 
 /* Dialog Root Container */
 .dialog-pane > .content {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-padding: 0;
 }
 
 /* Header Panel */
 .dialog-pane .header-panel {
     -fx-background-color: linear-gradient(to right, rgba(12,12,20,0.97), rgba(22,22,35,0.97), rgba(12,12,20,0.97));
-    -fx-border-color: #FFD700;
+    -fx-border-color: #BFA200;
     -fx-border-width: 0 0 2 0;
     -fx-padding: 22 50;
 }
 
 .dialog-pane .header-panel .label {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-size: 28px;
     -fx-font-weight: bold;
 }
 
 /* Content Area */
 .dialog-pane .content {
-    -fx-background-color: #080810;
+    -fx-background-color: #030308;
     -fx-padding: 0;
 }
 
 /* ---- Form Sections (glass cards) ---- */
 .form-section {
     -fx-background-color: linear-gradient(to bottom, rgba(16,16,28,0.95), rgba(12,12,22,0.98));
-    -fx-border-color: rgba(255, 215, 0, 0.18);
+    -fx-border-color: rgba(191, 162, 0, 0.18);
     -fx-border-width: 1;
     -fx-border-radius: 16;
     -fx-background-radius: 16;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.06), 18, 0.4, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.06), 18, 0.4, 0, 3);
 }
 
 .form-section:hover {
-    -fx-border-color: rgba(255, 215, 0, 0.45);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.18), 28, 0.7, 0, 4);
+    -fx-border-color: rgba(191, 162, 0, 0.45);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.18), 28, 0.7, 0, 4);
 }
 
 .form-section-title {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-size: 19px;
     -fx-font-weight: bold;
     -fx-padding: 0 0 10 0;
-    -fx-border-color: transparent transparent rgba(255, 215, 0, 0.15) transparent;
+    -fx-border-color: transparent transparent rgba(191, 162, 0, 0.15) transparent;
     -fx-border-width: 0 0 1 0;
 }
 
@@ -781,7 +781,7 @@ GridPane {
 }
 
 .form-field-label {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
     -fx-opacity: 0.85;
@@ -792,7 +792,7 @@ GridPane {
     -fx-background-color: rgba(18,18,30,0.9);
     -fx-text-fill: white;
     -fx-prompt-text-fill: #555;
-    -fx-border-color: rgba(255, 215, 0, 0.2);
+    -fx-border-color: rgba(191, 162, 0, 0.2);
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-font-size: 15px;
@@ -802,24 +802,24 @@ GridPane {
 }
 
 .form-input:hover {
-    -fx-border-color: rgba(255, 215, 0, 0.55);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.12), 12, 0.5, 0, 2);
+    -fx-border-color: rgba(191, 162, 0, 0.55);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.12), 12, 0.5, 0, 2);
 }
 
 .form-input:focused {
-    -fx-border-color: #FFD700;
+    -fx-border-color: #BFA200;
     -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.4), 20, 0.6, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.4), 20, 0.6, 0, 3);
     -fx-background-color: rgba(22,22,38,0.95);
 }
 
 /* Browse Button */
 .btn-browse {
-    -fx-background-color: rgba(255, 215, 0, 0.1);
-    -fx-text-fill: #FFD700;
+    -fx-background-color: rgba(191, 162, 0, 0.1);
+    -fx-text-fill: #BFA200;
     -fx-font-weight: bold;
     -fx-font-size: 12px;
-    -fx-border-color: rgba(255, 215, 0, 0.35);
+    -fx-border-color: rgba(191, 162, 0, 0.35);
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-padding: 9 18;
@@ -827,17 +827,17 @@ GridPane {
 }
 
 .btn-browse:hover {
-    -fx-background-color: #FFD700;
+    -fx-background-color: #BFA200;
     -fx-text-fill: #0a0a0a;
     -fx-scaleX: 1.06;
     -fx-scaleY: 1.06;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.5), 15, 0.6, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 15, 0.6, 0, 3);
 }
 
 /* === ComboBox (Dropdown Select) === */
 .form-combo {
     -fx-background-color: rgba(18,18,30,0.9);
-    -fx-border-color: rgba(255, 215, 0, 0.2);
+    -fx-border-color: rgba(191, 162, 0, 0.2);
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-min-height: 46;
@@ -854,23 +854,23 @@ GridPane {
     -fx-padding: 0 12 0 0;
 }
 .form-combo .arrow {
-    -fx-background-color: #FFD700;
+    -fx-background-color: #BFA200;
     -fx-shape: "M 0 0 L 6 6 L 12 0 Z";
 }
 .form-combo:hover {
-    -fx-border-color: rgba(255, 215, 0, 0.55);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.12), 12, 0.5, 0, 2);
+    -fx-border-color: rgba(191, 162, 0, 0.55);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.12), 12, 0.5, 0, 2);
 }
 .form-combo:focused,
 .form-combo:showing {
-    -fx-border-color: #FFD700;
+    -fx-border-color: #BFA200;
     -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.4), 20, 0.6, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.4), 20, 0.6, 0, 3);
     -fx-background-color: rgba(22,22,38,0.95);
 }
 .form-combo .combo-box-popup .list-view {
     -fx-background-color: rgba(14,14,24,0.98);
-    -fx-border-color: rgba(255, 215, 0, 0.3);
+    -fx-border-color: rgba(191, 162, 0, 0.3);
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 20, 0.3, 0, 6);
@@ -882,12 +882,12 @@ GridPane {
     -fx-padding: 10 18;
 }
 .form-combo .combo-box-popup .list-view .list-cell:hover {
-    -fx-background-color: rgba(255, 215, 0, 0.12);
-    -fx-text-fill: #FFD700;
+    -fx-background-color: rgba(191, 162, 0, 0.12);
+    -fx-text-fill: #BFA200;
 }
 .form-combo .combo-box-popup .list-view .list-cell:selected {
-    -fx-background-color: rgba(255, 215, 0, 0.2);
-    -fx-text-fill: #FFD700;
+    -fx-background-color: rgba(191, 162, 0, 0.2);
+    -fx-text-fill: #BFA200;
     -fx-font-weight: bold;
 }
 
@@ -899,16 +899,16 @@ GridPane {
 /* Image Preview Card */
 .image-preview-card {
     -fx-background-color: rgba(14,14,24,0.9);
-    -fx-border-color: rgba(255, 215, 0, 0.25);
+    -fx-border-color: rgba(191, 162, 0, 0.25);
     -fx-border-width: 1;
     -fx-border-radius: 12;
     -fx-background-radius: 12;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.06), 10, 0.3, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.06), 10, 0.3, 0, 2);
 }
 
 .image-preview-card:hover {
-    -fx-border-color: rgba(255, 215, 0, 0.55);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.18), 18, 0.5, 0, 3);
+    -fx-border-color: rgba(191, 162, 0, 0.55);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.18), 18, 0.5, 0, 3);
 }
 
 /* ---- Dialog Button Bar ---- */
@@ -925,7 +925,7 @@ GridPane {
 }
 
 .dialog-pane .button-bar .button {
-    -fx-background-color: linear-gradient(to bottom right, #FFE44D, #FFD700);
+    -fx-background-color: linear-gradient(to bottom right, #CCAB28, #BFA200);
     -fx-text-fill: #0a0a0a;
     -fx-font-weight: bold;
     -fx-font-size: 14px;
@@ -934,20 +934,20 @@ GridPane {
     -fx-cursor: hand;
     -fx-min-width: 130;
     -fx-min-height: 44;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.35), 12, 0.4, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.35), 12, 0.4, 0, 3);
 }
 
 .dialog-pane .button-bar .button:hover {
-    -fx-background-color: linear-gradient(to bottom right, #FFED80, #FFE44D);
+    -fx-background-color: linear-gradient(to bottom right, #FFED80, #CCAB28);
     -fx-scaleX: 1.08;
     -fx-scaleY: 1.08;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.6), 25, 0.8, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.6), 25, 0.8, 0, 5);
 }
 
 .dialog-pane .button-bar .button:pressed {
     -fx-scaleX: 0.93;
     -fx-scaleY: 0.93;
-    -fx-background-color: #e6c200;
+    -fx-background-color: #9E8500;
 }
 
 /* Dialog Labels */
@@ -957,13 +957,13 @@ GridPane {
 }
 
 .dialog-pane .title-label {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-size: 26px;
     -fx-font-weight: bold;
 }
 
 .dialog-pane .field-label {
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
 }
@@ -973,7 +973,7 @@ GridPane {
     -fx-background-color: rgba(18,18,30,0.9);
     -fx-text-fill: white;
     -fx-prompt-text-fill: #555;
-    -fx-border-color: rgba(255, 215, 0, 0.25);
+    -fx-border-color: rgba(191, 162, 0, 0.25);
     -fx-border-radius: 12;
     -fx-background-radius: 12;
     -fx-font-size: 14px;
@@ -983,14 +983,14 @@ GridPane {
 }
 
 .dialog-pane .text-field:hover {
-    -fx-border-color: rgba(255, 215, 0, 0.55);
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.12), 12, 0.5, 0, 2);
+    -fx-border-color: rgba(191, 162, 0, 0.55);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.12), 12, 0.5, 0, 2);
 }
 
 .dialog-pane .text-field:focused {
-    -fx-border-color: #FFD700;
+    -fx-border-color: #BFA200;
     -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.35), 20, 0.6, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.35), 20, 0.6, 0, 3);
     -fx-background-color: rgba(22,22,38,0.95);
 }
 
@@ -999,15 +999,15 @@ GridPane {
    ================================================================= */
 .tooltip {
     -fx-background-color: rgba(22,22,35,0.95);
-    -fx-text-fill: #FFD700;
+    -fx-text-fill: #BFA200;
     -fx-font-weight: bold;
-    -fx-border-color: rgba(255, 215, 0, 0.4);
+    -fx-border-color: rgba(191, 162, 0, 0.4);
     -fx-border-width: 1;
     -fx-border-radius: 10;
     -fx-background-radius: 10;
     -fx-font-size: 12px;
     -fx-padding: 8 16;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.15), 12, 0.4, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.15), 12, 0.4, 0, 3);
 }
 
 /* =================================================================
@@ -1019,11 +1019,11 @@ GridPane {
     -fx-pref-width: 500;
     -fx-pref-height: 220;
     -fx-background-color: rgba(12,12,22,0.98);
-    -fx-border-color: rgba(255, 215, 0, 0.4);
+    -fx-border-color: rgba(191, 162, 0, 0.4);
     -fx-border-width: 2;
     -fx-border-radius: 14;
     -fx-background-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.15), 25, 0.5, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.15), 25, 0.5, 0, 5);
 }
 
 .alert .dialog-pane .content {
@@ -1044,9 +1044,9 @@ GridPane {
 .carousel-arrow {
     -fx-font-size: 22px;
     -fx-font-weight: bold;
-    -fx-background-color: linear-gradient(to bottom, rgba(255,215,0,0.08), rgba(255,215,0,0.03));
-    -fx-text-fill: #FFD700;
-    -fx-border-color: rgba(255, 215, 0, 0.3);
+    -fx-background-color: linear-gradient(to bottom, rgba(191,162,0,0.08), rgba(191,162,0,0.03));
+    -fx-text-fill: #BFA200;
+    -fx-border-color: rgba(191, 162, 0, 0.3);
     -fx-border-radius: 50;
     -fx-background-radius: 50;
     -fx-min-width: 48;
@@ -1054,21 +1054,21 @@ GridPane {
     -fx-max-width: 48;
     -fx-max-height: 48;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.08), 10, 0.3, 0, 2);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.08), 10, 0.3, 0, 2);
 }
 
 .carousel-arrow:hover {
-    -fx-background-color: linear-gradient(to bottom, #FFE44D, #FFD700);
+    -fx-background-color: linear-gradient(to bottom, #CCAB28, #BFA200);
     -fx-text-fill: #0a0a0a;
     -fx-scaleX: 1.15;
     -fx-scaleY: 1.15;
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.6), 22, 0.7, 0, 3);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.6), 22, 0.7, 0, 3);
 }
 
 .carousel-arrow:pressed {
     -fx-scaleX: 0.90;
     -fx-scaleY: 0.90;
-    -fx-background-color: #e6c200;
+    -fx-background-color: #9E8500;
 }
 
 .carousel-arrow:disabled {
@@ -1090,7 +1090,29 @@ GridPane {
 }
 
 .lieu-card:hover {
-    -fx-effect: dropshadow(gaussian, rgba(255, 215, 0, 0.4), 28, 0.6, 0, 5);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.4), 28, 0.6, 0, 5);
+}
+
+/* Individual Categorie Card */
+.categorie-card {
+    -fx-background-radius: 14;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 18, 0.35, 0, 6);
+}
+
+.categorie-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.4), 28, 0.6, 0, 5);
+}
+
+/* Individual Adresse Card */
+.adresse-card {
+    -fx-background-radius: 14;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 18, 0.35, 0, 6);
+}
+
+.adresse-card:hover {
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.4), 28, 0.6, 0, 5);
 }
 
 /* Page Indicator */
@@ -1101,7 +1123,7 @@ GridPane {
 }
 
 .carousel-page-info {
-    -fx-text-fill: rgba(255,215,0,0.5);
+    -fx-text-fill: rgba(191,162,0,0.5);
     -fx-font-size: 12px;
     -fx-font-weight: bold;
     -fx-padding: 0 12;

@@ -4,74 +4,74 @@ import com.esprit.entities.categorie;
 import com.esprit.services.categorieServices;
 import javafx.animation.*;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CategorieController {
 
-    @FXML private TableView<categorie> tableCategorie;
-    @FXML private TableColumn<categorie, Integer> colId;
-    @FXML private TableColumn<categorie, String> colNom, colDescription;
-    @FXML private TableColumn<categorie, LocalDate> colDateCreation;
     @FXML private Button btnAjouter, btnModifier, btnSupprimer;
+    @FXML private Button btnPrev, btnNext;
     @FXML private Label lblCount;
+    @FXML private HBox cardsContainer;
+    @FXML private VBox emptyState;
+    @FXML private HBox pageIndicator;
+    @FXML private Label lblPageInfo;
     @FXML private TextField searchField;
 
     private categorieServices catServices;
-    private ObservableList<categorie> categorieList;
-    private FilteredList<categorie> filteredList;
+    private List<categorie> catList = new ArrayList<>();
+    private List<categorie> filteredList = new ArrayList<>();
+    private int currentPage = 0;
+    private int selectedIndex = -1;
+    private static final int CARDS_PER_PAGE = 4;
+    private static final double CARD_WIDTH = 280;
+    private static final double CARD_HEIGHT = 300;
+
+    private static final String[] CARD_GRADIENTS = {
+            "linear-gradient(to bottom right, #1a1a3e, #0d0d2a)",
+            "linear-gradient(to bottom right, #1e2a1e, #0d1a0d)",
+            "linear-gradient(to bottom right, #2a1a1a, #1a0d0d)",
+            "linear-gradient(to bottom right, #1a2a2a, #0d1a1a)"
+    };
+    private static final String[] CARD_ICONS = {"📁", "📋", "🏷️", "📦", "🗂️", "📑"};
 
     public void initialize() {
         try {
             catServices = new categorieServices();
-            categorieList = FXCollections.observableArrayList();
-            tableCategorie.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-            // Bind columns
-            colId.setCellValueFactory(data -> new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getIdcategorie()));
-            colNom.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getNomcategorie()));
-            colDescription.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getDescription()));
-            colDateCreation.setCellValueFactory(data -> new javafx.beans.property.SimpleObjectProperty<>(data.getValue().getDateCreation()));
-
-            // Filtered list for search
-            filteredList = new FilteredList<>(categorieList, p -> true);
-            tableCategorie.setItems(filteredList);
-
-            // Search listener
-            if (searchField != null) {
-                searchField.textProperty().addListener((obs, oldVal, newVal) -> {
-                    filteredList.setPredicate(cat -> {
-                        if (newVal == null || newVal.trim().isEmpty()) return true;
-                        String lower = newVal.toLowerCase().trim();
-                        if (cat.getNomcategorie() != null && cat.getNomcategorie().toLowerCase().contains(lower)) return true;
-                        if (cat.getDescription() != null && cat.getDescription().toLowerCase().contains(lower)) return true;
-                        return false;
-                    });
-                    if (lblCount != null) lblCount.setText(String.valueOf(filteredList.size()));
-                });
-            }
-
-            // Button handlers
             if (btnAjouter != null) btnAjouter.setOnAction(e -> { animateButton(btnAjouter); openAddDialog(); });
             if (btnModifier != null) btnModifier.setOnAction(e -> { animateButton(btnModifier); openEditDialog(); });
             if (btnSupprimer != null) btnSupprimer.setOnAction(e -> { animateButton(btnSupprimer); deleteCategorie(); });
+            if (btnPrev != null) btnPrev.setOnAction(e -> { animateButton(btnPrev); navigate(-1); });
+            if (btnNext != null) btnNext.setOnAction(e -> { animateButton(btnNext); navigate(1); });
+
+            if (searchField != null) {
+                searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+                    currentPage = 0;
+                    selectedIndex = -1;
+                    applyFilter(newVal);
+                });
+            }
 
             Platform.runLater(() -> {
                 loadData();
@@ -85,151 +85,276 @@ public class CategorieController {
         }
     }
 
+    private void applyFilter(String query) {
+        filteredList.clear();
+        if (query == null || query.trim().isEmpty()) {
+            filteredList.addAll(catList);
+        } else {
+            String lower = query.toLowerCase().trim();
+            filteredList.addAll(catList.stream().filter(c -> {
+                if (c.getNomcategorie() != null && c.getNomcategorie().toLowerCase().contains(lower)) return true;
+                if (c.getDescription() != null && c.getDescription().toLowerCase().contains(lower)) return true;
+                return false;
+            }).collect(Collectors.toList()));
+        }
+        if (lblCount != null) lblCount.setText(String.valueOf(filteredList.size()));
+        buildCards();
+    }
+
     private void loadData() {
         try {
-            if (catServices == null) {
-                showToast("Service de base de données non disponible", false);
-                return;
-            }
-            categorieList.clear();
-            categorieList.addAll(catServices.afficher());
-            if (lblCount != null) animateCounter(lblCount, categorieList.size());
-            System.out.println("✅ Loaded " + categorieList.size() + " categories");
+            if (catServices == null) { showToast("Service non disponible", false); return; }
+            catList.clear();
+            catList.addAll(catServices.afficher());
+            filteredList.clear();
+            filteredList.addAll(catList);
+            if (lblCount != null) animateCounter(lblCount, catList.size());
+            int maxPage = getMaxPage();
+            if (currentPage > maxPage) currentPage = maxPage;
+            if (selectedIndex >= filteredList.size()) selectedIndex = filteredList.isEmpty() ? -1 : 0;
+            buildCards();
+            System.out.println("✅ Loaded " + catList.size() + " categories");
         } catch (SQLException e) {
             System.err.println("❌ SQL Error: " + e.getMessage());
             showToast("Erreur de chargement: " + e.getMessage(), false);
         }
     }
 
+    private int getMaxPage() {
+        if (filteredList.isEmpty()) return 0;
+        return (filteredList.size() - 1) / CARDS_PER_PAGE;
+    }
+
+    private void navigate(int direction) {
+        if (filteredList.isEmpty()) return;
+        currentPage += direction;
+        int maxPage = getMaxPage();
+        if (currentPage < 0) currentPage = maxPage;
+        if (currentPage > maxPage) currentPage = 0;
+        buildCards();
+    }
+
+    private void buildCards() {
+        cardsContainer.getChildren().clear();
+
+        if (filteredList.isEmpty()) {
+            cardsContainer.setVisible(false); cardsContainer.setManaged(false);
+            emptyState.setVisible(true); emptyState.setManaged(true);
+            lblPageInfo.setText("");
+            if (btnPrev != null) btnPrev.setDisable(true);
+            if (btnNext != null) btnNext.setDisable(true);
+            updateDots();
+            return;
+        }
+
+        cardsContainer.setVisible(true); cardsContainer.setManaged(true);
+        emptyState.setVisible(false); emptyState.setManaged(false);
+        if (btnPrev != null) btnPrev.setDisable(false);
+        if (btnNext != null) btnNext.setDisable(false);
+
+        int startIdx = currentPage * CARDS_PER_PAGE;
+        int endIdx = Math.min(startIdx + CARDS_PER_PAGE, filteredList.size());
+
+        for (int i = startIdx; i < endIdx; i++) {
+            StackPane card = createCard(filteredList.get(i), i);
+            cardsContainer.getChildren().add(card);
+
+            int delay = (i - startIdx) * 120;
+            card.setOpacity(0); card.setTranslateY(40); card.setScaleX(0.9); card.setScaleY(0.9);
+            FadeTransition fade = new FadeTransition(Duration.millis(400), card);
+            fade.setToValue(1.0); fade.setDelay(Duration.millis(delay)); fade.setInterpolator(Interpolator.EASE_OUT);
+            TranslateTransition slide = new TranslateTransition(Duration.millis(450), card);
+            slide.setToY(0); slide.setDelay(Duration.millis(delay)); slide.setInterpolator(Interpolator.EASE_OUT);
+            ScaleTransition scale = new ScaleTransition(Duration.millis(400), card);
+            scale.setToX(1.0); scale.setToY(1.0); scale.setDelay(Duration.millis(delay)); scale.setInterpolator(Interpolator.EASE_OUT);
+            new ParallelTransition(fade, slide, scale).play();
+        }
+
+        lblPageInfo.setText((currentPage + 1) + " / " + (getMaxPage() + 1));
+        updateDots();
+    }
+
+    private StackPane createCard(categorie cat, int index) {
+        StackPane card = new StackPane();
+        card.setPrefSize(CARD_WIDTH, CARD_HEIGHT);
+        card.setMinSize(CARD_WIDTH, CARD_HEIGHT);
+        card.setMaxSize(CARD_WIDTH, CARD_HEIGHT);
+        card.getStyleClass().add("categorie-card");
+
+        Rectangle clip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
+        clip.setArcWidth(24); clip.setArcHeight(24);
+        card.setClip(clip);
+
+        // Gradient background
+        Region bg = new Region();
+        bg.setPrefSize(CARD_WIDTH, CARD_HEIGHT);
+        bg.setStyle("-fx-background-color: " + CARD_GRADIENTS[index % CARD_GRADIENTS.length] + ";");
+
+        // Decorative large icon (watermark style)
+        Label watermark = new Label(CARD_ICONS[index % CARD_ICONS.length]);
+        watermark.setStyle("-fx-font-size: 80px; -fx-opacity: 0.07;");
+        StackPane.setAlignment(watermark, Pos.TOP_RIGHT);
+        StackPane.setMargin(watermark, new Insets(-10, -10, 0, 0));
+
+        // Content overlay
+        VBox content = new VBox(10);
+        content.setAlignment(Pos.TOP_LEFT);
+        content.setPadding(new Insets(24, 22, 22, 22));
+        content.setPickOnBounds(false);
+
+        // Top icon
+        Label iconLabel = new Label(CARD_ICONS[index % CARD_ICONS.length]);
+        iconLabel.setStyle("-fx-font-size: 32px;");
+
+        // Name
+        Label nameLabel = new Label(cat.getNomcategorie() != null ? cat.getNomcategorie() : "Sans nom");
+        nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;");
+        nameLabel.setWrapText(true);
+        nameLabel.setMaxWidth(CARD_WIDTH - 44);
+
+        // Description
+        String desc = cat.getDescription();
+        if (desc != null && desc.length() > 80) desc = desc.substring(0, 77) + "...";
+        Label descLabel = new Label(desc != null ? desc : "Aucune description");
+        descLabel.setStyle("-fx-text-fill: rgba(255,255,255,0.65); -fx-font-size: 12px;");
+        descLabel.setWrapText(true);
+        descLabel.setMaxWidth(CARD_WIDTH - 44);
+
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        // Date at bottom
+        String dateStr = cat.getDateCreation() != null
+                ? cat.getDateCreation().format(DateTimeFormatter.ofPattern("dd MMM yyyy"))
+                : "—";
+        Label dateLabel = new Label("📅 " + dateStr);
+        dateLabel.setStyle("-fx-text-fill: rgba(255,255,255,0.45); -fx-font-size: 11px;");
+
+        content.getChildren().addAll(iconLabel, nameLabel, descLabel, spacer, dateLabel);
+
+        card.getChildren().addAll(bg, watermark, content);
+
+        // Selection highlight
+        if (index == selectedIndex) {
+            card.setStyle("-fx-border-color: #BFA200; -fx-border-width: 2.5; -fx-border-radius: 12; "
+                    + "-fx-effect: dropshadow(gaussian, rgba(191,162,0,0.6), 20, 0.7, 0, 0);");
+            Rectangle selClip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
+            selClip.setArcWidth(24); selClip.setArcHeight(24);
+            card.setClip(selClip);
+        }
+
+        card.setOnMouseClicked(e -> {
+            selectedIndex = index;
+            ScaleTransition pop = new ScaleTransition(Duration.millis(150), card);
+            pop.setToX(0.95); pop.setToY(0.95);
+            ScaleTransition back = new ScaleTransition(Duration.millis(200), card);
+            back.setToX(1.0); back.setToY(1.0); back.setInterpolator(Interpolator.EASE_OUT);
+            pop.setOnFinished(ev -> { back.play(); back.setOnFinished(ev2 -> buildCards()); });
+            pop.play();
+        });
+
+        card.setOnMouseEntered(e -> {
+            if (index != selectedIndex) {
+                ScaleTransition hover = new ScaleTransition(Duration.millis(200), card);
+                hover.setToX(1.04); hover.setToY(1.04); hover.setInterpolator(Interpolator.EASE_OUT); hover.play();
+                card.setEffect(new DropShadow(25, Color.rgb(191, 162, 0, 0.4)));
+            }
+        });
+        card.setOnMouseExited(e -> {
+            if (index != selectedIndex) {
+                ScaleTransition unhover = new ScaleTransition(Duration.millis(200), card);
+                unhover.setToX(1.0); unhover.setToY(1.0); unhover.setInterpolator(Interpolator.EASE_OUT); unhover.play();
+                card.setEffect(null);
+            }
+        });
+
+        card.setCursor(Cursor.HAND);
+        return card;
+    }
+
+    private void updateDots() {
+        pageIndicator.getChildren().removeIf(node -> node instanceof Circle);
+        int totalPages = getMaxPage() + 1;
+        if (totalPages <= 1) return;
+        int maxDots = Math.min(totalPages, 10);
+        for (int i = 0; i < maxDots; i++) {
+            Circle dot = new Circle(5);
+            dot.setStyle(i == currentPage ? "-fx-fill: #BFA200;" : "-fx-fill: rgba(191,162,0,0.25);");
+            final int page = i;
+            dot.setCursor(Cursor.HAND);
+            dot.setOnMouseClicked(e -> { currentPage = page; buildCards(); });
+            pageIndicator.getChildren().add(pageIndicator.getChildren().size() - 1, dot);
+        }
+    }
+
+    private categorie getSelectedCategorie() {
+        if (selectedIndex < 0 || selectedIndex >= filteredList.size()) return null;
+        return filteredList.get(selectedIndex);
+    }
+
     // ========== ANIMATIONS ==========
 
     private void playEntranceAnimation() {
-        Node root = tableCategorie.getScene() != null ? tableCategorie.getParent() : null;
+        Node root = cardsContainer.getParent();
         if (root == null) return;
-
-        // Fade in the entire view
         root.setOpacity(0);
         FadeTransition fade = new FadeTransition(Duration.millis(600), root);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-        fade.setInterpolator(Interpolator.EASE_OUT);
-        fade.play();
-
-        // Slide in the table from bottom
-        tableCategorie.setTranslateY(30);
-        TranslateTransition slide = new TranslateTransition(Duration.millis(700), tableCategorie);
-        slide.setFromY(30);
-        slide.setToY(0);
-        slide.setInterpolator(Interpolator.EASE_OUT);
-        slide.setDelay(Duration.millis(200));
-        slide.play();
-
-        // Pulse the stat card
+        fade.setFromValue(0); fade.setToValue(1); fade.setInterpolator(Interpolator.EASE_OUT); fade.play();
         if (lblCount != null && lblCount.getParent() != null) {
             ScaleTransition pulse = new ScaleTransition(Duration.millis(500), lblCount.getParent());
-            pulse.setFromX(0.85);
-            pulse.setFromY(0.85);
-            pulse.setToX(1.0);
-            pulse.setToY(1.0);
-            pulse.setInterpolator(Interpolator.EASE_OUT);
-            pulse.setDelay(Duration.millis(300));
-            pulse.play();
+            pulse.setFromX(0.85); pulse.setFromY(0.85); pulse.setToX(1.0); pulse.setToY(1.0);
+            pulse.setInterpolator(Interpolator.EASE_OUT); pulse.setDelay(Duration.millis(300)); pulse.play();
         }
     }
 
     private void animateButton(Button btn) {
         ScaleTransition press = new ScaleTransition(Duration.millis(100), btn);
-        press.setToX(0.9);
-        press.setToY(0.9);
+        press.setToX(0.9); press.setToY(0.9);
         ScaleTransition release = new ScaleTransition(Duration.millis(150), btn);
-        release.setToX(1.0);
-        release.setToY(1.0);
-        release.setInterpolator(Interpolator.EASE_OUT);
-        press.setOnFinished(e -> release.play());
-        press.play();
+        release.setToX(1.0); release.setToY(1.0); release.setInterpolator(Interpolator.EASE_OUT);
+        press.setOnFinished(e -> release.play()); press.play();
     }
 
     private void animateCounter(Label label, int targetValue) {
         Timeline timeline = new Timeline();
-        int steps = 20;
-        for (int i = 0; i <= steps; i++) {
-            int val = (int) Math.round((double) targetValue * i / steps);
-            KeyFrame kf = new KeyFrame(Duration.millis(i * 30), e -> label.setText(String.valueOf(val)));
-            timeline.getKeyFrames().add(kf);
+        for (int i = 0; i <= 20; i++) {
+            int val = (int) Math.round((double) targetValue * i / 20);
+            timeline.getKeyFrames().add(new KeyFrame(Duration.millis(i * 30), e -> label.setText(String.valueOf(val))));
         }
         timeline.play();
     }
 
     private void showToast(String message, boolean isSuccess) {
         try {
-            if (tableCategorie.getScene() == null) return;
-            Node sceneRoot = tableCategorie.getScene().getRoot();
-            StackPane overlay = null;
+            if (cardsContainer.getScene() == null) return;
+            Node sceneRoot = cardsContainer.getScene().getRoot();
             if (sceneRoot instanceof StackPane) {
-                overlay = (StackPane) sceneRoot;
-            } else if (sceneRoot instanceof javafx.scene.layout.BorderPane) {
-                // Wrap in StackPane approach — just use Alert as fallback
-                Alert alert = new Alert(isSuccess ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
-                alert.setTitle(isSuccess ? "Succès" : "Erreur");
-                alert.setHeaderText(null);
-                alert.setContentText(message);
-                alert.showAndWait();
-                return;
-            } else {
-                Alert alert = new Alert(isSuccess ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
-                alert.setTitle(isSuccess ? "Succès" : "Erreur");
-                alert.setHeaderText(null);
-                alert.setContentText(message);
-                alert.showAndWait();
+                StackPane overlay = (StackPane) sceneRoot;
+                HBox toast = new HBox(10);
+                toast.setAlignment(Pos.CENTER);
+                toast.getStyleClass().add(isSuccess ? "toast-success" : "toast-error");
+                toast.setMaxWidth(450); toast.setMaxHeight(50);
+                Label icon = new Label(isSuccess ? "✓" : "✕"); icon.getStyleClass().add("toast-icon");
+                Label msg = new Label(message); msg.getStyleClass().add("toast-label"); msg.setWrapText(true);
+                toast.getChildren().addAll(icon, msg);
+                StackPane.setAlignment(toast, Pos.TOP_CENTER);
+                StackPane.setMargin(toast, new Insets(20, 0, 0, 0));
+                toast.setOpacity(0); toast.setTranslateY(-30);
+                overlay.getChildren().add(toast);
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(350), toast); fadeIn.setToValue(1.0);
+                TranslateTransition slideIn = new TranslateTransition(Duration.millis(350), toast);
+                slideIn.setToY(0); slideIn.setInterpolator(Interpolator.EASE_OUT);
+                ParallelTransition in = new ParallelTransition(fadeIn, slideIn);
+                FadeTransition fadeOut = new FadeTransition(Duration.millis(400), toast);
+                fadeOut.setToValue(0); fadeOut.setDelay(Duration.millis(2500));
+                fadeOut.setOnFinished(e -> overlay.getChildren().remove(toast));
+                in.setOnFinished(e -> fadeOut.play()); in.play();
                 return;
             }
-
-            HBox toast = new HBox(10);
-            toast.setAlignment(Pos.CENTER);
-            toast.getStyleClass().add(isSuccess ? "toast-success" : "toast-error");
-            toast.setMaxWidth(450);
-            toast.setMaxHeight(50);
-
-            Label icon = new Label(isSuccess ? "✓" : "✕");
-            icon.getStyleClass().add("toast-icon");
-            Label msg = new Label(message);
-            msg.getStyleClass().add("toast-label");
-            msg.setWrapText(true);
-
-            toast.getChildren().addAll(icon, msg);
-            StackPane.setAlignment(toast, Pos.TOP_CENTER);
-            StackPane.setMargin(toast, new Insets(20, 0, 0, 0));
-
-            toast.setOpacity(0);
-            toast.setTranslateY(-30);
-            overlay.getChildren().add(toast);
-
-            // Animate in
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(350), toast);
-            fadeIn.setToValue(1.0);
-            TranslateTransition slideIn = new TranslateTransition(Duration.millis(350), toast);
-            slideIn.setToY(0);
-            slideIn.setInterpolator(Interpolator.EASE_OUT);
-
-            ParallelTransition in = new ParallelTransition(fadeIn, slideIn);
-
-            // Animate out after delay
-            FadeTransition fadeOut = new FadeTransition(Duration.millis(400), toast);
-            fadeOut.setToValue(0);
-            fadeOut.setDelay(Duration.millis(2500));
-            StackPane finalOverlay = overlay;
-            fadeOut.setOnFinished(e -> finalOverlay.getChildren().remove(toast));
-
-            in.setOnFinished(e -> fadeOut.play());
-            in.play();
-        } catch (Exception e) {
-            // Fallback to plain alert
-            Alert alert = new Alert(isSuccess ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
-            alert.setTitle(isSuccess ? "Succès" : "Erreur");
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
-        }
+        } catch (Exception ignored) {}
+        Alert alert = new Alert(isSuccess ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR);
+        alert.setTitle(isSuccess ? "Succès" : "Erreur"); alert.setHeaderText(null); alert.setContentText(message);
+        alert.showAndWait();
     }
 
     // ========== CRUD DIALOGS ==========
@@ -245,35 +370,24 @@ public class CategorieController {
             dialog.setTitle("Ajouter une Catégorie");
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.setResizable(true);
-            String css = getClass().getResource("/style.css").toExternalForm();
-            dialogPane.getStylesheets().add(css);
-            Stage dialogStage = (Stage) dialog.getDialogPane().getScene().getWindow();
-            dialogStage.setMaximized(true);
-
+            dialogPane.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            ((Stage) dialog.getDialogPane().getScene().getWindow()).setMaximized(true);
             CategorieFormDialogController dc = loader.getController();
             dc.setMode("ADD");
-
             java.util.Optional<ButtonType> result = dialog.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 categorie newCat = dc.getCategorie();
-                if (newCat != null) {
-                    catServices.ajouter(newCat);
-                    loadData();
-                    showToast("Catégorie ajoutée avec succès !", true);
-                }
+                if (newCat != null) { catServices.ajouter(newCat); loadData(); showToast("Catégorie ajoutée avec succès !", true); }
             }
-        } catch (IOException e) {
-            showToast("Erreur d'ouverture du formulaire", false);
-        } catch (SQLException e) {
-            showToast("Erreur d'ajout: " + e.getMessage(), false);
-        }
+        } catch (IOException e) { showToast("Erreur d'ouverture du formulaire", false);
+        } catch (SQLException e) { showToast("Erreur d'ajout: " + e.getMessage(), false); }
     }
 
     @FXML
     private void openEditDialog() {
         if (catServices == null) { showToast("Service non disponible", false); return; }
-        categorie selected = tableCategorie.getSelectionModel().getSelectedItem();
-        if (selected == null) { showToast("Veuillez sélectionner une catégorie", false); return; }
+        categorie selected = getSelectedCategorie();
+        if (selected == null) { showToast("Cliquez sur une carte pour la sélectionner d'abord", false); return; }
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/CategorieFormDialog.fxml"));
             DialogPane dialogPane = loader.load();
@@ -282,73 +396,36 @@ public class CategorieController {
             dialog.setTitle("Modifier la Catégorie");
             dialog.initModality(Modality.APPLICATION_MODAL);
             dialog.setResizable(true);
-            String css = getClass().getResource("/style.css").toExternalForm();
-            dialogPane.getStylesheets().add(css);
-            Stage dialogStage = (Stage) dialog.getDialogPane().getScene().getWindow();
-            dialogStage.setMaximized(true);
-
+            dialogPane.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            ((Stage) dialog.getDialogPane().getScene().getWindow()).setMaximized(true);
             CategorieFormDialogController dc = loader.getController();
-            dc.setMode("EDIT");
-            dc.setCategorie(selected);
-
+            dc.setMode("EDIT"); dc.setCategorie(selected);
             java.util.Optional<ButtonType> result = dialog.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.OK) {
                 categorie updatedCat = dc.getCategorie();
                 if (updatedCat != null) {
                     updatedCat.setIdcategorie(selected.getIdcategorie());
-                    catServices.modifier(updatedCat);
-                    loadData();
-                    showToast("Catégorie modifiée avec succès !", true);
+                    catServices.modifier(updatedCat); loadData(); showToast("Catégorie modifiée avec succès !", true);
                 }
             }
-        } catch (IOException e) {
-            showToast("Erreur d'ouverture du formulaire", false);
-        } catch (SQLException e) {
-            showToast("Erreur de modification: " + e.getMessage(), false);
-        }
+        } catch (IOException e) { showToast("Erreur d'ouverture du formulaire", false);
+        } catch (SQLException e) { showToast("Erreur de modification: " + e.getMessage(), false); }
     }
 
     @FXML
     private void deleteCategorie() {
         if (catServices == null) { showToast("Service non disponible", false); return; }
-        categorie selected = tableCategorie.getSelectionModel().getSelectedItem();
-        if (selected == null) { showToast("Veuillez sélectionner une catégorie", false); return; }
-
+        categorie selected = getSelectedCategorie();
+        if (selected == null) { showToast("Cliquez sur une carte pour la sélectionner d'abord", false); return; }
         Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmAlert.setTitle("Confirmation");
-        confirmAlert.setHeaderText("Supprimer cette catégorie ?");
+        confirmAlert.setTitle("Confirmation"); confirmAlert.setHeaderText("Supprimer cette catégorie ?");
         confirmAlert.setContentText("Êtes-vous sûr de vouloir supprimer \"" + selected.getNomcategorie() + "\" ?");
         java.util.Optional<ButtonType> result = confirmAlert.showAndWait();
-
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
                 catServices.supprimer(selected.getIdcategorie());
-
-                // Animate row removal
-                int idx = tableCategorie.getSelectionModel().getSelectedIndex();
-                if (idx >= 0 && idx < tableCategorie.getItems().size()) {
-                    TableRow<?> row = null;
-                    for (Node node : tableCategorie.lookupAll(".table-row-cell")) {
-                        if (node instanceof TableRow && ((TableRow<?>) node).getIndex() == idx) {
-                            row = (TableRow<?>) node;
-                            break;
-                        }
-                    }
-                    if (row != null) {
-                        FadeTransition fadeRow = new FadeTransition(Duration.millis(300), row);
-                        fadeRow.setToValue(0);
-                        fadeRow.setOnFinished(e -> loadData());
-                        fadeRow.play();
-                    } else {
-                        loadData();
-                    }
-                } else {
-                    loadData();
-                }
-                showToast("Catégorie supprimée !", true);
-            } catch (SQLException e) {
-                showToast("Erreur de suppression: " + e.getMessage(), false);
-            }
+                selectedIndex = -1; loadData(); showToast("Catégorie supprimée !", true);
+            } catch (SQLException e) { showToast("Erreur de suppression: " + e.getMessage(), false); }
         }
     }
 }

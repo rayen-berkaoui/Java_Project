@@ -241,7 +241,7 @@ public class LieuTouristiqueController {
 
         // Price badge (top-right)
         Label priceBadge = new Label(String.format("%.0f TND", lieu.getPrix()));
-        priceBadge.setStyle("-fx-background-color: rgba(255,215,0,0.9); -fx-text-fill: #0a0a0a; -fx-font-size: 10px; "
+        priceBadge.setStyle("-fx-background-color: rgba(191,162,0,0.9); -fx-text-fill: #0a0a0a; -fx-font-size: 10px; "
                 + "-fx-font-weight: bold; -fx-padding: 3 10; -fx-background-radius: 4;");
         StackPane.setAlignment(priceBadge, Pos.TOP_RIGHT);
         StackPane.setMargin(priceBadge, new Insets(14, 14, 0, 0));
@@ -274,8 +274,8 @@ public class LieuTouristiqueController {
 
         // Selection highlight
         if (index == selectedIndex) {
-            card.setStyle("-fx-border-color: #FFD700; -fx-border-width: 2.5; -fx-border-radius: 12; "
-                    + "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.6), 20, 0.7, 0, 0);");
+            card.setStyle("-fx-border-color: #BFA200; -fx-border-width: 2.5; -fx-border-radius: 12; "
+                    + "-fx-effect: dropshadow(gaussian, rgba(191,162,0,0.6), 20, 0.7, 0, 0);");
             Rectangle selClip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
             selClip.setArcWidth(24);
             selClip.setArcHeight(24);
@@ -304,7 +304,7 @@ public class LieuTouristiqueController {
                 hover.setToY(1.04);
                 hover.setInterpolator(Interpolator.EASE_OUT);
                 hover.play();
-                card.setEffect(new DropShadow(25, Color.rgb(255, 215, 0, 0.4)));
+                card.setEffect(new DropShadow(25, Color.rgb(191, 162, 0, 0.4)));
             }
         });
         card.setOnMouseExited(e -> {
@@ -349,7 +349,7 @@ public class LieuTouristiqueController {
         int maxDots = Math.min(totalPages, 10);
         for (int i = 0; i < maxDots; i++) {
             Circle dot = new Circle(5);
-            dot.setStyle(i == currentPage ? "-fx-fill: #FFD700;" : "-fx-fill: rgba(255,215,0,0.25);");
+            dot.setStyle(i == currentPage ? "-fx-fill: #BFA200;" : "-fx-fill: rgba(191,162,0,0.25);");
             final int page = i;
             dot.setCursor(javafx.scene.Cursor.HAND);
             dot.setOnMouseClicked(e -> {
