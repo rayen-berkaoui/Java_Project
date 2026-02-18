@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.AffichageEtablissementController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <!-- TOP BAR : titre + recherche/filtres -->
+    <top>
+        <VBox spacing="10" styleClass="topbar">
+            <padding>
+                <Insets top="14" right="16" bottom="14" left="16"/>
+            </padding>
+
+            <!-- Titre jaune -->
+            <Label text="Gestion des établissements" styleClass="page-title"/>
+
+            <!-- Recherche + filtres -->
+            <HBox spacing="10">
+                <TextField fx:id="searchField"
+                           promptText="Rechercher (nom, ville, email, téléphone)..."
+                           HBox.hgrow="ALWAYS"/>
+                <ComboBox fx:id="filterVille" prefWidth="160" promptText="Ville"/>
+                <ComboBox fx:id="filterGamme" prefWidth="140" promptText="Gamme"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- CENTER : liste + bouton ajouter -->
+    <center>
+        <VBox spacing="12">
+            <padding>
+                <Insets top="12" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <ListView fx:id="etablissementList" VBox.vgrow="ALWAYS" styleClass="cards-list"/>
+
+            <HBox spacing="10">
+                <Button text="Ajouter" onAction="#onShowAjouter" styleClass="btn-primary"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>

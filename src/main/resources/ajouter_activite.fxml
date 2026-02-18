@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.AjouterActiviteController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <center>
+        <VBox spacing="10" prefWidth="520" styleClass="formpanel">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label fx:id="titleLabel" text="Ajouter une activité" styleClass="h1"/>
+            <Label fx:id="messageLabel" text="" wrapText="true"/>
+
+            <Separator/>
+
+            <TextField fx:id="nomField" promptText="Nom activité *"/>
+            <ComboBox fx:id="categorieField" promptText="Catégorie *"/>
+            <TextField fx:id="dureeField" promptText="Durée (minutes)"/>
+            <ComboBox fx:id="niveauField" promptText="Niveau"/>
+            <TextArea fx:id="descriptionArea" promptText="Description" prefRowCount="4"/>
+
+            <HBox spacing="10">
+                <Button fx:id="btnEnregistrer" text="Enregistrer" onAction="#onEnregistrer"
+                        styleClass="btn-primary" HBox.hgrow="ALWAYS"/>
+
+                <Button text="Annuler" onAction="#onAnnuler" styleClass="btn-secondary" HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+        </VBox>
+    </center>
+
+</BorderPane>

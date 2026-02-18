@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.AjouterEtablissementController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <center>
+        <VBox spacing="10" prefWidth="520" styleClass="formpanel">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label fx:id="titleLabel" text="Ajouter un établissement" styleClass="h1"/>
+            <Label fx:id="messageLabel" text="" wrapText="true"/>
+
+            <Separator/>
+
+            <TextField fx:id="nomField" promptText="Nom *"/>
+            <TextField fx:id="adresseField" promptText="Adresse"/>
+            <TextField fx:id="villeField" promptText="Ville *"/>
+            <TextField fx:id="telephoneField" promptText="Téléphone (optionnel)"/>
+            <TextField fx:id="emailField" promptText="Email (optionnel)"/>
+            <TextField fx:id="horairesField" promptText="Horaires (optionnel)"/>
+            <ComboBox fx:id="gammePrixField" promptText="Gamme prix (optionnel)"/>
+            <TextField fx:id="imageUrlField" promptText="URL image (optionnel)"/>
+            <TextArea fx:id="descriptionArea" promptText="Description (max 200)" prefRowCount="4"/>
+
+            <HBox spacing="10">
+                <Button fx:id="saveBtn"
+                        text="Enregistrer"
+                        onAction="#onEnregistrer"
+                        styleClass="btn-primary"
+                        HBox.hgrow="ALWAYS"/>
+                <Button text="Annuler"
+                        onAction="#onAnnuler"
+                        styleClass="btn-secondary"
+                        HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+        </VBox>
+    </center>
+
+</BorderPane>

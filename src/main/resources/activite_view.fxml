@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.ActiviteController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <!-- TOP BAR (recherche + filtres) -->
+    <top>
+        <VBox spacing="10" styleClass="topbar">
+            <padding>
+                <Insets top="14" right="16" bottom="14" left="16"/>
+            </padding>
+
+            <!-- Titre jaune -->
+            <Label text="Gestion des activités" styleClass="page-title"/>
+
+            <!-- Recherche + filtres -->
+            <HBox spacing="10">
+                <TextField fx:id="searchField"
+                           promptText="Rechercher (nom, catégorie, niveau)..."
+                           HBox.hgrow="ALWAYS"/>
+
+                <ComboBox fx:id="filterCategorie" prefWidth="170" promptText="Catégorie"/>
+                <ComboBox fx:id="filterNiveau" prefWidth="170" promptText="Niveau"/>
+                <ComboBox fx:id="sortBox" prefWidth="170" promptText="Trier"/>
+
+                <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <!-- CENTER LIST -->
+    <center>
+        <VBox spacing="12">
+            <padding>
+                <Insets top="12" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <ListView fx:id="activiteList" VBox.vgrow="ALWAYS" styleClass="cards-list"/>
+
+            <!-- Bouton Ajouter en bas à gauche -->
+            <HBox>
+                <Button text="Ajouter" onAction="#onShowAjouter" styleClass="btn-primary"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>

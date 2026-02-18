@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.AffichageActiviteController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <top>
+        <HBox spacing="10" styleClass="topbar">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <TextField fx:id="searchField" promptText="Rechercher (nom, catégorie, niveau)..." HBox.hgrow="ALWAYS"/>
+            <ComboBox fx:id="filterCategorie" prefWidth="170" promptText="Catégorie"/>
+            <ComboBox fx:id="filterNiveau" prefWidth="170" promptText="Niveau"/>
+            <ComboBox fx:id="sortBox" prefWidth="170" promptText="Trier"/>
+            <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label text="Liste des activités" styleClass="h1"/>
+            <ListView fx:id="activiteList" VBox.vgrow="ALWAYS" styleClass="cards-list"/>
+
+            <HBox spacing="10">
+                <Button text="Ajouter" onAction="#onShowAjouter" styleClass="btn-primary"/>
+                <Button text="Modifier" onAction="#onShowModifier" styleClass="btn-warning"/>
+                <Button text="Supprimer" onAction="#onSupprimer" styleClass="btn-danger"/>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>

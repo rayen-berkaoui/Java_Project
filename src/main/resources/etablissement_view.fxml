@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.EtablissementController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <!-- TOP BAR -->
+    <top>
+        <HBox spacing="10" styleClass="topbar">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <TextField fx:id="searchField"
+                       promptText="Rechercher (nom, ville, email, téléphone)..."
+                       HBox.hgrow="ALWAYS"/>
+
+            <ComboBox fx:id="filterVille" prefWidth="160" promptText="Ville"/>
+            <ComboBox fx:id="filterGamme" prefWidth="140" promptText="Gamme"/>
+            <ComboBox fx:id="sortBox" prefWidth="140" promptText="Trier"/>
+
+            <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
+        </HBox>
+    </top>
+
+    <!-- LEFT FILTER PANEL -->
+    <left>
+        <VBox spacing="12" prefWidth="250" styleClass="sidepanel">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label text="Filtres" styleClass="h2"/>
+            <Separator/>
+
+            <Label text="Ville" styleClass="label"/>
+            <ComboBox fx:id="filterVilleSide" promptText="Tous"/>
+
+            <Label text="Gamme de prix" styleClass="label"/>
+            <ComboBox fx:id="filterGammeSide" promptText="Tous"/>
+
+            <Separator/>
+            <Label text="Astuce" styleClass="muted"/>
+            <Label text="Utilise la barre de recherche pour filtrer rapidement."
+                   wrapText="true" styleClass="muted"/>
+        </VBox>
+    </left>
+
+    <!-- CENTER LIST -->
+    <center>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label text="Liste des établissements" styleClass="h1"/>
+            <ListView fx:id="etablissementList" VBox.vgrow="ALWAYS" styleClass="cards-list"/>
+        </VBox>
+    </center>
+
+    <!-- RIGHT FORM -->
+    <right>
+        <VBox spacing="10" prefWidth="360" styleClass="formpanel">
+            <padding>
+                <Insets top="16" right="16" bottom="16" left="16"/>
+            </padding>
+
+            <Label text="Formulaire" styleClass="h2"/>
+            <Label fx:id="selectionInfoLabel" text="Aucune sélection" styleClass="muted"/>
+            <Label fx:id="messageLabel" text="" wrapText="true"/>
+
+            <Separator/>
+
+            <TextField fx:id="nomField" promptText="Nom *"/>
+            <TextField fx:id="adresseField" promptText="Adresse"/>
+            <TextField fx:id="villeField" promptText="Ville *"/>
+            <TextField fx:id="telephoneField" promptText="Téléphone"/>
+            <TextField fx:id="emailField" promptText="Email"/>
+            <TextField fx:id="horairesField" promptText="Horaires"/>
+            <ComboBox fx:id="gammePrixField" promptText="Gamme (€ / €€ / €€€)"/>
+            <TextField fx:id="imageUrlField" promptText="URL image (ou vide)"/>
+            <TextArea fx:id="descriptionArea" promptText="Description" prefRowCount="4"/>
+
+            <HBox spacing="10">
+                <Button text="Ajouter" onAction="#onAjouter" styleClass="btn-primary" HBox.hgrow="ALWAYS"/>
+                <Button text="Modifier" onAction="#onModifier" styleClass="btn-warning" HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+            <HBox spacing="10">
+                <Button text="Supprimer" onAction="#onSupprimer" styleClass="btn-danger" HBox.hgrow="ALWAYS"/>
+                <Button text="Vider" onAction="#onVider" styleClass="btn-secondary" HBox.hgrow="ALWAYS"/>
+            </HBox>
+
+        </VBox>
+    </right>
+
+</BorderPane>
