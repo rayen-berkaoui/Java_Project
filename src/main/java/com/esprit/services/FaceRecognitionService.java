@@ -36,14 +36,22 @@ public class FaceRecognitionService {
     private boolean cameraRunning = false;
 
     // ═══════ MULTI-CAPTURE FACE ENCODING ═══════
-    // We store 5 face captures separated by ||| for robust matching across sessions
+    // We store 8 face captures separated by ||| for robust matching across sessions
     private static final String ENCODING_SEPARATOR = "|||";
-    private static final int NUM_CAPTURES = 5;
+    private static final int NUM_CAPTURES = 8;
 
     // Threshold for face matching using LBP histogram correlation.
     // Same person across sessions: typically 0.55-0.85
     // Different person: typically 0.20-0.50
-    private static final double MATCH_THRESHOLD = 0.80;
+    private static final double MATCH_THRESHOLD = 0.75;
+
+    // Face quality thresholds
+    private static final int MIN_FACE_SIZE = 80;  // Minimum face width/height in pixels
+    private static final double MIN_SHARPNESS = 15.0;  // Minimum Laplacian variance for sharpness
+
+    // Last match confidence (populated after compareFaces)
+    private double lastMatchConfidence = 0.0;
+    private String lastQualityMessage = "";
 
     public FaceRecognitionService() {
         // Load the Haar cascade for face detection from OpenCV data
@@ -209,8 +217,6 @@ public class FaceRecognitionService {
             new Size(0, 0)      // maxSize — unlimited
         );
 
-        System.out.println("Faces detected: " + faces.size());
-
         gray.close();
         return faces;
     }
@@ -224,40 +230,177 @@ public class FaceRecognitionService {
     }
 
     /**
+     * Get the last match confidence score (0.0-1.0)
+     */
+    public double getLastMatchConfidence() {
+        return lastMatchConfidence;
+    }
+
+    /**
+     * Get the last quality assessment message
+     */
+    public String getLastQualityMessage() {
+        return lastQualityMessage;
+    }
+
+    /**
+     * Assess the quality of a face capture.
+     * Returns a quality score (0.0-1.0) and sets lastQualityMessage.
+     */
+    public double assessFaceQuality(Mat image) {
+        if (image == null || image.empty()) {
+            lastQualityMessage = "Pas d'image";
+            return 0.0;
+        }
+
+        RectVector faces = detectFaces(image);
+        if (faces.size() == 0) {
+            lastQualityMessage = "Aucun visage detecte";
+            return 0.0;
+        }
+
+        Rect faceRect = faces.get(0);
+        for (int i = 1; i < faces.size(); i++) {
+            if (faces.get(i).area() > faceRect.area()) faceRect = faces.get(i);
+        }
+
+        double score = 0.0;
+
+        // Size check (larger = better) — face should be at least 80px, ideal >150px
+        int faceSize = Math.min(faceRect.width(), faceRect.height());
+        if (faceSize < MIN_FACE_SIZE) {
+            lastQualityMessage = "Rapprochez-vous de la camera";
+            return 0.1;
+        }
+        double sizeScore = Math.min(1.0, faceSize / 200.0);
+        score += sizeScore * 0.3;
+
+        // Centering check — face should be near center of frame
+        double centerX = faceRect.x() + faceRect.width() / 2.0;
+        double centerY = faceRect.y() + faceRect.height() / 2.0;
+        double frameCenterX = image.cols() / 2.0;
+        double frameCenterY = image.rows() / 2.0;
+        double distFromCenter = Math.sqrt(
+            Math.pow((centerX - frameCenterX) / frameCenterX, 2) +
+            Math.pow((centerY - frameCenterY) / frameCenterY, 2)
+        );
+        double centerScore = Math.max(0.0, 1.0 - distFromCenter);
+        score += centerScore * 0.2;
+
+        // Sharpness check using Laplacian variance
+        Mat gray = new Mat();
+        if (image.channels() > 1) {
+            cvtColor(image, gray, COLOR_BGR2GRAY);
+        } else {
+            gray = image.clone();
+        }
+        Mat faceROI = new Mat(gray, faceRect);
+        Mat laplacian = new Mat();
+        Laplacian(faceROI, laplacian, CV_64F);
+
+        // Calculate variance of Laplacian
+        Mat meanMat = new Mat();
+        Mat stddevMat = new Mat();
+        meanStdDev(laplacian, meanMat, stddevMat);
+        double stddevVal = stddevMat.createIndexer().getDouble(0);
+        double sharpness = stddevVal * stddevVal;
+        double sharpnessScore = Math.min(1.0, sharpness / 50.0);
+        score += sharpnessScore * 0.3;
+
+        // Brightness check — not too dark, not too bright
+        double brightness = meanMat.createIndexer().getDouble(0);
+        double brightnessScore;
+        if (brightness < 40) {
+            brightnessScore = brightness / 40.0;
+            lastQualityMessage = "Eclairage insuffisant";
+        } else if (brightness > 220) {
+            brightnessScore = (255 - brightness) / 35.0;
+            lastQualityMessage = "Trop de lumiere";
+        } else {
+            brightnessScore = 1.0;
+        }
+        score += brightnessScore * 0.2;
+
+        // Set quality message
+        if (score >= 0.8) {
+            lastQualityMessage = "Excellente qualite";
+        } else if (score >= 0.6) {
+            lastQualityMessage = "Bonne qualite";
+        } else if (score >= 0.4) {
+            lastQualityMessage = "Qualite moyenne - ameliorez l'eclairage";
+        } else {
+            if (lastQualityMessage.isEmpty()) lastQualityMessage = "Qualite insuffisante";
+        }
+
+        meanMat.close();
+        stddevMat.close();
+        gray.close();
+        faceROI.close();
+        laplacian.close();
+
+        return score;
+    }
+
+    /**
      * Capture multiple face encodings for registration (more robust).
      * Takes NUM_CAPTURES samples with delays between them for lighting variation.
+     * Only accepts high-quality captures.
      * Returns a combined encoding string with ||| separator, or null on failure.
      */
     public String encodeMultipleFaces() {
+        return encodeMultipleFaces(null);
+    }
+
+    /**
+     * Capture multiple face encodings with progress callback.
+     * Callback receives (capturedCount, totalNeeded, qualityScore)
+     */
+    public String encodeMultipleFaces(CaptureProgressCallback callback) {
         if (!cameraRunning) return null;
 
         List<String> encodings = new ArrayList<>();
         System.out.println("=== Multi-capture face registration: capturing " + NUM_CAPTURES + " samples ===");
 
-        for (int i = 0; i < NUM_CAPTURES * 4 && encodings.size() < NUM_CAPTURES; i++) {
+        for (int i = 0; i < NUM_CAPTURES * 5 && encodings.size() < NUM_CAPTURES; i++) {
             try {
                 // Longer delay between captures for more lighting/pose variation
-                Thread.sleep(500);
+                Thread.sleep(400);
             } catch (InterruptedException ignored) {}
 
             Mat frame = grabMat();
             if (frame == null) continue;
 
+            // Only accept good quality captures
+            double quality = assessFaceQuality(frame);
+            if (quality < 0.4) {
+                System.out.println("Skipping low quality capture (" + String.format("%.2f", quality) + ")");
+                if (callback != null) callback.onProgress(encodings.size(), NUM_CAPTURES, quality, lastQualityMessage);
+                continue;
+            }
+
             String enc = encodeSingleFace(frame);
             if (enc != null) {
                 encodings.add(enc);
-                System.out.println("Captured face " + encodings.size() + "/" + NUM_CAPTURES);
+                System.out.println("Captured face " + encodings.size() + "/" + NUM_CAPTURES + " (quality: " + String.format("%.2f", quality) + ")");
+                if (callback != null) callback.onProgress(encodings.size(), NUM_CAPTURES, quality, lastQualityMessage);
             }
         }
 
-        if (encodings.size() < 3) {
-            System.out.println("Failed: only captured " + encodings.size() + " faces, need at least 3");
+        if (encodings.size() < 4) {
+            System.out.println("Failed: only captured " + encodings.size() + " faces, need at least 4");
             return null;
         }
 
         String combined = String.join(ENCODING_SEPARATOR, encodings);
         System.out.println("Multi-capture complete: " + encodings.size() + " samples, total length: " + combined.length());
         return combined;
+    }
+
+    /**
+     * Callback interface for capture progress
+     */
+    public interface CaptureProgressCallback {
+        void onProgress(int captured, int total, double quality, String qualityMessage);
     }
 
     /**
@@ -353,6 +496,7 @@ public class FaceRecognitionService {
             }
 
             System.out.println("Best match score across " + storedParts.length + " stored captures: " + String.format("%.4f", bestScore));
+            lastMatchConfidence = bestScore;
             return bestScore;
 
         } catch (Exception e) {
@@ -695,17 +839,16 @@ public class FaceRecognitionService {
      * Returns the Mat with rectangles drawn
      */
     public Mat drawFaceRects(Mat image, RectVector faces) {
-        Mat result = image.clone();
         for (int i = 0; i < faces.size(); i++) {
             Rect face = faces.get(i);
-            rectangle(result,
+            rectangle(image,
                 new Point(face.x(), face.y()),
                 new Point(face.x() + face.width(), face.y() + face.height()),
                 new Scalar(0, 215, 255, 255),  // Gold color (BGR)
                 2, LINE_AA, 0
             );
         }
-        return result;
+        return image;
     }
 
     /**
@@ -723,14 +866,24 @@ public class FaceRecognitionService {
             if (mat == null || mat.empty()) return null;
 
             RectVector faces = detectFaces(mat);
-            Mat display = drawFaceRects(mat, faces);
-
-            Image image = matToImage(display);
             boolean faceDetected = faces.size() > 0;
+            int faceCount = (int) faces.size();
+            int fw = 0, fh = 0;
+            if (faceDetected) {
+                // Get the largest face dimensions
+                Rect largest = faces.get(0);
+                for (int i = 1; i < faces.size(); i++) {
+                    if (faces.get(i).area() > largest.area()) largest = faces.get(i);
+                }
+                fw = largest.width();
+                fh = largest.height();
+            }
 
-            display.close();
+            // Draw rectangles directly on mat (no clone)
+            drawFaceRects(mat, faces);
+            Image image = matToImage(mat);
 
-            return new CameraResult(image, faceDetected, mat);
+            return new CameraResult(image, faceDetected, faceDetected ? mat : null, faceCount, fw, fh);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -831,15 +984,28 @@ public class FaceRecognitionService {
         private final Image image;
         private final boolean faceDetected;
         private final Mat originalMat;
+        private final int faceCount;
+        private final int faceWidth;
+        private final int faceHeight;
 
         public CameraResult(Image image, boolean faceDetected, Mat originalMat) {
+            this(image, faceDetected, originalMat, faceDetected ? 1 : 0, 0, 0);
+        }
+
+        public CameraResult(Image image, boolean faceDetected, Mat originalMat, int faceCount, int faceWidth, int faceHeight) {
             this.image = image;
             this.faceDetected = faceDetected;
             this.originalMat = originalMat;
+            this.faceCount = faceCount;
+            this.faceWidth = faceWidth;
+            this.faceHeight = faceHeight;
         }
 
         public Image getImage() { return image; }
         public boolean isFaceDetected() { return faceDetected; }
         public Mat getOriginalMat() { return originalMat; }
+        public int getFaceCount() { return faceCount; }
+        public int getFaceWidth() { return faceWidth; }
+        public int getFaceHeight() { return faceHeight; }
     }
 }

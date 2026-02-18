@@ -581,6 +581,12 @@ public class utilisateurServices implements ICrud<utilisateur> {
         u.setNumTel(rs.getInt("num_tel"));
         u.setProfilePicture(rs.getString("profile_picture"));
         u.setFaceEncoding(rs.getString("face_encoding"));
+        try { u.setFaceConfidence(rs.getDouble("face_confidence")); } catch (SQLException ignored) {}
+        try { u.setFaceSamplesCount(rs.getInt("face_samples_count")); } catch (SQLException ignored) {}
+        try {
+            Date faceLoginDate = rs.getDate("last_face_login");
+            if (faceLoginDate != null) u.setLastFaceLogin(faceLoginDate.toLocalDate());
+        } catch (SQLException ignored) {}
         Date date = rs.getDate("date_creation");
         if (date != null) u.setDateCreation(date.toLocalDate());
         return u;
@@ -590,10 +596,48 @@ public class utilisateurServices implements ICrud<utilisateur> {
     // ✅ SAVE FACE ENCODING
     // =====================================================
     public boolean saveFaceEncoding(int userId, String faceEncoding) {
-        String sql = "UPDATE utilisateur SET face_encoding = ? WHERE id = ?";
+        // Count the number of samples in the encoding
+        int samplesCount = faceEncoding != null ? faceEncoding.split("\\|\\|\\|").length : 0;
+        String sql = "UPDATE utilisateur SET face_encoding = ?, face_samples_count = ? WHERE id = ?";
         try {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, faceEncoding);
+            ps.setInt(2, samplesCount);
+            ps.setInt(3, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // =====================================================
+    // ✅ SAVE FACE ENCODING WITH CONFIDENCE
+    // =====================================================
+    public boolean saveFaceEncodingWithConfidence(int userId, String faceEncoding, double confidence) {
+        int samplesCount = faceEncoding != null ? faceEncoding.split("\\|\\|\\|").length : 0;
+        String sql = "UPDATE utilisateur SET face_encoding = ?, face_confidence = ?, face_samples_count = ? WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, faceEncoding);
+            ps.setDouble(2, confidence);
+            ps.setInt(3, samplesCount);
+            ps.setInt(4, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    // =====================================================
+    // ✅ UPDATE LAST FACE LOGIN
+    // =====================================================
+    public boolean updateLastFaceLogin(int userId, double confidence) {
+        String sql = "UPDATE utilisateur SET last_face_login = CURDATE(), face_confidence = ? WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setDouble(1, confidence);
             ps.setInt(2, userId);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {

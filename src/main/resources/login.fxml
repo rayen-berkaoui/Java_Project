@@ -30,103 +30,98 @@
 
             <!-- ═══════ LEFT BRAND PANEL ═══════ -->
             <VBox alignment="CENTER" spacing="0" styleClass="brand-panel" HBox.hgrow="ALWAYS"
-                  style="-fx-min-width: 480; -fx-max-width: 520;">
+                  style="-fx-min-width: 520; -fx-max-width: 580;">
 
-                <VBox alignment="CENTER" spacing="28" style="-fx-padding: 50 50;">
+                <VBox alignment="CENTER" spacing="16" style="-fx-padding: 30 40;">
 
-                    <!-- Webcam / Face Recognition Area -->
-                    <StackPane prefWidth="200" prefHeight="200" maxWidth="200" maxHeight="200">
+                    <!-- Header -->
+                    <VBox alignment="CENTER" spacing="4">
+                        <Label text="TABAANI"
+                               style="-fx-font-size: 28; -fx-text-fill: #FFD700; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 20, 0.4, 0, 0);" />
+                        <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.35), transparent); -fx-pref-height: 1; -fx-max-width: 180;" />
+                        <Label text="Reconnaissance Biometrique"
+                               style="-fx-text-fill: #888888; -fx-font-size: 12;" />
+                    </VBox>
+
+                    <!-- Large Webcam / Face Recognition Area -->
+                    <StackPane prefWidth="340" prefHeight="340" maxWidth="340" maxHeight="340">
                         <!-- Decorative rings (visible when camera is off) -->
-                        <Circle fx:id="outerRing" radius="95" style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.2); -fx-stroke-width: 1.5; -fx-stroke-dash-array: 8 4;" />
-                        <Circle fx:id="middleRing" radius="80" style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.12); -fx-stroke-width: 1;" />
-                        <Circle fx:id="innerCircle" radius="70" style="-fx-fill: rgba(255,215,0,0.04);" />
+                        <Circle fx:id="outerRing" radius="165" style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.2); -fx-stroke-width: 2; -fx-stroke-dash-array: 10 5;" />
+                        <Circle fx:id="middleRing" radius="148" style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.12); -fx-stroke-width: 1.5;" />
+                        <Circle fx:id="innerCircle" radius="135" style="-fx-fill: rgba(255,215,0,0.04);" />
 
                         <!-- Lock icon (visible when camera is off) -->
-                        <Label fx:id="lockIcon" text="&#x1F510;" style="-fx-font-size: 38;" />
+                        <Label fx:id="lockIcon" text="&#x1F510;" style="-fx-font-size: 52;" />
 
-                        <!-- Clip for circular webcam -->
-                        <StackPane maxWidth="160" maxHeight="160" prefWidth="160" prefHeight="160">
+                        <!-- Clip for circular webcam — LARGE 300x300 -->
+                        <StackPane maxWidth="300" maxHeight="300" prefWidth="300" prefHeight="300">
                             <StackPane>
-                                <Circle radius="78" style="-fx-fill: #111111;" />
+                                <Circle radius="148" style="-fx-fill: #111111;" />
                             </StackPane>
-                            <ImageView fx:id="webcamView" fitWidth="160" fitHeight="160" preserveRatio="false" visible="false">
+                            <ImageView fx:id="webcamView" fitWidth="300" fitHeight="300" preserveRatio="false" visible="false">
                                 <clip>
-                                    <Circle radius="78" centerX="80" centerY="80" />
+                                    <Circle radius="148" centerX="150" centerY="150" />
                                 </clip>
                             </ImageView>
                         </StackPane>
 
                         <!-- Gold border ring for webcam -->
-                        <Circle fx:id="webcamBorder" radius="80" visible="false"
-                                style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.5); -fx-stroke-width: 2.5;" />
+                        <Circle fx:id="webcamBorder" radius="150" visible="false"
+                                style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.5); -fx-stroke-width: 3;" />
 
                         <!-- Face detection indicator -->
-                        <Circle fx:id="faceIndicator" radius="84" visible="false"
-                                style="-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.6); -fx-stroke-width: 2;" />
+                        <Circle fx:id="faceIndicator" radius="158" visible="false"
+                                style="-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.6); -fx-stroke-width: 2.5;" />
                     </StackPane>
 
+                    <!-- Biometric Info Panel -->
+                    <VBox fx:id="biometricInfoPanel" spacing="6" alignment="CENTER"
+                          style="-fx-background-color: rgba(255,255,255,0.03); -fx-padding: 10 20; -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 10; -fx-border-width: 1;">
+                        <!-- Face quality indicator -->
+                        <HBox spacing="8" alignment="CENTER">
+                            <Label text="Qualite:" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
+                            <ProgressBar fx:id="faceQualityBar" progress="0" prefWidth="140" prefHeight="8"
+                                         style="-fx-accent: #FFD700;" />
+                            <Label fx:id="faceQualityLabel" text="--" style="-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;" />
+                        </HBox>
+                        <!-- Confidence score -->
+                        <HBox spacing="8" alignment="CENTER">
+                            <Label text="Confiance:" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
+                            <ProgressBar fx:id="confidenceBar" progress="0" prefWidth="140" prefHeight="8"
+                                         style="-fx-accent: #51CF66;" />
+                            <Label fx:id="confidenceLabel" text="--" style="-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;" />
+                        </HBox>
+                        <!-- Face size / distance indicator -->
+                        <Label fx:id="faceSizeLabel" text=""
+                               style="-fx-text-fill: #555555; -fx-font-size: 10;" />
+                    </VBox>
+
                     <!-- Face Recognition Status -->
-                    <Label fx:id="faceStatusLabel" text="" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
+                    <Label fx:id="faceStatusLabel" text="" wrapText="true" textAlignment="CENTER" maxWidth="400"
+                           style="-fx-text-fill: #888888; -fx-font-size: 12;" />
+
+                    <!-- Capture Progress (visible during registration) -->
+                    <HBox fx:id="captureProgressBox" spacing="8" alignment="CENTER" visible="false" managed="false">
+                        <Label text="Echantillons:" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
+                        <ProgressBar fx:id="captureProgressBar" progress="0" prefWidth="160" prefHeight="10"
+                                     style="-fx-accent: #64B5F6;" />
+                        <Label fx:id="captureProgressLabel" text="0/8" style="-fx-text-fill: #64B5F6; -fx-font-size: 12; -fx-font-weight: bold;" />
+                    </HBox>
 
                     <!-- Face Recognition Buttons -->
-                    <HBox spacing="10" alignment="CENTER">
+                    <HBox spacing="12" alignment="CENTER">
                         <Button fx:id="btnStartCamera" text="&#x1F4F7; Activer Camera"
                                 onAction="#handleStartCamera"
-                                style="-fx-background-color: rgba(255,215,0,0.1); -fx-text-fill: #FFD700; -fx-font-size: 11; -fx-padding: 8 16; -fx-background-radius: 8; -fx-border-color: rgba(255,215,0,0.2); -fx-border-radius: 8; -fx-cursor: hand; -fx-font-weight: bold;" />
+                                style="-fx-background-color: rgba(255,215,0,0.1); -fx-text-fill: #FFD700; -fx-font-size: 12; -fx-padding: 10 22; -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.2); -fx-border-radius: 10; -fx-cursor: hand; -fx-font-weight: bold;" />
                         <Button fx:id="btnFaceLogin" text="&#x1F513; Connexion Faciale"
                                 onAction="#handleFaceLogin"
                                 visible="false" managed="false"
-                                style="-fx-background-color: rgba(81,207,102,0.15); -fx-text-fill: #51CF66; -fx-font-size: 11; -fx-padding: 8 16; -fx-background-radius: 8; -fx-border-color: rgba(81,207,102,0.3); -fx-border-radius: 8; -fx-cursor: hand; -fx-font-weight: bold;" />
+                                style="-fx-background-color: rgba(81,207,102,0.15); -fx-text-fill: #51CF66; -fx-font-size: 12; -fx-padding: 10 22; -fx-background-radius: 10; -fx-border-color: rgba(81,207,102,0.3); -fx-border-radius: 10; -fx-cursor: hand; -fx-font-weight: bold;" />
                     </HBox>
-                    <Button fx:id="btnRegisterFace" text="&#x1F4BE; Enregistrer mon Visage"
+                    <Button fx:id="btnRegisterFace" text="&#x1F4BE; Enregistrer mon Visage (8 echantillons)"
                             onAction="#handleRegisterFace"
                             visible="false" managed="false"
-                            style="-fx-background-color: rgba(100,181,246,0.1); -fx-text-fill: #64B5F6; -fx-font-size: 10; -fx-padding: 6 14; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8; -fx-cursor: hand;" />
-
-                    <VBox alignment="CENTER" spacing="8">
-                        <Label text="TABAANI"
-                               style="-fx-font-size: 38; -fx-text-fill: #FFD700; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 20, 0.4, 0, 0);" />
-                        <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.35), transparent); -fx-pref-height: 1; -fx-max-width: 180;" />
-                        <Label text="Votre plateforme de gestion intelligente"
-                               style="-fx-text-fill: #777777; -fx-font-size: 13;"
-                               wrapText="true" textAlignment="CENTER" maxWidth="300" />
-                    </VBox>
-
-                    <Region prefHeight="10" />
-
-                    <!-- Feature highlights -->
-                    <VBox spacing="16" style="-fx-padding: 0 30;">
-                        <HBox spacing="14" alignment="CENTER_LEFT">
-                            <StackPane prefWidth="36" prefHeight="36" minWidth="36"
-                                       style="-fx-background-color: rgba(255,215,0,0.08); -fx-background-radius: 10;">
-                                <Label text="⚡" style="-fx-font-size: 16;" />
-                            </StackPane>
-                            <VBox spacing="2">
-                                <Label text="Rapide et sécurisé" style="-fx-text-fill: #dddddd; -fx-font-size: 12; -fx-font-weight: bold;" />
-                                <Label text="Connexion protégée par chiffrement" style="-fx-text-fill: #555555; -fx-font-size: 10;" />
-                            </VBox>
-                        </HBox>
-                        <HBox spacing="14" alignment="CENTER_LEFT">
-                            <StackPane prefWidth="36" prefHeight="36" minWidth="36"
-                                       style="-fx-background-color: rgba(255,215,0,0.08); -fx-background-radius: 10;">
-                                <Label text="🛡" style="-fx-font-size: 16;" />
-                            </StackPane>
-                            <VBox spacing="2">
-                                <Label text="Double authentification" style="-fx-text-fill: #dddddd; -fx-font-size: 12; -fx-font-weight: bold;" />
-                                <Label text="Sécurité OTP par email" style="-fx-text-fill: #555555; -fx-font-size: 10;" />
-                            </VBox>
-                        </HBox>
-                        <HBox spacing="14" alignment="CENTER_LEFT">
-                            <StackPane prefWidth="36" prefHeight="36" minWidth="36"
-                                       style="-fx-background-color: rgba(255,215,0,0.08); -fx-background-radius: 10;">
-                                <Label text="📊" style="-fx-font-size: 16;" />
-                            </StackPane>
-                            <VBox spacing="2">
-                                <Label text="Tableau de bord complet" style="-fx-text-fill: #dddddd; -fx-font-size: 12; -fx-font-weight: bold;" />
-                                <Label text="Suivi en temps réel de vos données" style="-fx-text-fill: #555555; -fx-font-size: 10;" />
-                            </VBox>
-                        </HBox>
-                    </VBox>
+                            style="-fx-background-color: rgba(100,181,246,0.1); -fx-text-fill: #64B5F6; -fx-font-size: 11; -fx-padding: 8 18; -fx-background-radius: 10; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 10; -fx-cursor: hand;" />
 
                 </VBox>
 

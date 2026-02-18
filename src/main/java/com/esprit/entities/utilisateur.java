@@ -19,6 +19,9 @@ public class utilisateur {
     private int numTel;
     private String profilePicture;   // base64 encoded image
     private String faceEncoding;      // stored face encoding for face recognition
+    private double faceConfidence;    // best match confidence score (0.0 - 1.0)
+    private int faceSamplesCount;     // number of face samples stored
+    private LocalDate lastFaceLogin;  // last successful face login date
 
     // =========================
     // Constructeur vide
@@ -162,6 +165,30 @@ public class utilisateur {
 
     public void setFaceEncoding(String faceEncoding) {
         this.faceEncoding = faceEncoding;
+    }
+
+    public double getFaceConfidence() {
+        return faceConfidence;
+    }
+
+    public void setFaceConfidence(double faceConfidence) {
+        this.faceConfidence = faceConfidence;
+    }
+
+    public int getFaceSamplesCount() {
+        return faceSamplesCount;
+    }
+
+    public void setFaceSamplesCount(int faceSamplesCount) {
+        this.faceSamplesCount = faceSamplesCount;
+    }
+
+    public LocalDate getLastFaceLogin() {
+        return lastFaceLogin;
+    }
+
+    public void setLastFaceLogin(LocalDate lastFaceLogin) {
+        this.lastFaceLogin = lastFaceLogin;
     }
 
     // =========================

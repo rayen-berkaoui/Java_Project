@@ -51,11 +51,24 @@ public class LoginController {
     @FXML private Button btnFaceLogin;
     @FXML private Button btnRegisterFace;
 
+    // ═══════ BIOMETRIC INFO PANEL ═══════
+    @FXML private VBox biometricInfoPanel;
+    @FXML private ProgressBar faceQualityBar;
+    @FXML private Label faceQualityLabel;
+    @FXML private ProgressBar confidenceBar;
+    @FXML private Label confidenceLabel;
+    @FXML private Label faceSizeLabel;
+    @FXML private HBox captureProgressBox;
+    @FXML private ProgressBar captureProgressBar;
+    @FXML private Label captureProgressLabel;
+
     private utilisateurServices utilisateurService;
     private FaceRecognitionService faceService;
     private ScheduledExecutorService cameraTimer;
     private boolean passwordVisible = false;
     private boolean faceCurrentlyDetected = false;
+    private int frameCounter = 0;
+    private double cachedQuality = 0.0;
     private double xOffset = 0;
     private double yOffset = 0;
 
@@ -173,16 +186,67 @@ public class LoginController {
 
                 FaceRecognitionService.CameraResult result = faceService.grabFrameWithDetection();
                 if (result != null) {
+                    frameCounter++;
+                    // Only assess quality every 15 frames (~1 second) to avoid lag
+                    final boolean doQualityCheck = result.isFaceDetected() && (frameCounter % 15 == 0);
+                    final double quality;
+                    if (doQualityCheck && result.getOriginalMat() != null) {
+                        quality = faceService.assessFaceQuality(result.getOriginalMat());
+                        cachedQuality = quality;
+                    } else {
+                        quality = cachedQuality;
+                    }
+                    final int fw = result.getFaceWidth();
+                    final int fh = result.getFaceHeight();
+                    final boolean faceDetected = result.isFaceDetected();
+
                     Platform.runLater(() -> {
                         webcamView.setImage(result.getImage());
 
-                        if (result.isFaceDetected() != faceCurrentlyDetected) {
-                            faceCurrentlyDetected = result.isFaceDetected();
+                        if (faceDetected != faceCurrentlyDetected) {
+                            faceCurrentlyDetected = faceDetected;
                             updateFaceIndicator(faceCurrentlyDetected);
+                        }
+
+                        // Update biometric info panel
+                        if (faceDetected) {
+                            if (faceQualityBar != null) faceQualityBar.setProgress(quality);
+                            if (faceQualityLabel != null) {
+                                faceQualityLabel.setText(String.format("%.0f%%", quality * 100));
+                                if (quality >= 0.7) {
+                                    faceQualityLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
+                                } else if (quality >= 0.4) {
+                                    faceQualityLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 11; -fx-font-weight: bold;");
+                                } else {
+                                    faceQualityLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11; -fx-font-weight: bold;");
+                                }
+                            }
+                            if (faceSizeLabel != null) {
+                                String sizeInfo = fw + "x" + fh + "px";
+                                if (fw < 80) {
+                                    faceSizeLabel.setText(sizeInfo + " — Rapprochez-vous");
+                                    faceSizeLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 10;");
+                                } else if (fw < 150) {
+                                    faceSizeLabel.setText(sizeInfo + " — Bonne distance");
+                                    faceSizeLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 10;");
+                                } else {
+                                    faceSizeLabel.setText(sizeInfo + " — Distance ideale");
+                                    faceSizeLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 10;");
+                                }
+                            }
+                        } else {
+                            if (faceQualityBar != null) faceQualityBar.setProgress(0);
+                            if (faceQualityLabel != null) {
+                                faceQualityLabel.setText("--");
+                                faceQualityLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;");
+                            }
+                            if (faceSizeLabel != null) {
+                                faceSizeLabel.setText("");
+                            }
                         }
                     });
                 }
-            }, 0, 33, TimeUnit.MILLISECONDS); // ~30 FPS
+            }, 0, 66, TimeUnit.MILLISECONDS); // ~15 FPS for smooth performance
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -222,27 +286,48 @@ public class LoginController {
                 // Take MULTIPLE captures for reliable cross-session matching
                 // Each capture gets its own independent preprocessing
                 List<String> capturedEncodings = new ArrayList<>();
-                for (int attempt = 0; attempt < 10 && capturedEncodings.size() < 3; attempt++) {
+                for (int attempt = 0; attempt < 15 && capturedEncodings.size() < 5; attempt++) {
                     Mat currentFrame = faceService.grabMat();
                     if (currentFrame == null) continue;
+
+                    // Only use good quality captures for matching
+                    double quality = faceService.assessFaceQuality(currentFrame);
+                    if (quality < 0.4) {
+                        System.out.println("Skipping low quality capture for login (quality=" + String.format("%.2f", quality) + ")");
+                        continue;
+                    }
 
                     String enc = faceService.encodeFace(currentFrame);
                     if (enc != null) {
                         capturedEncodings.add(enc);
                         System.out.println("Face captured on attempt " + (attempt + 1)
-                            + " (" + capturedEncodings.size() + "/3)");
+                            + " (" + capturedEncodings.size() + "/5, quality=" + String.format("%.2f", quality) + ")");
+
+                        // Update confidence bar during capture
+                        final int count = capturedEncodings.size();
+                        Platform.runLater(() -> {
+                            if (confidenceBar != null) confidenceBar.setProgress(count / 5.0 * 0.3);
+                            if (confidenceLabel != null) confidenceLabel.setText("Capture " + count + "/5...");
+                        });
                     }
                     // Delay between attempts for variation
-                    Thread.sleep(200);
+                    Thread.sleep(150);
                 }
 
                 if (capturedEncodings.isEmpty()) {
                     Platform.runLater(() -> {
                         faceStatusLabel.setText("Visage non detecte dans la capture. Reessayez.");
-                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12;");
+                        if (confidenceBar != null) confidenceBar.setProgress(0);
+                        if (confidenceLabel != null) { confidenceLabel.setText("--"); confidenceLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;"); }
                     });
                     return;
                 }
+
+                Platform.runLater(() -> {
+                    faceStatusLabel.setText("Comparaison biometrique en cours...");
+                    faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12;");
+                });
 
                 // Try each captured encoding against all users, take best match
                 utilisateur bestMatchUser = null;
@@ -262,12 +347,25 @@ public class LoginController {
 
                 // Copy to effectively final variable for use inside lambda
                 final utilisateur matchedUser = bestMatchUser;
+                final double finalScore = overallBestScore;
 
                 Platform.runLater(() -> {
+                    // Update confidence display
+                    if (confidenceBar != null) confidenceBar.setProgress(finalScore);
+                    if (confidenceLabel != null) {
+                        confidenceLabel.setText(String.format("%.1f%%", finalScore * 100));
+                        if (finalScore >= 0.75) {
+                            confidenceLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
+                        } else {
+                            confidenceLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11; -fx-font-weight: bold;");
+                        }
+                    }
+
                     if (matchedUser != null) {
                         // SUCCESS — face matched
-                        faceStatusLabel.setText("Visage reconnu: " + matchedUser.getNom() + " " + matchedUser.getPrenom());
-                        faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
+                        faceStatusLabel.setText("Visage reconnu: " + matchedUser.getNom() + " " + matchedUser.getPrenom()
+                            + " (confiance: " + String.format("%.1f%%", finalScore * 100) + ")");
+                        faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;");
 
                         errorLabel.setText("Bienvenue " + matchedUser.getNom() + " !");
                         errorLabel.setStyle("-fx-text-fill: #51CF66;");
@@ -276,6 +374,9 @@ public class LoginController {
                         if (faceIndicator != null) {
                             faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.9); -fx-stroke-width: 3;");
                         }
+
+                        // Update last face login in database
+                        utilisateurService.updateLastFaceLogin(matchedUser.getId(), finalScore);
 
                         // Stop camera and redirect
                         PauseTransition delay = new PauseTransition(Duration.millis(1200));
@@ -350,34 +451,57 @@ public class LoginController {
 
         new Thread(() -> {
             try {
-                // Use multi-capture for more robust registration (5 samples)
+                // Use multi-capture for more robust registration (8 samples) with progress
                 Platform.runLater(() -> {
-                    faceStatusLabel.setText("Capture en cours (5 echantillons)... Restez immobile.");
-                    faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 11;");
+                    faceStatusLabel.setText("Capture en cours (8 echantillons)... Restez immobile et regardez la camera.");
+                    faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12;");
+                    if (captureProgressBox != null) {
+                        captureProgressBox.setVisible(true);
+                        captureProgressBox.setManaged(true);
+                    }
+                    if (captureProgressBar != null) captureProgressBar.setProgress(0);
+                    if (captureProgressLabel != null) captureProgressLabel.setText("0/8");
                 });
 
-                String faceEncoding = faceService.encodeMultipleFaces();
+                String faceEncoding = faceService.encodeMultipleFaces((captured, total, quality, qualityMsg) -> {
+                    Platform.runLater(() -> {
+                        if (captureProgressBar != null) captureProgressBar.setProgress((double) captured / total);
+                        if (captureProgressLabel != null) captureProgressLabel.setText(captured + "/" + total);
+                        if (faceQualityLabel != null) faceQualityLabel.setText(String.format("%.0f%%", quality * 100));
+                        if (faceQualityBar != null) faceQualityBar.setProgress(quality);
+                        faceStatusLabel.setText("Echantillon " + captured + "/" + total + " — " + qualityMsg);
+                    });
+                });
+
                 if (faceEncoding == null) {
                     Platform.runLater(() -> {
-                        faceStatusLabel.setText("Impossible d'encoder le visage. Reessayez en regardant la camera.");
-                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+                        faceStatusLabel.setText("Impossible d'encoder le visage. Ameliorez l'eclairage et reessayez.");
+                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12;");
+                        if (captureProgressBox != null) { captureProgressBox.setVisible(false); captureProgressBox.setManaged(false); }
                     });
                     return;
                 }
 
-                // Save face encoding to database
-                boolean saved = utilisateurService.saveFaceEncoding(user.getId(), faceEncoding);
+                // Save face encoding with confidence to database
+                boolean saved = utilisateurService.saveFaceEncodingWithConfidence(user.getId(), faceEncoding, 1.0);
 
                 Platform.runLater(() -> {
+                    if (captureProgressBox != null) { captureProgressBox.setVisible(false); captureProgressBox.setManaged(false); }
+
                     if (saved) {
-                        faceStatusLabel.setText("Visage enregistre avec succes ! Vous pouvez maintenant vous connecter par reconnaissance faciale.");
-                        faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
+                        int samples = faceEncoding.split("\\|\\|\\|").length;
+                        faceStatusLabel.setText("Visage enregistre avec succes ! " + samples + " echantillons biometriques stockes.\n"
+                            + "Vous pouvez maintenant vous connecter par reconnaissance faciale.");
+                        faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;");
 
                         errorLabel.setText("Visage enregistre !");
                         errorLabel.setStyle("-fx-text-fill: #51CF66;");
+
+                        if (confidenceBar != null) confidenceBar.setProgress(1.0);
+                        if (confidenceLabel != null) { confidenceLabel.setText("100%"); confidenceLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;"); }
                     } else {
-                        faceStatusLabel.setText("Erreur lors de l'enregistrement du visage.");
-                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+                        faceStatusLabel.setText("Erreur lors de l'enregistrement du visage en base de donnees.");
+                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12;");
                     }
                 });
 
@@ -423,16 +547,16 @@ public class LoginController {
         if (faceIndicator == null) return;
 
         if (detected) {
-            faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.6); -fx-stroke-width: 2;");
+            faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.6); -fx-stroke-width: 2.5;");
             if (faceStatusLabel != null) {
-                faceStatusLabel.setText("Visage detecte - Pret pour la connexion");
-                faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11;");
+                faceStatusLabel.setText("Visage detecte — Pret pour la connexion biometrique");
+                faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12;");
             }
         } else {
-            faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.3); -fx-stroke-width: 1;");
+            faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.3); -fx-stroke-width: 1.5;");
             if (faceStatusLabel != null) {
                 faceStatusLabel.setText("Positionnez votre visage dans le cercle");
-                faceStatusLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11;");
+                faceStatusLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 12;");
             }
         }
     }
@@ -450,7 +574,16 @@ public class LoginController {
         faceService.stopCamera();
         faceCurrentlyDetected = false;
 
-        Platform.runLater(() -> setCameraUIState(false));
+        Platform.runLater(() -> {
+            setCameraUIState(false);
+            // Reset biometric displays
+            if (faceQualityBar != null) faceQualityBar.setProgress(0);
+            if (faceQualityLabel != null) { faceQualityLabel.setText("--"); faceQualityLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;"); }
+            if (confidenceBar != null) confidenceBar.setProgress(0);
+            if (confidenceLabel != null) { confidenceLabel.setText("--"); confidenceLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;"); }
+            if (faceSizeLabel != null) faceSizeLabel.setText("");
+            if (captureProgressBox != null) { captureProgressBox.setVisible(false); captureProgressBox.setManaged(false); }
+        });
     }
 
     // =========================
