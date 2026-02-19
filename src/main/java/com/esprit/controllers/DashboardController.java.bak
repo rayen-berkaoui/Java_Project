@@ -421,12 +421,6 @@ public class DashboardController {
         return l;
     }
 
-    private boolean isRestoOrCafeAdmin(String type) {
-        if (type == null) return false;
-        String t = type.toLowerCase();
-        return t.contains("restaurant") || t.contains("caf") || t.contains("resto");
-    }
-
     @FXML private void handleUserSearch() {
         currentSearchQuery = userSearchField != null ? userSearchField.getText().trim() : "";
         currentPage = 1;
@@ -830,16 +824,10 @@ public class DashboardController {
             String dateFin = p.getDateFin() != null ? p.getDateFin().format(dtf) : "-";
             String statut = p.getStatutItem() != null ? p.getStatutItem() : "-";
 
-            boolean isRestoAdmin = isRestoOrCafeAdmin(p.getTypeService());
-
             String statutColor = "#888888";
             if ("en_attente".equalsIgnoreCase(statut)) statutColor = "#FFA726";
             else if ("confirme".equalsIgnoreCase(statut)) statutColor = "#51CF66";
             else if ("annul\u00e9".equalsIgnoreCase(statut)) statutColor = "#FF6B6B";
-
-            // Price display: "Sur place" for restaurants, actual price for others
-            String prixDisplay = isRestoAdmin ? "\uD83C\uDF7D Sur place" : String.format("%.2f DT", p.getPrixEstime());
-            String prixColor = isRestoAdmin ? "#51CF66" : "#51CF66";
 
             row.getChildren().addAll(
                 makeDataLabel("#" + p.getIdPanier(), 40, "#FFD700"),
@@ -848,7 +836,7 @@ public class DashboardController {
                 makeDataLabel(dateDebut, 110, "#aaaaaa"),
                 makeDataLabel(dateFin, 110, "#aaaaaa"),
                 makeDataLabel(String.valueOf(p.getNbPersonnes()), 45, "#cccccc"),
-                makeDataLabel(prixDisplay, 70, prixColor),
+                makeDataLabel(String.format("%.2f DT", p.getPrixEstime()), 70, "#51CF66"),
                 makeDataLabel(statut, 80, statutColor)
             );
 
@@ -857,8 +845,7 @@ public class DashboardController {
             actions.setAlignment(Pos.CENTER_LEFT);
             actions.setMinWidth(170);
 
-            // Restaurant items are auto-confirmed, no confirm/cancel needed
-            if (!isRestoAdmin && "en_attente".equalsIgnoreCase(statut)) {
+            if ("en_attente".equalsIgnoreCase(statut)) {
                 Button confirmBtn = new Button("Confirmer");
                 confirmBtn.setStyle("-fx-background-color: #2d7a3a; -fx-text-fill: white; -fx-font-size: 9; -fx-padding: 4 10; -fx-background-radius: 6; -fx-cursor: hand;");
                 confirmBtn.setOnAction(e -> {
@@ -946,13 +933,7 @@ public class DashboardController {
         for (Reservation r : allRes) {
             String sp = r.getStatutPaiement() != null ? r.getStatutPaiement() : "";
             if ("En cours de paiement".equalsIgnoreCase(sp)) pendingCount++;
-            else if ("Paye".equalsIgnoreCase(sp) || "Pay\u00e9".equalsIgnoreCase(sp)) {
-                paidCount++;
-                // Exclude restaurant/cafe from revenue (payment on the spot)
-                if (!isRestoOrCafeAdmin(r.getTypeService())) {
-                    totalRevenue += r.getMontantTotal();
-                }
-            }
+            else if ("Paye".equalsIgnoreCase(sp) || "Pay\u00e9".equalsIgnoreCase(sp)) { paidCount++; totalRevenue += r.getMontantTotal(); }
         }
         if (adminTotalResLabel != null) adminTotalResLabel.setText(String.valueOf(totalRes));
         if (adminPendingResLabel != null) adminPendingResLabel.setText(String.valueOf(pendingCount));
@@ -1013,16 +994,12 @@ public class DashboardController {
             if ("Especes".equalsIgnoreCase(mode) || "Cash".equalsIgnoreCase(mode)) modeColor = "#FFA726";
             else if ("Carte".equalsIgnoreCase(mode) || "Card".equalsIgnoreCase(mode)) modeColor = "#64B5F6";
 
-            boolean isRestoRes = isRestoOrCafeAdmin(r.getTypeService());
-            String montantDisplay = isRestoRes ? "\uD83C\uDF7D Sur place" : String.format("%.2f DT", r.getMontantTotal());
-            String montantColor = isRestoRes ? "#51CF66" : "#51CF66";
-
             row.getChildren().addAll(
                 makeDataLabel("#" + r.getIdReservation(), 35, "#FFD700"),
                 makeDataLabel(clientName, 120, "#ffffff"),
                 makeDataLabel(r.getTypeService() != null ? r.getTypeService() : "-", 70, "#64B5F6"),
                 makeDataLabel(dateStr, 110, "#aaaaaa"),
-                makeDataLabel(montantDisplay, 80, montantColor),
+                makeDataLabel(String.format("%.2f DT", r.getMontantTotal()), 80, "#51CF66"),
                 makeDataLabel(mode, 80, modeColor),
                 makeDataLabel(statut, 120, statutColor),
                 makeDataLabel(code, 100, "#888888")
@@ -1033,8 +1010,8 @@ public class DashboardController {
             actions.setAlignment(Pos.CENTER_LEFT);
             actions.setMinWidth(180);
 
-            // Restaurant reservations are auto-confirmed, no approve/reject needed
-            if (!isRestoRes && "En cours de paiement".equalsIgnoreCase(statut)) {
+            // APPROVE button - only for cash "En cours de paiement"
+            if ("En cours de paiement".equalsIgnoreCase(statut)) {
                 Button approveBtn = new Button("\u2705 Approuver");
                 approveBtn.setStyle("-fx-background-color: linear-gradient(to right, #2d7a3a, #1a5e28); -fx-text-fill: white; -fx-font-size: 10; -fx-padding: 5 14; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: bold;");
                 approveBtn.setOnAction(e -> {

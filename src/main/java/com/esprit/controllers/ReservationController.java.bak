@@ -95,20 +95,11 @@ public class ReservationController {
         int total = reservations.size();
         long paye = reservations.stream().filter(r -> "Paye".equalsIgnoreCase(r.getStatutPaiement()) || "Pay\u00e9".equalsIgnoreCase(r.getStatutPaiement())).count();
         long enCours = reservations.stream().filter(r -> "En cours de paiement".equalsIgnoreCase(r.getStatutPaiement())).count();
-        // Exclude restaurant/cafe reservations from total spending (they have 0 montant)
-        double totalDepense = reservations.stream()
-                .filter(r -> !isRestoOrCafeType(r.getTypeService()))
-                .mapToDouble(Reservation::getMontantTotal).sum();
+        double totalDepense = reservations.stream().mapToDouble(Reservation::getMontantTotal).sum();
         if (totalReservationsLabel != null) totalReservationsLabel.setText(String.valueOf(total));
         if (payeLabel != null) payeLabel.setText(String.valueOf(paye));
         if (enCoursLabel != null) enCoursLabel.setText(String.valueOf(enCours));
         if (totalDepenseLabel != null) totalDepenseLabel.setText(String.format("%.2f DT", totalDepense));
-    }
-
-    private boolean isRestoOrCafeType(String type) {
-        if (type == null) return false;
-        String lower = type.toLowerCase();
-        return lower.contains("restaurant") || lower.contains("caf") || lower.contains("resto");
     }
 
     private void renderCarousel() {
@@ -185,17 +176,9 @@ public class ReservationController {
 
         VBox priceBox = new VBox(2);
         priceBox.setAlignment(Pos.CENTER_RIGHT);
-        boolean isRestoRes = r.getTypeService() != null &&
-            (r.getTypeService().toLowerCase().contains("restaurant") || r.getTypeService().toLowerCase().contains("caf") || r.getTypeService().toLowerCase().contains("resto"));
-        if (isRestoRes) {
-            Label gratuitLabel = new Label("Sur place");
-            gratuitLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 14; -fx-font-weight: bold;");
-            priceBox.getChildren().add(gratuitLabel);
-        } else {
-            Label prixLabel = new Label(String.format("%.2f DT", r.getMontantTotal()));
-            prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
-            priceBox.getChildren().add(prixLabel);
-        }
+        Label prixLabel = new Label(String.format("%.2f DT", r.getMontantTotal()));
+        prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+        priceBox.getChildren().add(prixLabel);
 
         header.getChildren().addAll(iconPane, nameBox, priceBox);
 
@@ -239,17 +222,17 @@ public class ReservationController {
         buttons.setAlignment(Pos.CENTER);
 
         boolean isEnCours = "En cours de paiement".equalsIgnoreCase(r.getStatutPaiement());
-        if (isEnCours && !isRestoRes) {
+        if (isEnCours) {
             Button payerBtn = new Button("\u2705 Payer");
             payerBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-padding: 7 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
             payerBtn.setOnAction(e -> markAsPaid(r));
             buttons.getChildren().add(payerBtn);
         }
 
-        // Upgrade button: Cash -> Card (one-way only!) - not for restaurants
+        // Upgrade button: Cash -> Card (one-way only!)
         boolean isCash = "Especes".equalsIgnoreCase(r.getModePaiement());
         boolean isPaid = r.getStatutPaiement() != null && (r.getStatutPaiement().toLowerCase().contains("pay"));
-        if (isCash && isPaid && !isRestoRes) {
+        if (isCash && isPaid) {
             Button upgradeBtn = new Button("\uD83D\uDCB3 Passer en Carte");
             upgradeBtn.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-text-fill: #64B5F6; -fx-padding: 7 12; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
             upgradeBtn.setOnAction(e -> showUpgradeToCardDialog(r));
@@ -587,8 +570,7 @@ public class ReservationController {
         currentInfo.setStyle("-fx-background-color: rgba(255,215,0,0.04); -fx-padding: 14; -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.1); -fx-border-radius: 10; -fx-border-width: 1;");
         Label curTitle = new Label("\uD83D\uDCCB Informations actuelles");
         curTitle.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;");
-        boolean isRestoReservation = isRestoOrCafeType(r.getTypeService());
-        HBox curRow1 = buildInfoChip("\uD83D\uDCB0 Montant", isRestoReservation ? "Paiement sur place" : String.format("%.2f DT", r.getMontantTotal()));
+        HBox curRow1 = buildInfoChip("\uD83D\uDCB0 Montant", String.format("%.2f DT", r.getMontantTotal()));
         HBox curRow2 = buildInfoChip("\uD83D\uDCB3 Mode", r.getModePaiement() != null ? r.getModePaiement() : "N/A");
         HBox curRow3 = buildInfoChip("\uD83D\uDCCA Statut", r.getStatutPaiement() != null ? r.getStatutPaiement() : "N/A");
         currentInfo.getChildren().addAll(curTitle, curRow1, curRow2, curRow3);
@@ -603,16 +585,9 @@ public class ReservationController {
         VBox montantBox = new VBox(4);
         Label montantLbl = new Label("Montant Total (DT)");
         montantLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        TextField montantField = new TextField(isRestoReservation ? "0.00" : String.format("%.2f", r.getMontantTotal()));
+        TextField montantField = new TextField(String.format("%.2f", r.getMontantTotal()));
         montantField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-padding: 10 14; -fx-background-radius: 8; -fx-font-size: 13; -fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 8;");
-        if (isRestoReservation) {
-            montantField.setDisable(true);
-            Label noPayNote = new Label("\u2139 Pas de paiement en ligne pour les restaurants/cafes");
-            noPayNote.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 9;");
-            montantBox.getChildren().addAll(montantLbl, montantField, noPayNote);
-        } else {
-            montantBox.getChildren().addAll(montantLbl, montantField);
-        }
+        montantBox.getChildren().addAll(montantLbl, montantField);
 
         // Mode de paiement - ONE-WAY RESTRICTION
         boolean isCurrentlyCard = "Carte Bancaire".equalsIgnoreCase(r.getModePaiement());
@@ -620,15 +595,7 @@ public class ReservationController {
         Label modeLbl = new Label("Mode de Paiement");
         modeLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
         ComboBox<String> modeCombo = new ComboBox<>();
-        if (isRestoReservation) {
-            // Restaurant reservations: locked to Especes (payment on the spot)
-            modeCombo.getItems().add("Especes");
-            modeCombo.setValue("Especes");
-            modeCombo.setDisable(true);
-            Label lockLbl = new Label("\uD83C\uDF7D Paiement sur place uniquement");
-            lockLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 9;");
-            modeBox.getChildren().addAll(modeLbl, modeCombo, lockLbl);
-        } else if (isCurrentlyCard) {
+        if (isCurrentlyCard) {
             // If already card, can ONLY stay as card - no downgrade
             modeCombo.getItems().add("Carte Bancaire");
             modeCombo.setValue("Carte Bancaire");
@@ -650,20 +617,11 @@ public class ReservationController {
         Label statutLbl = new Label("Statut du Paiement");
         statutLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
         ComboBox<String> statutCombo = new ComboBox<>();
-        if (isRestoReservation) {
-            statutCombo.getItems().add("Confirm\u00e9");
-            statutCombo.setValue("Confirm\u00e9");
-            statutCombo.setDisable(true);
-            Label statutLockLbl = new Label("\u2705 R\u00e9servation confirm\u00e9e automatiquement");
-            statutLockLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 9;");
-            statutBox.getChildren().addAll(statutLbl, statutCombo, statutLockLbl);
-        } else {
-            statutCombo.getItems().addAll("Pay\u00e9", "En cours de paiement", "Rembours\u00e9");
-            statutCombo.setValue(r.getStatutPaiement() != null ? r.getStatutPaiement() : "Pay\u00e9");
-            statutCombo.setMaxWidth(Double.MAX_VALUE);
-            statutCombo.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-font-size: 12;");
-            statutBox.getChildren().addAll(statutLbl, statutCombo);
-        }
+        statutCombo.getItems().addAll("Pay\u00e9", "En cours de paiement", "Rembours\u00e9");
+        statutCombo.setValue(r.getStatutPaiement() != null ? r.getStatutPaiement() : "Pay\u00e9");
+        statutCombo.setMaxWidth(Double.MAX_VALUE);
+        statutCombo.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-font-size: 12;");
+        statutBox.getChildren().addAll(statutLbl, statutCombo);
 
         editSection.getChildren().addAll(editTitle, montantBox, modeBox, statutBox);
 
@@ -776,11 +734,7 @@ public class ReservationController {
         detailRows.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 16; -fx-background-radius: 12;");
 
         addDetailRow(detailRows, "\uD83D\uDD11 Code", r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "N/A", "#FFD700");
-        if (isRestoOrCafeType(r.getTypeService())) {
-            addDetailRow(detailRows, "\uD83D\uDCB0 Montant", "Paiement sur place", "#51CF66");
-        } else {
-            addDetailRow(detailRows, "\uD83D\uDCB0 Montant", String.format("%.2f DT", r.getMontantTotal()), "#FFD700");
-        }
+        addDetailRow(detailRows, "\uD83D\uDCB0 Montant", String.format("%.2f DT", r.getMontantTotal()), "#FFD700");
         addDetailRow(detailRows, "\uD83D\uDCB3 Mode", r.getModePaiement() != null ? r.getModePaiement() : "N/A", "#64B5F6");
         addDetailRow(detailRows, "\uD83C\uDFAF Service", r.getTypeService() != null ? r.getTypeService() : "N/A", "white");
         addDetailRow(detailRows, "\uD83D\uDC65 Personnes", String.valueOf(r.getNbPersonnes()), "white");

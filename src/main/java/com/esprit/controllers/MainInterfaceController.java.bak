@@ -235,7 +235,6 @@ public class MainInterfaceController {
         villeLabel.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
         nameBox.getChildren().addAll(nameLabel, villeLabel);
 
-        // Only show price for bookable/payable services (not restaurants/cafes - lieux are always voyage/hotel type)
         Label prixLabel = new Label(String.format("%.2f DT", lieu.getPrix()));
         prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
         header.getChildren().addAll(iconPane, nameBox, prixLabel);
@@ -322,18 +321,9 @@ public class MainInterfaceController {
 
         VBox priceBox = new VBox(2);
         priceBox.setAlignment(Pos.CENTER_RIGHT);
-        // Only show price for hotels/voyages - restaurants/cafes don't have advance pricing
-        String etabType = guessEtabType(etab);
-        boolean isPayableEtab = "Hotel".equalsIgnoreCase(etabType) || "Spa".equalsIgnoreCase(etabType);
-        if (isPayableEtab && etab.getGammePrix() != null && !etab.getGammePrix().isEmpty()) {
-            Label gammeLbl = new Label(etab.getGammePrix());
-            gammeLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
-            priceBox.getChildren().add(gammeLbl);
-        } else if (!isPayableEtab) {
-            Label freeLbl = new Label("Reservation gratuite");
-            freeLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 10; -fx-font-weight: bold;");
-            priceBox.getChildren().add(freeLbl);
-        }
+        Label gammeLbl = new Label(etab.getGammePrix() != null ? etab.getGammePrix() : "");
+        gammeLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;");
+        priceBox.getChildren().add(gammeLbl);
         header.getChildren().addAll(iconPane, nameBox, priceBox);
 
         // Info chips row
@@ -393,16 +383,8 @@ public class MainInterfaceController {
         VBox headerText = new VBox(2);
         Label titleLbl = new Label("Reserver: " + name);
         titleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
-        boolean isHotelType = serviceType.toLowerCase().contains("hotel") || serviceType.toLowerCase().contains("voyage") || serviceType.toLowerCase().contains("hebergement");
-        boolean isRestaurantType = serviceType.toLowerCase().contains("restaurant") || serviceType.toLowerCase().contains("caf") || serviceType.toLowerCase().contains("resto");
-        Label subLbl;
-        if (isRestaurantType) {
-            subLbl = new Label(serviceType + " | Reservation gratuite - paiement sur place");
-            subLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11;");
-        } else {
-            subLbl = new Label(serviceType + " | " + String.format("%.2f DT / unite", basePrice));
-            subLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
-        }
+        Label subLbl = new Label(serviceType + " | " + String.format("%.2f DT / unite", basePrice));
+        subLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
         headerText.getChildren().addAll(titleLbl, subLbl);
         headerRow.getChildren().addAll(headerIcon, headerText);
 
@@ -513,35 +495,20 @@ public class MainInterfaceController {
 
         formSection.getChildren().add(guestsSection);
 
-        // Live price calculation - ONLY for payable services (hotels, voyages, lieux)
-        // Restaurants/cafes have no advance price - you pay on the spot
+        // Live price calculation
         VBox priceSection = new VBox(6);
         priceSection.setStyle("-fx-background-color: rgba(255,215,0,0.04); -fx-padding: 14; -fx-background-radius: 10;");
-        Label priceTitleLbl;
+        Label priceTitleLbl = new Label("\uD83D\uDCB0 Estimation du prix");
+        priceTitleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;");
         Label priceBreakdown = new Label("");
         priceBreakdown.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
         priceBreakdown.setWrapText(true);
         Label totalPriceLbl = new Label("0.00 DT");
         totalPriceLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 22; -fx-font-weight: bold;");
-
-        if (isRestaurant) {
-            priceTitleLbl = new Label("\u2139 Information");
-            priceTitleLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;");
-            Label freeNote = new Label("Pas de paiement a l'avance pour les restaurants et cafes.\nVotre reservation sera confirmee automatiquement.\nVous payerez directement sur place.");
-            freeNote.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
-            freeNote.setWrapText(true);
-            totalPriceLbl.setText("Gratuit");
-            totalPriceLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 22; -fx-font-weight: bold;");
-            priceSection.getChildren().addAll(priceTitleLbl, freeNote, totalPriceLbl);
-        } else {
-            priceTitleLbl = new Label("\uD83D\uDCB0 Estimation du prix");
-            priceTitleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;");
-            priceSection.getChildren().addAll(priceTitleLbl, priceBreakdown, totalPriceLbl);
-        }
+        priceSection.getChildren().addAll(priceTitleLbl, priceBreakdown, totalPriceLbl);
 
         // Price update runnable
         Runnable updatePrice = () -> {
-            if (isRestaurant) return; // No price calculation for restaurants/cafes
             int adults = adultesSpinner.getValue();
             int children = enfantsSpinner.getValue();
             double price;
@@ -594,7 +561,7 @@ public class MainInterfaceController {
         content.getChildren().addAll(headerRow, formSection, priceSection, errorLbl);
         dp.setContent(content);
 
-        ButtonType addType = new ButtonType(isRestaurant ? "\u2705 Confirmer la Reservation" : "\uD83D\uDED2 Ajouter au Panier", ButtonBar.ButtonData.OK_DONE);
+        ButtonType addType = new ButtonType("\uD83D\uDED2 Ajouter au Panier", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelType = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
         dp.getButtonTypes().addAll(addType, cancelType);
 
@@ -640,14 +607,10 @@ public class MainInterfaceController {
             }
 
             double finalPrice;
-            if (isRestaurant) {
-                finalPrice = 0.0; // Restaurants/cafes - no advance payment
-            } else {
-                try {
-                    finalPrice = Double.parseDouble(totalPriceLbl.getText().replace(" DT", "").replace(",", "."));
-                } catch (NumberFormatException ex) {
-                    finalPrice = basePrice * totalPeople;
-                }
+            try {
+                finalPrice = Double.parseDouble(totalPriceLbl.getText().replace(" DT", "").replace(",", "."));
+            } catch (NumberFormatException ex) {
+                finalPrice = basePrice * totalPeople;
             }
 
             Panier p = new Panier();
@@ -658,43 +621,17 @@ public class MainInterfaceController {
             p.setDateFin(end);
             p.setNbPersonnes(totalPeople);
             p.setPrixEstime(finalPrice);
+            p.setStatutItem("en_attente");
             p.setNbAdultes(adults);
             p.setNbEnfants(children);
 
-            if (isRestaurant) {
-                // Restaurants/cafes: auto-confirm with "Especes" - no advance payment needed
-                p.setStatutItem("confirme");
-                if (panierService.ajouter(p)) {
-                    // Also auto-create a reservation
-                    com.esprit.entities.Reservation r = new com.esprit.entities.Reservation();
-                    r.setIdPanier(p.getIdPanier());
-                    r.setDatePaiement(LocalDateTime.now());
-                    r.setMontantTotal(0.0);
-                    r.setModePaiement("Especes");
-                    r.setStatutPaiement("Confirme");
-                    r.setTypeService(serviceType);
-                    r.setNomEtablissement(name);
-                    r.setNbPersonnes(totalPeople);
-                    r.setIdClient(currentUser.getId());
-                    new com.esprit.services.ReservationService().ajouter(r);
-                    updatePanierBadge();
-                    updateStats();
-                    showSuccessOverlay(name, 0, totalPeople, serviceType);
-                } else {
-                    errorLbl.setText("\u274C Echec de la reservation.");
-                    event.consume();
-                }
+            if (panierService.ajouter(p)) {
+                updatePanierBadge();
+                updateStats();
+                showSuccessOverlay(name, finalPrice, totalPeople, serviceType);
             } else {
-                // Hotels/Voyages/Lieux: add to panier as en_attente for payment
-                p.setStatutItem("en_attente");
-                if (panierService.ajouter(p)) {
-                    updatePanierBadge();
-                    updateStats();
-                    showSuccessOverlay(name, finalPrice, totalPeople, serviceType);
-                } else {
-                    errorLbl.setText("\u274C Echec de l'ajout au panier.");
-                    event.consume();
-                }
+                errorLbl.setText("\u274C Echec de l'ajout au panier.");
+                event.consume();
             }
         });
 
@@ -726,9 +663,7 @@ public class MainInterfaceController {
         checkIcon.setStyle("-fx-font-size: 32;");
         checkCircle.getChildren().add(checkIcon);
 
-        boolean isRestoType = type != null && (type.toLowerCase().contains("restaurant") || type.toLowerCase().contains("caf") || type.toLowerCase().contains("resto"));
-
-        Label successTitle = new Label(isRestoType ? "Reservation Confirmee !" : "Ajoute au Panier !");
+        Label successTitle = new Label("Ajoute au Panier !");
         successTitle.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 20; -fx-font-weight: bold;");
 
         Label successName = new Label(name);
@@ -742,34 +677,18 @@ public class MainInterfaceController {
         typeLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 12;");
         detailsRow.getChildren().addAll(peopleLbl, typeLbl);
 
-        card.getChildren().addAll(checkCircle, successTitle, successName, detailsRow);
+        Label priceLbl = new Label(String.format("%.2f DT", price));
+        priceLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 28; -fx-font-weight: bold;");
 
-        if (isRestoType) {
-            // Restaurant: show "free reservation" message
-            Label freeLbl = new Label("Reservation gratuite");
-            freeLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 22; -fx-font-weight: bold;");
-            Label infoLbl = new Label("Paiement sur place le jour de votre visite");
-            infoLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 12;");
-            card.getChildren().addAll(freeLbl, infoLbl);
-        } else {
-            // Hotel/Voyage/Lieu: show price
-            Label priceLbl = new Label(String.format("%.2f DT", price));
-            priceLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 28; -fx-font-weight: bold;");
-            card.getChildren().add(priceLbl);
-        }
-
-        Button goToPanierBtn = new Button(isRestoType ? "\uD83D\uDCB3 Voir mes Reservations" : "\uD83D\uDED2 Voir le Panier");
+        Button goToPanierBtn = new Button("\uD83D\uDED2 Voir le Panier");
         goToPanierBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 10 28; -fx-background-radius: 8; -fx-font-size: 13; -fx-cursor: hand;");
-        goToPanierBtn.setOnAction(e -> {
-            root.getChildren().remove(overlay);
-            if (isRestoType) { handleGoToMesPaiements(); } else { handleGoToPanier(); }
-        });
+        goToPanierBtn.setOnAction(e -> { root.getChildren().remove(overlay); handleGoToPanier(); });
 
         Button continueBtn = new Button("Continuer les achats");
         continueBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #888; -fx-font-size: 12; -fx-cursor: hand; -fx-padding: 6 16;");
         continueBtn.setOnAction(e -> root.getChildren().remove(overlay));
 
-        card.getChildren().addAll(goToPanierBtn, continueBtn);
+        card.getChildren().addAll(checkCircle, successTitle, successName, detailsRow, priceLbl, goToPanierBtn, continueBtn);
         overlay.getChildren().add(card);
 
         root.getChildren().add(overlay);

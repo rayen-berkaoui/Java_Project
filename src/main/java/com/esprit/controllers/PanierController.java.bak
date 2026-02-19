@@ -104,8 +104,7 @@ public class PanierController {
             }
         }
         panierItems = allItems.stream()
-                .filter(p -> "en_attente".equals(p.getStatutItem()) ||
-                    ("confirme".equals(p.getStatutItem()) && isRestoOrCafeType(p.getTypeService())))
+                .filter(p -> "en_attente".equals(p.getStatutItem()))
                 .collect(Collectors.toList());
         updateStats();
         updateBadge();
@@ -115,9 +114,8 @@ public class PanierController {
     private void updateStats() {
         int total = panierItems.size();
         long enAttente = panierItems.stream().filter(p -> "en_attente".equals(p.getStatutItem())).count();
-        // Only sum prices for non-restaurant items (restaurants are free/pay on spot)
         double totalPrix = panierItems.stream()
-                .filter(p -> "en_attente".equals(p.getStatutItem()) && !isRestoOrCafeType(p.getTypeService()))
+                .filter(p -> "en_attente".equals(p.getStatutItem()))
                 .mapToDouble(Panier::getPrixEstime).sum();
         if (totalItemsLabel != null) totalItemsLabel.setText(String.valueOf(total));
         if (enAttenteLabel != null) enAttenteLabel.setText(String.valueOf(enAttente));
@@ -200,18 +198,9 @@ public class PanierController {
 
         VBox priceBox = new VBox(2);
         priceBox.setAlignment(Pos.CENTER_RIGHT);
-        // Check if this is a restaurant/cafe (no price)
-        boolean isRestoItem = p.getTypeService() != null &&
-            (p.getTypeService().toLowerCase().contains("restaurant") || p.getTypeService().toLowerCase().contains("caf") || p.getTypeService().toLowerCase().contains("resto"));
-        if (isRestoItem) {
-            Label gratuitLabel = new Label("Gratuit");
-            gratuitLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 16; -fx-font-weight: bold;");
-            priceBox.getChildren().add(gratuitLabel);
-        } else {
-            Label prixLabel = new Label(String.format("%.2f DT", p.getPrixEstime()));
-            prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
-            priceBox.getChildren().add(prixLabel);
-        }
+        Label prixLabel = new Label(String.format("%.2f DT", p.getPrixEstime()));
+        prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+        priceBox.getChildren().add(prixLabel);
 
         header.getChildren().addAll(iconPane, nameBox, priceBox);
 
@@ -231,8 +220,8 @@ public class PanierController {
         );
         details.getChildren().addAll(row1, row2);
 
-        // Discount info if promo applied (only for items with price)
-        if (!isRestoItem && appliedPromo != null && discountPercent > 0) {
+        // Discount info if promo applied
+        if (appliedPromo != null && discountPercent > 0) {
             double discounted = p.getPrixEstime() * (1 - discountPercent / 100.0);
             HBox promoRow = new HBox(8);
             promoRow.setAlignment(Pos.CENTER);
@@ -252,14 +241,8 @@ public class PanierController {
         // STATUT BADGE
         HBox statutRow = new HBox();
         statutRow.setAlignment(Pos.CENTER);
-        Label statutBadge;
-        if (isRestoItem && "confirme".equalsIgnoreCase(p.getStatutItem())) {
-            statutBadge = new Label("\u2705 Reservation confirmee - Paiement sur place");
-            statutBadge.setStyle("-fx-background-color: rgba(81,207,102,0.08); -fx-text-fill: #51CF66; -fx-padding: 5 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
-        } else {
-            statutBadge = new Label("\u23F3 En attente de confirmation");
-            statutBadge.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-text-fill: #FFD700; -fx-padding: 5 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
-        }
+        Label statutBadge = new Label("\u23F3 En attente de confirmation");
+        statutBadge.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-text-fill: #FFD700; -fx-padding: 5 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
         statutRow.getChildren().add(statutBadge);
 
         // ACTION BUTTONS
@@ -270,20 +253,15 @@ public class PanierController {
         modifyBtn.setStyle("-fx-background-color: rgba(255,167,38,0.12); -fx-text-fill: #FFA726; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
         modifyBtn.setOnAction(e -> showModifyPanierDialog(p));
 
-        // Only show "Confirmer" for payable items (not restaurants/cafes)
-        if (!isRestoItem) {
-            Button confirmBtn = new Button("\u2705 Confirmer");
-            confirmBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
-            confirmBtn.setOnAction(e -> showPaymentMethodDialog(p));
-            buttons.getChildren().addAll(modifyBtn, confirmBtn);
-        } else {
-            buttons.getChildren().add(modifyBtn);
-        }
+        Button confirmBtn = new Button("\u2705 Confirmer");
+        confirmBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
+        confirmBtn.setOnAction(e -> showPaymentMethodDialog(p));
 
         Button deleteBtn = new Button("\uD83D\uDDD1");
         deleteBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
         deleteBtn.setOnAction(e -> deletePanierItem(p));
-        buttons.getChildren().add(deleteBtn);
+
+        buttons.getChildren().addAll(modifyBtn, confirmBtn, deleteBtn);
 
         card.getChildren().addAll(header, details, statutRow, buttons);
         return card;
@@ -308,12 +286,6 @@ public class PanierController {
         if (type.toLowerCase().contains("caf")) return "\u2615";
         if (type.toLowerCase().contains("rest")) return "\uD83C\uDF55";
         return "\uD83C\uDFAF";
-    }
-
-    private boolean isRestoOrCafeType(String type) {
-        if (type == null) return false;
-        String lower = type.toLowerCase();
-        return lower.contains("restaurant") || lower.contains("caf") || lower.contains("resto");
     }
 
     // ================================================================
@@ -1184,22 +1156,16 @@ public class PanierController {
 
         VBox infoBox = new VBox(6);
         infoBox.setStyle("-fx-background-color: rgba(255,107,107,0.04); -fx-padding: 12; -fx-background-radius: 8;");
-        if (!isRestoOrCafeType(p.getTypeService())) {
-            HBox priceRow = new HBox();
-            priceRow.setAlignment(Pos.CENTER_LEFT);
-            Label pLeft = new Label("\uD83D\uDCB0 Prix");
-            pLeft.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
-            Region pSpacer = new Region();
-            HBox.setHgrow(pSpacer, Priority.ALWAYS);
-            Label pRight = new Label(String.format("%.2f DT", p.getPrixEstime()));
-            pRight.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12; -fx-font-weight: bold;");
-            priceRow.getChildren().addAll(pLeft, pSpacer, pRight);
-            infoBox.getChildren().add(priceRow);
-        } else {
-            Label freeInfo = new Label("Reservation gratuite (paiement sur place)");
-            freeInfo.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11;");
-            infoBox.getChildren().add(freeInfo);
-        }
+        HBox priceRow = new HBox();
+        priceRow.setAlignment(Pos.CENTER_LEFT);
+        Label pLeft = new Label("\uD83D\uDCB0 Prix");
+        pLeft.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+        Region pSpacer = new Region();
+        HBox.setHgrow(pSpacer, Priority.ALWAYS);
+        Label pRight = new Label(String.format("%.2f DT", p.getPrixEstime()));
+        pRight.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12; -fx-font-weight: bold;");
+        priceRow.getChildren().addAll(pLeft, pSpacer, pRight);
+        infoBox.getChildren().add(priceRow);
 
         content.getChildren().addAll(warnIcon, warnTitle, warnDesc, infoBox);
         dp.setContent(content);
