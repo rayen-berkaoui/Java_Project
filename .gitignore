@@ -1,1 +1,13 @@
-/vendor/
+# Build output
+target/
+
+# IDE
+.idea/
+*.iml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Maven
+*.log

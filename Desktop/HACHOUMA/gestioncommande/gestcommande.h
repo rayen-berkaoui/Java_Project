@@ -1,4 +1,0 @@
-#ifndef GESTCOMMANDE_H
-#define GESTCOMMANDE_H
-
-#endif // GESTCOMMANDE_H
