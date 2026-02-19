@@ -6,8 +6,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.regex.Pattern;
 
 public class AjouterEtablissementController {
@@ -31,16 +29,19 @@ public class AjouterEtablissementController {
 
     private final EtablissementServices service = new EtablissementServices();
 
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9+ ]+$");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    // Email obligatoire + valide
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
+    // Téléphone tunisien : 8 chiffres, commence par 2/3/4/5/7/9
+    private static final Pattern TN_PHONE_PATTERN =
+            Pattern.compile("^[234579][0-9]{7}$");
 
     @FXML
     public void initialize() {
 
-        // options
         gammePrixField.getItems().setAll("€", "€€", "€€€");
 
-        // récupérer l’établissement à modifier (comme activité)
         editing = AffichageEtablissementController.etablissementToEdit;
 
         if (editing != null) {
@@ -50,7 +51,7 @@ public class AjouterEtablissementController {
             titleLabel.setText("Ajouter un établissement");
         }
 
-        // listeners validation live
+        // validation live
         nomField.textProperty().addListener((o,a,b)-> validateAll());
         villeField.textProperty().addListener((o,a,b)-> validateAll());
         telephoneField.textProperty().addListener((o,a,b)-> validateAll());
@@ -85,11 +86,18 @@ public class AjouterEtablissementController {
         e.setNom(nomField.getText().trim());
         e.setAdresse(safe(adresseField.getText()).trim());
         e.setVille(villeField.getText().trim());
-        e.setTelephone(safe(telephoneField.getText()).trim());
-        e.setEmail(safe(emailField.getText()).trim());
+
+        // téléphone تونس : on garde brut (sans espaces)
+        String tel = safe(telephoneField.getText()).trim().replaceAll("\\s+", "");
+        e.setTelephone(tel);
+
+        e.setEmail(emailField.getText().trim());
         e.setHoraires(safe(horairesField.getText()).trim());
         e.setGammePrix(gammePrixField.getValue() == null ? "" : gammePrixField.getValue().trim());
+
+        // ✅ image accepte tout
         e.setImageUrl(safe(imageUrlField.getText()).trim());
+
         e.setDescription(safe(descriptionArea.getText()).trim());
 
         try {
@@ -101,9 +109,7 @@ public class AjouterEtablissementController {
                 setMessage("✅ Établissement modifié.", true);
             }
 
-            // reset variable
             AffichageEtablissementController.etablissementToEdit = null;
-
             NavigationUtils.goTo("/etablissement_affichage.fxml", event);
 
         } catch (Exception ex) {
@@ -123,68 +129,53 @@ public class AjouterEtablissementController {
         clearErrors();
         StringBuilder errors = new StringBuilder();
 
-        // NOM obligatoire + max 30
+        // NOM obligatoire 1..20
         String nom = safe(nomField.getText()).trim();
         if (nom.isBlank()) {
             errors.append("• Nom obligatoire.\n");
             markError(nomField);
-        } else if (nom.length() > 30) {
-            errors.append("• Nom : max 30 caractères.\n");
+        } else if (nom.length() < 1 || nom.length() > 20) {
+            errors.append("• Nom : 1 à 20 caractères.\n");
             markError(nomField);
         }
 
-        // VILLE obligatoire + max 30
+        // VILLE obligatoire 1..20
         String ville = safe(villeField.getText()).trim();
         if (ville.isBlank()) {
             errors.append("• Ville obligatoire.\n");
             markError(villeField);
-        } else if (ville.length() > 30) {
-            errors.append("• Ville : max 30 caractères.\n");
+        } else if (ville.length() < 1 || ville.length() > 20) {
+            errors.append("• Ville : 1 à 20 caractères.\n");
             markError(villeField);
         }
 
-        // TELEPHONE optionnel : chiffres + + espace, 8..15 chiffres
-        String tel = safe(telephoneField.getText()).trim();
-        if (!tel.isBlank()) {
-            if (!PHONE_PATTERN.matcher(tel).matches()) {
-                errors.append("• Téléphone invalide (chiffres, espace, +).\n");
-                markError(telephoneField);
-            } else {
-                String digits = tel.replaceAll("[^0-9]", "");
-                if (digits.length() < 8 || digits.length() > 15) {
-                    errors.append("• Téléphone : 8 à 15 chiffres.\n");
-                    markError(telephoneField);
-                }
-            }
-        }
-
-        // EMAIL optionnel : format valide
+        // EMAIL obligatoire + valide
         String email = safe(emailField.getText()).trim();
-        if (!email.isBlank() && !EMAIL_PATTERN.matcher(email).matches()) {
-            errors.append("• Email invalide.\n");
+        if (email.isBlank()) {
+            errors.append("• Email obligatoire.\n");
+            markError(emailField);
+        } else if (!EMAIL_PATTERN.matcher(email).matches()) {
+            errors.append("• Email invalide (ex: nom@gmail.com).\n");
             markError(emailField);
         }
 
-        // GAMME PRIX optionnel mais contrôlé
-        String gamme = (gammePrixField.getValue() == null) ? "" : gammePrixField.getValue().trim();
-        if (!gamme.isBlank() && !(gamme.equals("€") || gamme.equals("€€") || gamme.equals("€€€"))) {
-            errors.append("• Gamme prix invalide.\n");
-            markError(gammePrixField);
+        // TELEPHONE tunisien optionnel
+        String tel = safe(telephoneField.getText()).trim().replaceAll("\\s+", "");
+        if (!tel.isBlank()) {
+            if (!TN_PHONE_PATTERN.matcher(tel).matches()) {
+                errors.append("• Téléphone tunisian chiffres et commence par 2/3/4/5/7/9.\n");
+                markError(telephoneField);
+            }
         }
 
-        // DESCRIPTION max 200
+        // DESCRIPTION max 200 (tu peux garder)
         String desc = safe(descriptionArea.getText()).trim();
         if (desc.length() > 200) {
             errors.append("• Description : max 200 caractères.\n");
             markError(descriptionArea);
         }
 
-        // IMAGE URL optionnel : url valide
-        String img = safe(imageUrlField.getText()).trim();
-        if (!img.isBlank() && !isValidUrl(img)) {
-            errors.append("• URL image invalide.\n");
-            markError(imageUrlField);
-        }
+        // ✅ IMAGE : accepte tout -> aucune validation
 
         boolean ok = errors.length() == 0;
         if (saveBtn != null) saveBtn.setDisable(!ok);
@@ -193,15 +184,6 @@ public class AjouterEtablissementController {
         else setMessage(errors.toString().trim(), false);
 
         return ok;
-    }
-
-    private boolean isValidUrl(String s) {
-        try {
-            new URL(s);
-            return true;
-        } catch (MalformedURLException e) {
-            return false;
-        }
     }
 
     private void clearErrors() {
@@ -217,9 +199,7 @@ public class AjouterEtablissementController {
     }
 
     private void markError(Control c) {
-        if (!c.getStyleClass().contains("field-error")) {
-            c.getStyleClass().add("field-error");
-        }
+        if (!c.getStyleClass().contains("field-error")) c.getStyleClass().add("field-error");
     }
 
     private void removeError(Control c) {

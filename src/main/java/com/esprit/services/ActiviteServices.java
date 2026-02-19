@@ -12,7 +12,7 @@ public class ActiviteServices {
     private final Connection cnx = MyDataBase.getInstance().getConnection();
 
     public void ajouter(Activite a) throws SQLException {
-        String sql = "INSERT INTO activite (nomActivite, description, categorie, duree, niveau) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO activite (nomActivite, description, categorie, duree, niveau, image_url) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
             ps.setString(1, a.getNomActivite());
             ps.setString(2, a.getDescription());
@@ -22,12 +22,13 @@ public class ActiviteServices {
             else ps.setInt(4, a.getDuree());
 
             ps.setString(5, a.getNiveau());
+            ps.setString(6, a.getImageUrl()); // ✅ NEW
             ps.executeUpdate();
         }
     }
 
     public void modifier(Activite a) throws SQLException {
-        String sql = "UPDATE activite SET nomActivite=?, description=?, categorie=?, duree=?, niveau=? WHERE idActivite=?";
+        String sql = "UPDATE activite SET nomActivite=?, description=?, categorie=?, duree=?, niveau=?, image_url=? WHERE idActivite=?";
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
             ps.setString(1, a.getNomActivite());
             ps.setString(2, a.getDescription());
@@ -37,7 +38,8 @@ public class ActiviteServices {
             else ps.setInt(4, a.getDuree());
 
             ps.setString(5, a.getNiveau());
-            ps.setInt(6, a.getIdActivite());
+            ps.setString(6, a.getImageUrl()); // ✅ NEW
+            ps.setInt(7, a.getIdActivite());
             ps.executeUpdate();
         }
     }
@@ -51,7 +53,7 @@ public class ActiviteServices {
     }
 
     public List<Activite> afficher() throws SQLException {
-        String sql = "SELECT idActivite, nomActivite, description, categorie, duree, niveau FROM activite";
+        String sql = "SELECT idActivite, nomActivite, description, categorie, duree, niveau, image_url FROM activite";
         List<Activite> list = new ArrayList<>();
 
         try (Statement st = cnx.createStatement();
@@ -68,6 +70,10 @@ public class ActiviteServices {
                 a.setDuree(rs.wasNull() ? null : d);
 
                 a.setNiveau(rs.getString("niveau"));
+
+                // ✅ NEW
+                a.setImageUrl(rs.getString("image_url"));
+
                 list.add(a);
             }
         }

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.HomeController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <top>
+        <VBox styleClass="topbar" spacing="10">
+            <padding>
+                <Insets top="18" right="22" bottom="16" left="22"/>
+            </padding>
+            <Label text="Premium Dashboard" styleClass="page-title"/>
+            <Region styleClass="accent-line-thin"/>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="18" styleClass="content-root" alignment="CENTER">
+            <padding>
+                <Insets top="30" right="22" bottom="22" left="22"/>
+            </padding>
+
+            <Label text="Choisissez un module" styleClass="section-title"/>
+
+            <HBox spacing="18" alignment="CENTER">
+                <Button text="Gestion des Activités"
+                        onAction="#goActivites"
+                        styleClass="home-btn home-btn-large"/>
+
+                <Button text="Gestion des Établissements"
+                        onAction="#goEtablissements"
+                        styleClass="home-btn home-btn-large"/>
+            </HBox>
+
+        </VBox>
+    </center>
+
+</BorderPane>

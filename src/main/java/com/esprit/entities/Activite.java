@@ -8,23 +8,29 @@ public class Activite {
     private Integer duree;   // peut être null
     private String niveau;
 
+    // ✅ NEW
+    private String imageUrl; // colonne : image_url
+
     public Activite() {}
 
-    public Activite(String nomActivite, String description, String categorie, Integer duree, String niveau) {
+    public Activite(String nomActivite, String description, String categorie, Integer duree, String niveau, String imageUrl) {
         this.nomActivite = nomActivite;
         this.description = description;
         this.categorie = categorie;
         this.duree = duree;
         this.niveau = niveau;
+        this.imageUrl = imageUrl;
     }
 
-    public Activite(int idActivite, String nomActivite, String description, String categorie, Integer duree, String niveau) {
+    public Activite(int idActivite, String nomActivite, String description, String categorie,
+                    Integer duree, String niveau, String imageUrl) {
         this.idActivite = idActivite;
         this.nomActivite = nomActivite;
         this.description = description;
         this.categorie = categorie;
         this.duree = duree;
         this.niveau = niveau;
+        this.imageUrl = imageUrl;
     }
 
     public int getIdActivite() { return idActivite; }
@@ -44,6 +50,10 @@ public class Activite {
 
     public String getNiveau() { return niveau; }
     public void setNiveau(String niveau) { this.niveau = niveau; }
+
+    // ✅ NEW
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
     @Override
     public String toString() {

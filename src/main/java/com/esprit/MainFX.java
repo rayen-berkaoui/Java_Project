@@ -13,26 +13,24 @@ public class MainFX extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 
-        URL fxmlUrl = getClass().getResource("/etablissement_affichage.fxml");
-
+        URL fxmlUrl = getClass().getResource("/home.fxml");
         if (fxmlUrl == null) {
-            throw new RuntimeException("❌ FXML introuvable: /activite_view.fxml\n" +
-                    "➡️ Mets-le dans: src/main/resources/activite_view.fxml");
+            throw new RuntimeException(" FXML introuvable: /home.fxml\n" +
+                    "➡️ Mets-le dans: src/main/resources/home.fxml");
         }
 
         Parent root = FXMLLoader.load(fxmlUrl);
 
-        Scene scene = new Scene(root, 1200, 750);
+        Scene scene = new Scene(root);
 
-        URL cssUrl = getClass().getResource("/style.css"); // ou /style.css selon ton projet
-        if (cssUrl != null) {
-            scene.getStylesheets().add(cssUrl.toExternalForm());
-        } else {
-            System.out.println("⚠️ CSS introuvable (optionnel).");
-        }
+        URL cssUrl = getClass().getResource("/style.css");
+        if (cssUrl != null) scene.getStylesheets().add(cssUrl.toExternalForm());
 
-        stage.setTitle("Gestion des Activités");
+        stage.setTitle("Dashboard");
         stage.setScene(scene);
+        stage.setMaximized(true);
+        stage.setMinWidth(1100);
+        stage.setMinHeight(700);
         stage.show();
     }
 

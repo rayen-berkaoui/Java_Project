@@ -10,41 +10,80 @@
             stylesheets="@style.css"
             styleClass="app-root">
 
-    <!-- TOP BAR : titre + recherche/filtres -->
+    <!-- ================= TOP BAR ================= -->
     <top>
-        <VBox spacing="10" styleClass="topbar">
+        <VBox styleClass="topbar" spacing="12">
             <padding>
-                <Insets top="14" right="16" bottom="14" left="16"/>
+                <Insets top="18" right="22" bottom="16" left="22"/>
             </padding>
 
-            <!-- Titre jaune -->
-            <Label text="Gestion des établissements" styleClass="page-title"/>
+            <!-- ✅ Titre + bouton Home -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Gestion des établissements" styleClass="page-title"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+
+                <!-- ✅ Bouton retour Home -->
+                <Button text="← Home"
+                        onAction="#goHome"
+                        styleClass="home-btn-small"/>
+            </HBox>
 
             <!-- Recherche + filtres -->
-            <HBox spacing="10">
+            <HBox spacing="12" alignment="CENTER_LEFT">
                 <TextField fx:id="searchField"
                            promptText="Rechercher (nom, ville, email, téléphone)..."
+                           styleClass="search-field"
                            HBox.hgrow="ALWAYS"/>
-                <ComboBox fx:id="filterVille" prefWidth="160" promptText="Ville"/>
-                <ComboBox fx:id="filterGamme" prefWidth="140" promptText="Gamme"/>
+
+                <ComboBox fx:id="filterVille" prefWidth="170" promptText="Ville" styleClass="filter-combo"/>
+                <ComboBox fx:id="filterGamme" prefWidth="170" promptText="Gamme" styleClass="filter-combo"/>
+                <ComboBox fx:id="sortBox" prefWidth="170" promptText="Trier" styleClass="filter-combo"/>
+
+                <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
             </HBox>
+
+            <Region styleClass="accent-line-thin"/>
         </VBox>
     </top>
 
-    <!-- CENTER : liste + bouton ajouter -->
+    <!-- ================= CENTER ================= -->
     <center>
-        <VBox spacing="12">
+        <StackPane styleClass="page-body">
             <padding>
-                <Insets top="12" right="16" bottom="16" left="16"/>
+                <Insets top="18" right="22" bottom="22" left="22"/>
             </padding>
 
-            <ListView fx:id="etablissementList" VBox.vgrow="ALWAYS" styleClass="cards-list"/>
+            <VBox spacing="16" styleClass="content-root">
 
-            <HBox spacing="10">
-                <Button text="Ajouter" onAction="#onShowAjouter" styleClass="btn-primary"/>
-                <Pane HBox.hgrow="ALWAYS"/>
-            </HBox>
-        </VBox>
+                <HBox alignment="CENTER_LEFT" spacing="12" styleClass="section-bar">
+                    <Label text="Galerie Premium" styleClass="section-title"/>
+                    <Pane HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+                </HBox>
+
+                <ScrollPane fitToWidth="true"
+                            hbarPolicy="NEVER"
+                            vbarPolicy="AS_NEEDED"
+                            styleClass="content-scroll">
+                    <content>
+                        <VBox styleClass="grid-wrapper">
+                            <padding>
+                                <Insets top="8" right="0" bottom="0" left="0"/>
+                            </padding>
+
+                            <TilePane fx:id="cardsPane"
+                                      prefColumns="3"
+                                      prefTileWidth="360"
+                                      prefTileHeight="360"
+                                      hgap="22" vgap="22"
+                                      tileAlignment="TOP_LEFT"
+                                      styleClass="cards-grid"/>
+                        </VBox>
+                    </content>
+                </ScrollPane>
+
+            </VBox>
+        </StackPane>
     </center>
 
 </BorderPane>

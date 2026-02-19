@@ -10,28 +10,44 @@
             stylesheets="@style.css"
             styleClass="app-root">
 
-    <center>
-        <VBox spacing="10" prefWidth="520" styleClass="formpanel">
+    <top>
+        <VBox styleClass="topbar" spacing="10">
             <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
+                <Insets top="18" right="22" bottom="16" left="22"/>
+            </padding>
+            <Label text="Ajouter / Modifier une activité" styleClass="page-title"/>
+            <Region styleClass="accent-line-thin"/>
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="12" styleClass="content-root">
+            <padding>
+                <Insets top="18" right="22" bottom="22" left="22"/>
             </padding>
 
-            <Label fx:id="titleLabel" text="Ajouter une activité" styleClass="h1"/>
-            <Label fx:id="messageLabel" text="" wrapText="true"/>
+            <Label text="Nom" styleClass="field-label"/>
+            <TextField fx:id="nomField" promptText="Nom de l’activité" />
 
-            <Separator/>
+            <Label text="Catégorie" styleClass="field-label"/>
+            <ComboBox fx:id="categorieBox" promptText="Choisir catégorie"/>
 
-            <TextField fx:id="nomField" promptText="Nom activité *"/>
-            <ComboBox fx:id="categorieField" promptText="Catégorie *"/>
-            <TextField fx:id="dureeField" promptText="Durée (minutes)"/>
-            <ComboBox fx:id="niveauField" promptText="Niveau"/>
-            <TextArea fx:id="descriptionArea" promptText="Description" prefRowCount="4"/>
+            <Label text="Niveau" styleClass="field-label"/>
+            <ComboBox fx:id="niveauBox" promptText="Choisir niveau"/>
 
-            <HBox spacing="10">
-                <Button fx:id="btnEnregistrer" text="Enregistrer" onAction="#onEnregistrer"
-                        styleClass="btn-primary" HBox.hgrow="ALWAYS"/>
+            <Label text="Durée (minutes)" styleClass="field-label"/>
+            <TextField fx:id="dureeField" promptText="Ex: 60"/>
 
-                <Button text="Annuler" onAction="#onAnnuler" styleClass="btn-secondary" HBox.hgrow="ALWAYS"/>
+            <Label text="Description" styleClass="field-label"/>
+            <TextArea fx:id="descArea" promptText="Description..." prefRowCount="4"/>
+
+            <!-- ✅ NEW -->
+            <Label text="Image URL / Path" styleClass="field-label"/>
+            <TextField fx:id="imageUrlField" promptText="https://... ou C:\...\image.jpg"/>
+
+            <HBox spacing="10" styleClass="action-bar">
+                <Button text="Enregistrer" onAction="#onSave" styleClass="btn-primary"/>
+                <Button text="Annuler" onAction="#onCancel" styleClass="btn-secondary"/>
             </HBox>
 
         </VBox>

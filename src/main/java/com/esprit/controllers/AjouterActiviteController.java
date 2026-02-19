@@ -2,202 +2,195 @@ package com.esprit.controllers;
 
 import com.esprit.entities.Activite;
 import com.esprit.services.ActiviteServices;
-import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 
-import java.sql.SQLException;
-import java.util.Set;
-
 public class AjouterActiviteController {
 
-    @FXML private Label titleLabel;
+    @FXML private TextField nomField;
+    @FXML private ComboBox<String> categorieBox;
+    @FXML private ComboBox<String> niveauBox;
+    @FXML private TextField dureeField;
+    @FXML private TextArea descArea;
+    @FXML private TextField imageUrlField;
+
+    // ✅ optionnel (si tu l’ajoutes dans FXML)
     @FXML private Label messageLabel;
 
-    @FXML private TextField nomField;
-    @FXML private ComboBox<String> categorieField;
-    @FXML private TextField dureeField;
-    @FXML private ComboBox<String> niveauField;
-    @FXML private TextArea descriptionArea;
-
-    @FXML private Button btnEnregistrer;
+    // ✅ important (si tu veux disable)
+    @FXML private Button saveBtn;
 
     private final ActiviteServices service = new ActiviteServices();
-    private Activite editing = null;
-
-    // règles
-    private static final int NOM_MAX = 20;
-    private static final int DESC_MAX = 200;
-
-    private static final Set<String> CATEGORIES = Set.of("Sport", "Culture", "Loisir", "Nature", "Autre");
-    private static final Set<String> NIVEAUX = Set.of("Débutant", "Intermédiaire", "Avancé");
 
     @FXML
     public void initialize() {
+        categorieBox.setItems(FXCollections.observableArrayList("Sport", "Culture", "Loisir", "Nature", "Autre"));
+        niveauBox.setItems(FXCollections.observableArrayList("Débutant", "Intermédiaire", "Avancé"));
 
-        categorieField.getItems().setAll(CATEGORIES);
-        niveauField.getItems().setAll(NIVEAUX);
-
-        // Durée: chiffres seulement (live)
-        dureeField.setTextFormatter(new TextFormatter<String>(change -> {
-            String newText = change.getControlNewText();
-            if (newText.isEmpty()) return change;
-            return newText.matches("\\d*") ? change : null;
-        }));
-
-        // mode modification / ajout
-        editing = ActiviteController.activiteToEdit;
-        if (editing != null) {
-            titleLabel.setText("Modifier une activité");
-            nomField.setText(editing.getNomActivite());
-            categorieField.setValue(editing.getCategorie());
-            dureeField.setText(editing.getDuree() == null ? "" : String.valueOf(editing.getDuree()));
-            niveauField.setValue(editing.getNiveau());
-            descriptionArea.setText(editing.getDescription());
-        } else {
-            titleLabel.setText("Ajouter une activité");
+        // Mode edit
+        if (ActiviteController.activiteToEdit != null) {
+            Activite a = ActiviteController.activiteToEdit;
+            nomField.setText(safe(a.getNomActivite()));
+            categorieBox.setValue(safe(a.getCategorie()).isBlank() ? null : a.getCategorie());
+            niveauBox.setValue(safe(a.getNiveau()).isBlank() ? null : a.getNiveau());
+            dureeField.setText(a.getDuree() == null ? "" : String.valueOf(a.getDuree()));
+            descArea.setText(safe(a.getDescription()));
+            imageUrlField.setText(safe(a.getImageUrl()));
         }
 
-        // validation live: chaque changement revalide et (dés)active Enregistrer
-        ChangeListener<Object> live = (obs, o, n) -> validateFormAndUpdateUI();
-        nomField.textProperty().addListener(live);
-        categorieField.valueProperty().addListener(live);
-        dureeField.textProperty().addListener(live);
-        niveauField.valueProperty().addListener(live);
-        descriptionArea.textProperty().addListener(live);
+        // listeners validation live
+        nomField.textProperty().addListener((o,a,b)-> validateAll());
+        categorieBox.valueProperty().addListener((o,a,b)-> validateAll());
+        niveauBox.valueProperty().addListener((o,a,b)-> validateAll());
+        dureeField.textProperty().addListener((o,a,b)-> validateAll());
+        descArea.textProperty().addListener((o,a,b)-> validateAll());
+        imageUrlField.textProperty().addListener((o,a,b)-> validateAll());
 
-        validateFormAndUpdateUI(); // état initial
+        validateAll();
     }
 
     @FXML
-    private void onEnregistrer(ActionEvent event) {
-        // sécurité: si invalide, on ne fait rien
-        if (!validateFormAndUpdateUI()) return;
-
-        Activite a = buildActiviteFromForm();
+    private void onSave(ActionEvent event) {
+        if (!validateAll()) return;
 
         try {
-            if (editing == null) {
-                service.ajouter(a);
-                setMessage("✅ Activité ajoutée.", true);
-            } else {
-                a.setIdActivite(editing.getIdActivite());
-                service.modifier(a);
-                setMessage("✅ Activité modifiée.", true);
+            String nom = nomField.getText().trim();
+            String cat = categorieBox.getValue();
+            String niv = niveauBox.getValue();
+            String desc = safe(descArea.getText()).trim();
+            String imageUrl = safe(imageUrlField.getText()).trim(); // accepte tout
+
+            Integer duree = null;
+            String dTxt = safe(dureeField.getText()).trim();
+            if (!dTxt.isEmpty()) {
+                duree = Integer.parseInt(dTxt);
             }
+
+            if (ActiviteController.activiteToEdit == null) {
+                Activite a = new Activite(nom, desc, cat, duree, niv, imageUrl);
+                service.ajouter(a);
+            } else {
+                Activite a = ActiviteController.activiteToEdit;
+                a.setNomActivite(nom);
+                a.setCategorie(cat);
+                a.setNiveau(niv);
+                a.setDescription(desc);
+                a.setDuree(duree);
+                a.setImageUrl(imageUrl);
+
+                service.modifier(a);
+                ActiviteController.activiteToEdit = null;
+            }
+
+            // ✅ après sauvegarde -> retourne à la liste
             NavigationUtils.goTo("/activite_view.fxml", event);
 
-        } catch (SQLException ex) {
-            setMessage("❌ " + ex.getMessage(), false);
+        } catch (Exception e) {
+            showError("Erreur: " + e.getMessage());
         }
     }
 
     @FXML
-    private void onAnnuler(ActionEvent event) {
+    private void onCancel(ActionEvent event) {
+        ActiviteController.activiteToEdit = null;
         NavigationUtils.goTo("/activite_view.fxml", event);
     }
 
     // ================= VALIDATION =================
-    private boolean validateFormAndUpdateUI() {
-        clearAllErrors();
-        setMessage("", true);
+    private boolean validateAll() {
+        clearErrors();
+        StringBuilder errors = new StringBuilder();
 
-        boolean ok = true;
-
+        // Nom obligatoire 1..20
         String nom = safe(nomField.getText()).trim();
-        String cat = categorieField.getValue() == null ? "" : categorieField.getValue().trim();
-        String dureeStr = safe(dureeField.getText()).trim();
-        String niv = niveauField.getValue() == null ? "" : niveauField.getValue().trim();
-        String desc = safe(descriptionArea.getText()).trim();
-
-        // Nom obligatoire + max 20
         if (nom.isBlank()) {
-            setError(nomField, "❌ Nom obligatoire.");
-            ok = false;
-        } else if (nom.length() > NOM_MAX) {
-            setError(nomField, "❌ Nom trop long (max " + NOM_MAX + " caractères).");
-            ok = false;
+            errors.append("• Nom obligatoire.\n");
+            markError(nomField);
+        } else if (nom.length() > 20) {
+            errors.append("• Nom : max 20 caractères.\n");
+            markError(nomField);
         }
 
         // Catégorie obligatoire
-        if (cat.isBlank()) {
-            setError(categorieField, "❌ Catégorie obligatoire.");
-            ok = false;
-        } else if (!CATEGORIES.contains(cat)) {
-            setError(categorieField, "❌ Catégorie invalide.");
-            ok = false;
+        String cat = categorieBox.getValue();
+        if (cat == null || cat.isBlank()) {
+            errors.append("• Catégorie obligatoire.\n");
+            markError(categorieBox);
         }
 
-        // Durée: chiffres, >0 et <120 (optionnelle ? tu peux la rendre obligatoire si tu veux)
-        if (!dureeStr.isBlank()) {
+        // Niveau obligatoire
+        String niv = niveauBox.getValue();
+        if (niv == null || niv.isBlank()) {
+            errors.append("• Niveau obligatoire.\n");
+            markError(niveauBox);
+        }
+
+        // Durée : optionnelle mais si remplie -> int > 0
+        String dTxt = safe(dureeField.getText()).trim();
+        if (!dTxt.isEmpty()) {
             try {
-                int d = Integer.parseInt(dureeStr);
-                if (d <= 0 || d >= 120) {
-                    setError(dureeField, "❌ Durée doit être entre 1 et 119 minutes.");
-                    ok = false;
+                int d = Integer.parseInt(dTxt);
+                if (d <= 0) {
+                    errors.append("• Durée : doit être > 0.\n");
+                    markError(dureeField);
                 }
-            } catch (NumberFormatException e) {
-                setError(dureeField, "❌ Durée invalide (chiffres uniquement).");
-                ok = false;
+            } catch (NumberFormatException ex) {
+                errors.append("• Durée invalide (ex: 60).\n");
+                markError(dureeField);
             }
         }
 
-        // Niveau optionnel mais contrôlé
-        if (!niv.isBlank() && !NIVEAUX.contains(niv)) {
-            setError(niveauField, "❌ Niveau invalide.");
-            ok = false;
-        }
-
         // Description max 200
-        if (desc.length() > DESC_MAX) {
-            setError(descriptionArea, "❌ Description trop longue (max " + DESC_MAX + " caractères).");
-            ok = false;
+        String desc = safe(descArea.getText()).trim();
+        if (desc.length() > 200) {
+            errors.append("• Description : max 200 caractères.\n");
+            markError(descArea);
         }
 
-        // Désactiver Enregistrer si invalide
-        if (btnEnregistrer != null) btnEnregistrer.setDisable(!ok);
+        // Image : accepte tout -> pas de validation
+
+        boolean ok = errors.length() == 0;
+
+        if (saveBtn != null) saveBtn.setDisable(!ok);
+
+        if (messageLabel != null) {
+            if (ok) {
+                messageLabel.setText("");
+                messageLabel.setStyle("-fx-text-fill:#22c55e; -fx-font-weight:bold;");
+            } else {
+                messageLabel.setText(errors.toString().trim());
+                messageLabel.setStyle("-fx-text-fill:#ef4444; -fx-font-weight:bold;");
+            }
+        }
 
         return ok;
     }
 
-    private Activite buildActiviteFromForm() {
-        String nom = safe(nomField.getText()).trim();
-        String cat = categorieField.getValue().trim();
-        String dureeStr = safe(dureeField.getText()).trim();
-        String niv = niveauField.getValue() == null ? null : niveauField.getValue().trim();
-        String desc = safe(descriptionArea.getText()).trim();
-
-        Integer duree = dureeStr.isBlank() ? null : Integer.parseInt(dureeStr);
-
-        Activite a = new Activite();
-        a.setNomActivite(nom);
-        a.setCategorie(cat);
-        a.setDuree(duree);
-        a.setNiveau(niv == null || niv.isBlank() ? null : niv);
-        a.setDescription(desc.isBlank() ? null : desc);
-        return a;
+    private void clearErrors() {
+        removeError(nomField);
+        removeError(categorieBox);
+        removeError(niveauBox);
+        removeError(dureeField);
+        removeError(descArea);
+        removeError(imageUrlField);
     }
 
-    // ================= UI HELPERS =================
-    private void setError(Control c, String msg) {
-        c.getStyleClass().add("field-error");
-        setMessage(msg, false);
+    private void markError(Control c) {
+        if (!c.getStyleClass().contains("field-error")) c.getStyleClass().add("field-error");
     }
 
-    private void clearAllErrors() {
-        nomField.getStyleClass().remove("field-error");
-        categorieField.getStyleClass().remove("field-error");
-        dureeField.getStyleClass().remove("field-error");
-        niveauField.getStyleClass().remove("field-error");
-        descriptionArea.getStyleClass().remove("field-error");
+    private void removeError(Control c) {
+        c.getStyleClass().remove("field-error");
     }
 
-    private void setMessage(String msg, boolean ok) {
-        messageLabel.setText(msg == null ? "" : msg);
-        messageLabel.setStyle(ok
-                ? "-fx-text-fill:#22c55e; -fx-font-weight:bold;"
-                : "-fx-text-fill:#ef4444; -fx-font-weight:bold;");
+    private void showError(String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setTitle("Erreur");
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 
     private String safe(String s) { return s == null ? "" : s; }
