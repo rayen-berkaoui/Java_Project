@@ -30,16 +30,8 @@
                     <Button styleClass="nav-button" text="�  Dashboard" onAction="#selectDashboardTab" prefHeight="42" minWidth="150"/>
                     <Button styleClass="nav-button" text="�📂  Catégories" onAction="#selectCategoriesTab" prefHeight="42" minWidth="150"/>
                     <Button styleClass="nav-button" text="📍  Adresses" onAction="#selectAddressesTab" prefHeight="42" minWidth="150"/>
-                    <Button styleClass="nav-button" text="🏛️  Lieux" onAction="#selectLocationsTab" prefHeight="42" minWidth="150"/>                    <Button styleClass="nav-button" text="❤️  Favoris" onAction="#selectFavorisTab" prefHeight="42" minWidth="150"/>
+                    <Button styleClass="nav-button" text="🏛️  Lieux" onAction="#selectLocationsTab" prefHeight="42" minWidth="150"/>
                 </HBox>
-
-                <Region prefWidth="15"/>
-
-                <!-- Language Toggle -->
-                <HBox spacing="0" alignment="CENTER" styleClass="lang-toggle-group">
-                    <Button fx:id="btnLangFr" text="FR" styleClass="lang-toggle-btn,lang-toggle-active" onAction="#switchToFrench" prefHeight="36" prefWidth="40"/>
-                    <Button fx:id="btnLangEn" text="EN" styleClass="lang-toggle-btn" onAction="#switchToEnglish" prefHeight="36" prefWidth="40"/>
-                    <Button fx:id="btnLangAr" text="ع" styleClass="lang-toggle-btn" onAction="#switchToArabic" prefHeight="36" prefWidth="40"/>                </HBox>
 
                 <Region prefWidth="25"/>
 
@@ -68,10 +60,6 @@
 
             <Tab text="Lieux Touristiques" closable="false">
                 <fx:include source="LieuTouristiqueView.fxml"/>
-            </Tab>
-
-            <Tab text="Favoris" closable="false">
-                <fx:include source="FavorisView.fxml"/>
             </Tab>
 
         </TabPane>

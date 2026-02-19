@@ -1,11 +1,7 @@
 package com.esprit.controllers;
 
-import com.esprit.entities.LieuImage;
 import com.esprit.entities.LieuTouristique;
-import com.esprit.services.FavorisServices;
-import com.esprit.services.LieuImageServices;
 import com.esprit.services.LieuTouristiqueServices;
-import com.esprit.utils.LanguageManager;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -33,8 +29,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.Set;
-import java.util.HashSet;
 
 public class LieuTouristiqueController {
 
@@ -48,16 +42,12 @@ public class LieuTouristiqueController {
     @FXML private TextField searchField;
 
     private LieuTouristiqueServices lieuServices;
-    private LieuImageServices lieuImageServices;
-    private FavorisServices favorisServices;
     private List<LieuTouristique> lieuList = new ArrayList<>();
     private List<LieuTouristique> filteredList = new ArrayList<>();
     /** Cache of gallery images per lieu id for carousel */
     private final Map<Integer, List<String>> galleryCache = new HashMap<>();
     /** Tracks current carousel image index per lieu id */
     private final Map<Integer, Integer> carouselIndex = new HashMap<>();
-    /** Set of favorited lieu IDs for fast lookup */
-    private Set<Integer> favoriteIds = new HashSet<>();
     private int currentPage = 0;
     private int selectedIndex = -1;
     private static final int CARDS_PER_PAGE = 4;
@@ -67,8 +57,6 @@ public class LieuTouristiqueController {
     public void initialize() {
         try {
             lieuServices = new LieuTouristiqueServices();
-            lieuImageServices = new LieuImageServices();
-            favorisServices = new FavorisServices();
 
             if (btnAjouter != null) btnAjouter.setOnAction(e -> { animateButton(btnAjouter); openAddDialog(); });
             if (btnModifier != null) btnModifier.setOnAction(e -> { animateButton(btnModifier); openEditDialog(); });
@@ -88,23 +76,13 @@ public class LieuTouristiqueController {
             Platform.runLater(() -> {
                 loadData();
                 playEntranceAnimation();
-                updateLanguageUI();
             });
-            LanguageManager.getInstance().addListener(this::updateLanguageUI);
             System.out.println("✅ LieuTouristiqueController initialized successfully");
         } catch (Exception e) {
             System.err.println("❌ Error initializing LieuTouristiqueController: " + e.getMessage());
             e.printStackTrace();
             showToast("Erreur d'initialisation: " + e.getMessage(), false);
         }
-    }
-
-    private void updateLanguageUI() {
-        LanguageManager lm = LanguageManager.getInstance();
-        if (btnAjouter != null) btnAjouter.setText(lm.get("btn.add"));
-        if (btnModifier != null) btnModifier.setText(lm.get("btn.edit"));
-        if (btnSupprimer != null) btnSupprimer.setText(lm.get("btn.delete"));
-        if (searchField != null) searchField.setPromptText(lm.get("locations.search"));
     }
 
     private void applyFilter(String query) {
@@ -136,32 +114,16 @@ public class LieuTouristiqueController {
             filteredList.addAll(lieuList);
             if (lblCount != null) animateCounter(lblCount, lieuList.size());
 
-            // Preload gallery images for carousel
+            // Preload gallery images for carousel (using lieu's image field)
             galleryCache.clear();
             carouselIndex.clear();
-            if (lieuImageServices != null) {
-                for (LieuTouristique l : lieuList) {
-                    try {
-                        List<LieuImage> imgs = lieuImageServices.getByLieuId(l.getId_lieu());
-                        List<String> paths = new ArrayList<>();
-                        for (LieuImage li : imgs) paths.add(li.getImagePath());
-                        // If no gallery images but has a legacy image, use it
-                        if (paths.isEmpty() && l.getImage() != null && !l.getImage().trim().isEmpty()) {
-                            paths.add(l.getImage());
-                        }
-                        galleryCache.put(l.getId_lieu(), paths);
-                        carouselIndex.put(l.getId_lieu(), 0);
-                    } catch (SQLException ex) {
-                        System.err.println("⚠️ Error loading gallery for lieu " + l.getId_lieu());
-                    }
+            for (LieuTouristique l : lieuList) {
+                List<String> paths = new ArrayList<>();
+                if (l.getImage() != null && !l.getImage().trim().isEmpty()) {
+                    paths.add(l.getImage());
                 }
-            }
-
-            // Load favorite IDs
-            try {
-                if (favorisServices != null) favoriteIds = favorisServices.getAllFavoriIds();
-            } catch (SQLException ex) {
-                System.err.println("⚠️ Error loading favorites: " + ex.getMessage());
+                galleryCache.put(l.getId_lieu(), paths);
+                carouselIndex.put(l.getId_lieu(), 0);
             }
 
             int maxPage = getMaxPage();
@@ -335,44 +297,7 @@ public class LieuTouristiqueController {
         textOverlay.getChildren().addAll(nameLabel, descLabel, locationLabel);
         StackPane.setAlignment(textOverlay, Pos.BOTTOM_LEFT);
 
-        // Heart (favorite) toggle button
-        Label heartBtn = new Label(favoriteIds.contains(lieu.getId_lieu()) ? "❤️" : "🤍");
-        heartBtn.setStyle("-fx-font-size: 22px; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 4, 0, 0, 1);");
-        heartBtn.setOnMouseClicked(ev -> {
-            ev.consume();
-            try {
-                boolean nowFav = favorisServices.toggleFavori(lieu.getId_lieu());
-                if (nowFav) {
-                    favoriteIds.add(lieu.getId_lieu());
-                    heartBtn.setText("❤️");
-                    // Pulse animation
-                    ScaleTransition pulse = new ScaleTransition(Duration.millis(200), heartBtn);
-                    pulse.setFromX(1.0); pulse.setFromY(1.0);
-                    pulse.setToX(1.4); pulse.setToY(1.4);
-                    pulse.setAutoReverse(true); pulse.setCycleCount(2);
-                    pulse.play();
-                    showToast("Ajouté aux favoris ❤️", true);
-                } else {
-                    favoriteIds.remove(lieu.getId_lieu());
-                    heartBtn.setText("🤍");
-                    showToast("Retiré des favoris", true);
-                }
-            } catch (SQLException ex) {
-                showToast("Erreur favoris: " + ex.getMessage(), false);
-            }
-        });
-        heartBtn.setOnMouseEntered(ev -> {
-            ScaleTransition h = new ScaleTransition(Duration.millis(150), heartBtn);
-            h.setToX(1.2); h.setToY(1.2); h.play();
-        });
-        heartBtn.setOnMouseExited(ev -> {
-            ScaleTransition h = new ScaleTransition(Duration.millis(150), heartBtn);
-            h.setToX(1.0); h.setToY(1.0); h.play();
-        });
-        StackPane.setAlignment(heartBtn, Pos.TOP_RIGHT);
-        StackPane.setMargin(heartBtn, new Insets(12, 50, 0, 0));
-
-        card.getChildren().addAll(darkBg, bgImage, gradientOverlay, badge, priceBadge, heartBtn, textOverlay);
+        card.getChildren().addAll(darkBg, bgImage, gradientOverlay, badge, priceBadge, textOverlay);
 
         // Horizontal scroll to cycle images (only when multiple images)
         if (galleryPaths.size() > 1) {
@@ -671,14 +596,6 @@ public class LieuTouristiqueController {
                 LieuTouristique newLieu = dc.getLieuTouristique();
                 if (newLieu != null) {
                     lieuServices.ajouter(newLieu);
-                    // Save gallery images
-                    List<String> galleryPaths = dc.getGalleryImagePaths();
-                    if (galleryPaths != null && !galleryPaths.isEmpty() && lieuImageServices != null) {
-                        int newLieuId = lieuImageServices.getLastInsertedLieuId();
-                        if (newLieuId > 0) {
-                            lieuImageServices.ajouterMultiple(newLieuId, galleryPaths);
-                        }
-                    }
                     loadData();
                     showToast("Lieu touristique ajouté avec succès !", true);
                 }
@@ -717,18 +634,6 @@ public class LieuTouristiqueController {
             setupFullscreenButton(dialogPane, dialogStage);
             dc.setLieuTouristique(selected);
 
-            // Load existing gallery images for this lieu
-            if (lieuImageServices != null) {
-                try {
-                    List<LieuImage> existingImgs = lieuImageServices.getByLieuId(selected.getId_lieu());
-                    List<String> existingPaths = new ArrayList<>();
-                    for (LieuImage li : existingImgs) existingPaths.add(li.getImagePath());
-                    dc.loadExistingGalleryImages(existingPaths);
-                } catch (SQLException ex) {
-                    System.err.println("⚠️ Error loading gallery for editing: " + ex.getMessage());
-                }
-            }
-
             // Prevent dialog from closing when validation fails
             dialogPane.lookupButton(ButtonType.OK).addEventFilter(ActionEvent.ACTION, event -> {
                 if (dc.getLieuTouristique() == null) event.consume();
@@ -739,11 +644,6 @@ public class LieuTouristiqueController {
                 if (updatedLieu != null) {
                     updatedLieu.setId_lieu(selected.getId_lieu());
                     lieuServices.modifier(updatedLieu);
-                    // Replace gallery images
-                    List<String> galleryPaths = dc.getGalleryImagePaths();
-                    if (lieuImageServices != null) {
-                        lieuImageServices.replaceAll(selected.getId_lieu(), galleryPaths);
-                    }
                     loadData();
                     showToast("Lieu touristique modifié avec succès !", true);
                 }
@@ -768,10 +668,6 @@ public class LieuTouristiqueController {
         java.util.Optional<ButtonType> result = confirmAlert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             try {
-                // Delete gallery images first (cascade should handle this, but explicit is safer)
-                if (lieuImageServices != null) {
-                    lieuImageServices.supprimerByLieuId(selected.getId_lieu());
-                }
                 lieuServices.supprimer(selected.getId_lieu());
                 selectedIndex = -1;
                 loadData();

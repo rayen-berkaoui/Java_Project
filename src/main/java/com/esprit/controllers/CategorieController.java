@@ -2,7 +2,6 @@ package com.esprit.controllers;
 
 import com.esprit.entities.categorie;
 import com.esprit.services.categorieServices;
-import com.esprit.utils.LanguageManager;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -80,23 +79,13 @@ public class CategorieController {
             Platform.runLater(() -> {
                 loadData();
                 playEntranceAnimation();
-                updateLanguageUI();
             });
-            LanguageManager.getInstance().addListener(this::updateLanguageUI);
             System.out.println("✅ CategorieController initialized successfully");
         } catch (Exception e) {
             System.err.println("❌ Error initializing CategorieController: " + e.getMessage());
             e.printStackTrace();
             showToast("Erreur d'initialisation: " + e.getMessage(), false);
         }
-    }
-
-    private void updateLanguageUI() {
-        LanguageManager lm = LanguageManager.getInstance();
-        if (btnAjouter != null) btnAjouter.setText(lm.get("btn.add"));
-        if (btnModifier != null) btnModifier.setText(lm.get("btn.edit"));
-        if (btnSupprimer != null) btnSupprimer.setText(lm.get("btn.delete"));
-        if (searchField != null) searchField.setPromptText(lm.get("categories.search"));
     }
 
     private void applyFilter(String query) {

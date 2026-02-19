@@ -6,7 +6,6 @@ import com.esprit.entities.categorie;
 import com.esprit.services.AdresseServices;
 import com.esprit.services.LieuTouristiqueServices;
 import com.esprit.services.categorieServices;
-import com.esprit.utils.LanguageManager;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -58,9 +57,7 @@ public class DashboardController {
             loadData();
             buildDashboard();
             playEntranceAnimation();
-            updateLanguageUI();
         });
-        LanguageManager.getInstance().addListener(this::updateLanguageUI);
     }
 
     private void loadData() {
@@ -80,15 +77,6 @@ public class DashboardController {
         buildPriceDistributionChart();
         buildStatutPieChart();
         buildHeatmap();
-    }
-
-    private void updateLanguageUI() {
-        // Dashboard labels are mostly in FXML; rebuild charts with new language if needed
-        LanguageManager lm = LanguageManager.getInstance();
-        Platform.runLater(() -> {
-            loadData();
-            buildDashboard();
-        });
     }
 
     // ==================== STAT CARDS ====================

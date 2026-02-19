@@ -1,28 +1,21 @@
 package com.esprit.controllers;
 
-import com.esprit.utils.LanguageManager;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
-
 /**
- * Main controller for navigation, fullscreen toggle, and language switching.
+ * Main controller for navigation and fullscreen toggle.
  */
 public class MainController {
 
     @FXML
     private TabPane mainTabPane;
-
-    @FXML private Button btnLangFr, btnLangEn, btnLangAr;
     
     private Stage stage;
     private boolean isFullScreen = false;
@@ -67,68 +60,6 @@ public class MainController {
                     entrance.play();
                 }
             });
-
-            // Apply initial language
-            updateLanguageUI();
-        }
-    }
-
-    // ========== LANGUAGE SWITCHING ==========
-
-    @FXML
-    public void switchToFrench() {
-        switchLanguage(Locale.FRENCH);
-    }
-
-    @FXML
-    public void switchToEnglish() {
-        switchLanguage(Locale.ENGLISH);
-    }
-
-    @FXML
-    public void switchToArabic() {
-        switchLanguage(new Locale("ar"));
-    }
-
-    private void switchLanguage(Locale locale) {
-        LanguageManager.getInstance().setLocale(locale);
-        updateLanguageUI();
-        System.out.println("🌐 Language switched to: " + locale.getLanguage());
-    }
-
-    private void updateLanguageUI() {
-        ResourceBundle bundle = LanguageManager.getInstance().getBundle();
-        String lang = LanguageManager.getInstance().getLocale().getLanguage();
-
-        // Update tab names
-        if (mainTabPane != null && mainTabPane.getTabs().size() >= 5) {
-            mainTabPane.getTabs().get(0).setText(bundle.getString("tab.dashboard"));
-            mainTabPane.getTabs().get(1).setText(bundle.getString("tab.categories"));
-            mainTabPane.getTabs().get(2).setText(bundle.getString("tab.addresses"));
-            mainTabPane.getTabs().get(3).setText(bundle.getString("tab.locations"));
-            mainTabPane.getTabs().get(4).setText(bundle.getString("tab.favorites"));
-        }
-
-        // Update language toggle button styles
-        if (btnLangFr != null) {
-            btnLangFr.getStyleClass().remove("lang-toggle-active");
-            btnLangEn.getStyleClass().remove("lang-toggle-active");
-            btnLangAr.getStyleClass().remove("lang-toggle-active");
-            switch (lang) {
-                case "fr": btnLangFr.getStyleClass().add("lang-toggle-active"); break;
-                case "en": btnLangEn.getStyleClass().add("lang-toggle-active"); break;
-                case "ar": btnLangAr.getStyleClass().add("lang-toggle-active"); break;
-            }
-        }
-
-        // Set RTL for Arabic
-        if (mainTabPane != null && mainTabPane.getScene() != null) {
-            Node root = mainTabPane.getScene().getRoot();
-            if ("ar".equals(lang)) {
-                root.setNodeOrientation(javafx.geometry.NodeOrientation.RIGHT_TO_LEFT);
-            } else {
-                root.setNodeOrientation(javafx.geometry.NodeOrientation.LEFT_TO_RIGHT);
-            }
         }
     }
 
@@ -152,11 +83,6 @@ public class MainController {
     @FXML
     public void selectLocationsTab() {
         selectTab(3);
-    }
-
-    @FXML
-    public void selectFavorisTab() {
-        selectTab(4);
     }
 
     @FXML

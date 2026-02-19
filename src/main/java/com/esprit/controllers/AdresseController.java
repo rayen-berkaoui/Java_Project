@@ -2,7 +2,6 @@ package com.esprit.controllers;
 
 import com.esprit.entities.Adresse;
 import com.esprit.services.AdresseServices;
-import com.esprit.utils.LanguageManager;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -100,24 +99,13 @@ public class AdresseController {
             Platform.runLater(() -> {
                 loadData();
                 playEntranceAnimation();
-                updateLanguageUI();
             });
-            LanguageManager.getInstance().addListener(this::updateLanguageUI);
             System.out.println("✅ AdresseController initialized successfully");
         } catch (Exception e) {
             System.err.println("❌ Error initializing AdresseController: " + e.getMessage());
             e.printStackTrace();
             showToast("Erreur d'initialisation: " + e.getMessage(), false);
         }
-    }
-
-    private void updateLanguageUI() {
-        LanguageManager lm = LanguageManager.getInstance();
-        if (btnAjouter != null) btnAjouter.setText(lm.get("btn.add"));
-        if (btnModifier != null) btnModifier.setText(lm.get("btn.edit"));
-        if (btnSupprimer != null) btnSupprimer.setText(lm.get("btn.delete"));
-        if (searchField != null) searchField.setPromptText(lm.get("addresses.search"));
-        if (lblMapTitle != null) lblMapTitle.setText(lm.get("addresses.mapTitle"));
     }
 
     private void applyFilter(String query) {
