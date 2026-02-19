@@ -118,11 +118,18 @@ public class PanierService {
     }
 
     // =====================================================
-    // DELETE PANIER ITEM
+    // DELETE PANIER ITEM (and any linked reservations)
     // =====================================================
     public boolean supprimer(int idPanier) {
-        String sql = "DELETE FROM panier WHERE id_panier = ?";
         try {
+            // First delete any linked reservations (FK constraint)
+            String delRes = "DELETE FROM reservation WHERE id_panier = ?";
+            PreparedStatement psRes = con.prepareStatement(delRes);
+            psRes.setInt(1, idPanier);
+            psRes.executeUpdate();
+
+            // Then delete the panier item
+            String sql = "DELETE FROM panier WHERE id_panier = ?";
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, idPanier);
             return ps.executeUpdate() > 0;

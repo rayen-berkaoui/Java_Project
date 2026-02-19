@@ -43,7 +43,7 @@ public class FaceRecognitionService {
     // MSE threshold: same person RMSE is typically 15-35, different person 45-80+
     // We convert to similarity: sim = exp(-mse / sigma)
     // Same person: sim ~ 0.75-0.95, Different person: sim ~ 0.15-0.45
-    private static final double MATCH_THRESHOLD = 0.55;
+    private static final double MATCH_THRESHOLD = 0.42;
 
     public FaceRecognitionService() {
         // Load the Haar cascade for face detection from OpenCV data
@@ -109,34 +109,59 @@ public class FaceRecognitionService {
     }
 
     /**
-     * Start the webcam capture
+     * Start the webcam capture with retry logic
      */
     public void startCamera() throws FrameGrabber.Exception {
         if (cameraRunning) return;
 
-        grabber = new OpenCVFrameGrabber(0);
-        grabber.setImageWidth(640);
-        grabber.setImageHeight(480);
-        grabber.start();
-        cameraRunning = true;
-        System.out.println("Camera started successfully.");
+        FrameGrabber.Exception lastError = null;
+        // Try multiple camera indices and resolutions
+        int[] cameraIndices = {0, 1, -1};
+        for (int idx : cameraIndices) {
+            try {
+                grabber = new OpenCVFrameGrabber(idx);
+                grabber.setImageWidth(640);
+                grabber.setImageHeight(480);
+                grabber.start();
+                // Grab a test frame to verify camera works
+                Frame testFrame = grabber.grab();
+                if (testFrame != null) {
+                    cameraRunning = true;
+                    System.out.println("Camera started successfully on index " + idx);
+                    return;
+                }
+                // Test frame was null, try next
+                grabber.stop();
+                grabber.release();
+            } catch (FrameGrabber.Exception e) {
+                lastError = e;
+                System.err.println("Camera index " + idx + " failed: " + e.getMessage());
+                try {
+                    if (grabber != null) { grabber.stop(); grabber.release(); }
+                } catch (Exception ignored) { /* cleanup */ }
+            }
+        }
+        // All indices failed
+        if (lastError != null) throw lastError;
+        throw new FrameGrabber.Exception("No camera available on any index");
     }
 
     /**
-     * Stop the webcam capture
+     * Stop the webcam capture safely
      */
     public void stopCamera() {
-        if (!cameraRunning) return;
-
+        cameraRunning = false;
         try {
             if (grabber != null) {
                 grabber.stop();
                 grabber.release();
+                grabber = null;
             }
         } catch (FrameGrabber.Exception e) {
-            e.printStackTrace();
+            System.err.println("Error stopping camera: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Unexpected error stopping camera: " + e.getMessage());
         }
-        cameraRunning = false;
         System.out.println("Camera stopped.");
     }
 
@@ -202,10 +227,10 @@ public class FaceRecognitionService {
         RectVector faces = new RectVector();
         faceDetector.detectMultiScale(
             gray, faces,
-            1.1,     // scaleFactor
-            3,       // minNeighbors (lower = more sensitive)
+            1.05,    // scaleFactor — lower = more sensitive detection
+            2,       // minNeighbors — lowered for better detection
             0,       // flags
-            new Size(30, 30),   // minSize — smaller for distant faces
+            new Size(20, 20),   // minSize — detect smaller/distant faces
             new Size(0, 0)      // maxSize — unlimited
         );
 

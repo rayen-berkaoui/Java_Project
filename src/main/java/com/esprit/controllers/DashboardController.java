@@ -1270,6 +1270,7 @@ public class DashboardController {
             newRoot.setOpacity(0); newRoot.setScaleX(1.03); newRoot.setScaleY(1.03); newRoot.setTranslateY(8);
             stage.setScene(newScene);
             stage.setTitle(title);
+            stage.setMaximized(true);
 
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);
             fadeIn.setFromValue(0); fadeIn.setToValue(1); fadeIn.setInterpolator(Interpolator.EASE_OUT);

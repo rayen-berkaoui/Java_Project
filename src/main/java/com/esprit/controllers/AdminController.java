@@ -726,6 +726,7 @@ public class AdminController {
             newRoot.setTranslateY(8);
             stage.setScene(newScene);
             stage.setTitle(title);
+            stage.setMaximized(true);
 
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);
             fadeIn.setFromValue(0);

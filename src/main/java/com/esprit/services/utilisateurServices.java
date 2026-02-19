@@ -606,15 +606,39 @@ public class utilisateurServices implements ICrud<utilisateur> {
     // ✅ SAVE FACE ENCODING
     // =====================================================
     public boolean saveFaceEncoding(int userId, String faceEncoding) {
+        // Ensure column can hold large multi-capture Base64 data (~240KB+)
+        ensureFaceEncodingColumnSize();
+
         String sql = "UPDATE utilisateur SET face_encoding = ? WHERE id = ?";
         try {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, faceEncoding);
             ps.setInt(2, userId);
-            return ps.executeUpdate() > 0;
+            boolean result = ps.executeUpdate() > 0;
+            if (result) {
+                System.out.println("Face encoding saved for user " + userId + " (length: " + faceEncoding.length() + " chars)");
+            }
+            return result;
         } catch (SQLException e) {
+            System.err.println("Error saving face encoding: " + e.getMessage());
             e.printStackTrace();
             return false;
+        }
+    }
+
+    /**
+     * Ensure the face_encoding column is LONGTEXT to hold multi-capture Base64 data.
+     * TEXT = 64KB limit, MEDIUMTEXT = 16MB, LONGTEXT = 4GB.
+     * Multi-capture (3 × 200×200 grayscale) Base64 = ~240KB, needs at least MEDIUMTEXT.
+     */
+    private void ensureFaceEncodingColumnSize() {
+        try {
+            Statement st = con.createStatement();
+            st.executeUpdate("ALTER TABLE utilisateur MODIFY COLUMN face_encoding LONGTEXT");
+            System.out.println("face_encoding column ensured as LONGTEXT");
+        } catch (SQLException e) {
+            // Column might already be LONGTEXT or table structure differs — safe to ignore
+            System.out.println("face_encoding column check: " + e.getMessage());
         }
     }
 
@@ -642,12 +666,14 @@ public class utilisateurServices implements ICrud<utilisateur> {
         utilisateur bestMatch = null;
         double bestScore = 0.0;
 
+        System.out.println("=== Comparing face against " + usersWithFaces.size() + " registered users ===");
+
         for (utilisateur u : usersWithFaces) {
             String storedEncoding = u.getFaceEncoding();
             if (storedEncoding == null || storedEncoding.isEmpty()) continue;
 
             double score = faceService.compareFaces(storedEncoding, capturedEncoding);
-            System.out.println("Face match score for " + u.getEmail() + ": " + score);
+            System.out.println("Face match score for " + u.getEmail() + ": " + String.format("%.4f", score));
 
             if (score > bestScore) {
                 bestScore = score;
@@ -655,12 +681,13 @@ public class utilisateurServices implements ICrud<utilisateur> {
             }
         }
 
-        if (bestMatch != null && faceService.isFaceMatch(bestMatch.getFaceEncoding(), capturedEncoding)) {
-            System.out.println("✅ Face matched: " + bestMatch.getEmail() + " (score: " + bestScore + ")");
+        // Use the score already computed — no need to call compareFaces again
+        if (bestMatch != null && bestScore >= 0.42) {
+            System.out.println("✅ Face matched: " + bestMatch.getEmail() + " (score: " + String.format("%.4f", bestScore) + ")");
             return bestMatch;
         }
 
-        System.out.println("❌ No face match found. Best score: " + bestScore);
+        System.out.println("❌ No face match found. Best score: " + String.format("%.4f", bestScore));
         return null;
     }
 }

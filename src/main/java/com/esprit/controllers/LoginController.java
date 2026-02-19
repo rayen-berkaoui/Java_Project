@@ -209,9 +209,12 @@ public class LoginController {
             try {
                 // Take multiple captures for reliability
                 String capturedEncoding = null;
-                for (int attempt = 0; attempt < 5; attempt++) {
+                for (int attempt = 0; attempt < 8; attempt++) {
                     Mat currentFrame = faceService.grabMat();
-                    if (currentFrame == null) continue;
+                    if (currentFrame == null) {
+                        Thread.sleep(80);
+                        continue;
+                    }
 
                     String enc = faceService.encodeFace(currentFrame);
                     if (enc != null) {
@@ -220,7 +223,7 @@ public class LoginController {
                         break;
                     }
                     // Small delay between attempts
-                    Thread.sleep(100);
+                    Thread.sleep(150);
                 }
 
                 if (capturedEncoding == null) {
@@ -651,6 +654,7 @@ public class LoginController {
 
             stage.setScene(newScene);
             stage.setTitle(title);
+            stage.setMaximized(true);
 
             // Fade in + scale to normal + slide up
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);
