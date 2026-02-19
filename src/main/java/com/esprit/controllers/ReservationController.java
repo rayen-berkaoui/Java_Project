@@ -174,13 +174,8 @@ public class ReservationController {
         typeLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 10;");
         nameBox.getChildren().addAll(nameLabel, typeLabel);
 
-        VBox priceBox = new VBox(2);
-        priceBox.setAlignment(Pos.CENTER_RIGHT);
-        Label prixLabel = new Label(String.format("%.2f DT", r.getMontantTotal()));
-        prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
-        priceBox.getChildren().add(prixLabel);
-
-        header.getChildren().addAll(iconPane, nameBox, priceBox);
+        // Don't show price in reservations
+        header.getChildren().addAll(iconPane, nameBox);
 
         // CONFIRMATION CODE BADGE
         HBox codeBadge = new HBox(8);
@@ -221,13 +216,7 @@ public class ReservationController {
         HBox buttons = new HBox(6);
         buttons.setAlignment(Pos.CENTER);
 
-        boolean isEnCours = "En cours de paiement".equalsIgnoreCase(r.getStatutPaiement());
-        if (isEnCours) {
-            Button payerBtn = new Button("\u2705 Payer");
-            payerBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-padding: 7 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
-            payerBtn.setOnAction(e -> markAsPaid(r));
-            buttons.getChildren().add(payerBtn);
-        }
+        // Note: "Payé" button removed - payment is automatic for restaurants, and handled by admin for other services
 
         // Upgrade button: Cash -> Card (one-way only!)
         boolean isCash = "Especes".equalsIgnoreCase(r.getModePaiement());
@@ -819,22 +808,7 @@ public class ReservationController {
     // ================================================================
     // ACTIONS
     // ================================================================
-    private void markAsPaid(Reservation r) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirmer le paiement");
-        confirm.setHeaderText("Marquer comme paye ?");
-        confirm.setContentText("Code: " + r.getCodeConfirmation() + "\nMontant: " + String.format("%.2f DT", r.getMontantTotal()));
-        confirm.showAndWait().ifPresent(bt -> {
-            if (bt == ButtonType.OK) {
-                if (reservationService.updateStatut(r.getIdReservation(), "Pay\u00e9")) {
-                    showMessage("\u2705 Paiement confirme ! Code: " + r.getCodeConfirmation(), true);
-                    loadData();
-                } else {
-                    showMessage("Echec de la mise a jour.", false);
-                }
-            }
-        });
-    }
+    // markAsPaid method removed - "Payé" button removed from UI
 
     private void deleteReservation(Reservation r) {
         Dialog<ButtonType> dialog = new Dialog<>();

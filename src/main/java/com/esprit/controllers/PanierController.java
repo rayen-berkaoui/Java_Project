@@ -196,13 +196,25 @@ public class PanierController {
         typeLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 10;");
         nameBox.getChildren().addAll(nameLabel, typeLabel);
 
-        VBox priceBox = new VBox(2);
-        priceBox.setAlignment(Pos.CENTER_RIGHT);
-        Label prixLabel = new Label(String.format("%.2f DT", p.getPrixEstime()));
-        prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
-        priceBox.getChildren().add(prixLabel);
-
-        header.getChildren().addAll(iconPane, nameBox, priceBox);
+        // Don't show price for hotels and restaurants/cafes
+        boolean isPriceVisible = !(p.getTypeService() != null && 
+            (p.getTypeService().toLowerCase().contains("hotel") || 
+             p.getTypeService().toLowerCase().contains("voyage") || 
+             p.getTypeService().toLowerCase().contains("hebergement") ||
+             p.getTypeService().toLowerCase().contains("restaurant") || 
+             p.getTypeService().toLowerCase().contains("caf") ||
+             p.getTypeService().toLowerCase().contains("resto")));
+        
+        if (isPriceVisible) {
+            VBox priceBox = new VBox(2);
+            priceBox.setAlignment(Pos.CENTER_RIGHT);
+            Label prixLabel = new Label(String.format("%.2f DT", p.getPrixEstime()));
+            prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+            priceBox.getChildren().add(prixLabel);
+            header.getChildren().addAll(iconPane, nameBox, priceBox);
+        } else {
+            header.getChildren().addAll(iconPane, nameBox);
+        }
 
         // DETAIL GRID
         VBox details = new VBox(6);
@@ -255,7 +267,24 @@ public class PanierController {
 
         Button confirmBtn = new Button("\u2705 Confirmer");
         confirmBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
-        confirmBtn.setOnAction(e -> showPaymentMethodDialog(p));
+        confirmBtn.setOnAction(e -> {
+            // Auto-pay in cash for restaurants/cafes, show payment dialog for hotels
+            boolean isRestaurant = p.getTypeService() != null && 
+                (p.getTypeService().toLowerCase().contains("restaurant") || 
+                 p.getTypeService().toLowerCase().contains("caf"));
+            
+            if (isRestaurant) {
+                // Auto-pay in cash for restaurants/cafes
+                double finalPrice = p.getPrixEstime();
+                if (appliedPromo != null && discountPercent > 0) {
+                    finalPrice = p.getPrixEstime() * (1 - discountPercent / 100.0);
+                }
+                processPaymentCash(p, finalPrice);
+            } else {
+                // Show payment method dialog for hotels and other services
+                showPaymentMethodDialog(p);
+            }
+        });
 
         Button deleteBtn = new Button("\uD83D\uDDD1");
         deleteBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");

@@ -506,6 +506,12 @@ public class MainInterfaceController {
         Label totalPriceLbl = new Label("0.00 DT");
         totalPriceLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 22; -fx-font-weight: bold;");
         priceSection.getChildren().addAll(priceTitleLbl, priceBreakdown, totalPriceLbl);
+        
+        // Hide price section for restaurants/cafes (no price input in booking form)
+        if (isRestaurant) {
+            priceSection.setManaged(false);
+            priceSection.setVisible(false);
+        }
 
         // Price update runnable
         Runnable updatePrice = () -> {
