@@ -16,12 +16,10 @@
                 <Insets top="18" right="22" bottom="16" left="22"/>
             </padding>
 
-            <!-- ✅ Titre + bouton Home (même ligne) -->
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <Label text="Gestion des activités" styleClass="page-title"/>
                 <Pane HBox.hgrow="ALWAYS"/>
 
-                <!-- ✅ Bouton Retour Home -->
                 <Button text="← Home"
                         onAction="#goHome"
                         styleClass="home-btn-small"/>

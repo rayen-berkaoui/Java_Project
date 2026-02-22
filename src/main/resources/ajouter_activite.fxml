@@ -15,42 +15,93 @@
             <padding>
                 <Insets top="18" right="22" bottom="16" left="22"/>
             </padding>
+
             <Label text="Ajouter / Modifier une activité" styleClass="page-title"/>
             <Region styleClass="accent-line-thin"/>
         </VBox>
     </top>
 
     <center>
-        <VBox spacing="12" styleClass="content-root">
-            <padding>
-                <Insets top="18" right="22" bottom="22" left="22"/>
-            </padding>
+        <ScrollPane fitToWidth="true" fitToHeight="true"
+                    styleClass="content-scroll"
+                    hbarPolicy="NEVER">
+            <content>
+                <VBox spacing="12" styleClass="form-section">
+                    <padding>
+                        <Insets top="18" right="22" bottom="22" left="22"/>
+                    </padding>
 
-            <Label text="Nom" styleClass="field-label"/>
-            <TextField fx:id="nomField" promptText="Nom de l’activité" />
+                    <Label fx:id="messageLabel" text="" wrapText="true"/>
 
-            <Label text="Catégorie" styleClass="field-label"/>
-            <ComboBox fx:id="categorieBox" promptText="Choisir catégorie"/>
+                    <!-- ✅ ETABLISSEMENT (FK) -->
+                    <Label text="Établissement *" styleClass="form-field-label"/>
+                    <ComboBox fx:id="etablissementBox"
+                              promptText="Choisir un établissement"
+                              styleClass="form-combo"
+                              maxWidth="Infinity"/>
+                    <Label fx:id="etablissementError" styleClass="field-error-label"/>
 
-            <Label text="Niveau" styleClass="field-label"/>
-            <ComboBox fx:id="niveauBox" promptText="Choisir niveau"/>
+                    <Label text="Nom *" styleClass="form-field-label"/>
+                    <TextField fx:id="nomField"
+                               promptText="Nom de l’activité"
+                               styleClass="form-input"
+                               maxWidth="Infinity"/>
+                    <Label fx:id="nomError" styleClass="field-error-label"/>
 
-            <Label text="Durée (minutes)" styleClass="field-label"/>
-            <TextField fx:id="dureeField" promptText="Ex: 60"/>
+                    <Label text="Catégorie *" styleClass="form-field-label"/>
+                    <ComboBox fx:id="categorieBox"
+                              promptText="Choisir catégorie"
+                              styleClass="form-combo"
+                              maxWidth="Infinity"/>
+                    <Label fx:id="categorieError" styleClass="field-error-label"/>
 
-            <Label text="Description" styleClass="field-label"/>
-            <TextArea fx:id="descArea" promptText="Description..." prefRowCount="4"/>
+                    <Label text="Niveau *" styleClass="form-field-label"/>
+                    <ComboBox fx:id="niveauBox"
+                              promptText="Choisir niveau"
+                              styleClass="form-combo"
+                              maxWidth="Infinity"/>
+                    <Label fx:id="niveauError" styleClass="field-error-label"/>
 
-            <!-- ✅ NEW -->
-            <Label text="Image URL / Path" styleClass="field-label"/>
-            <TextField fx:id="imageUrlField" promptText="https://... ou C:\...\image.jpg"/>
+                    <Label text="Durée (minutes)" styleClass="form-field-label"/>
+                    <TextField fx:id="dureeField"
+                               promptText="Ex: 60"
+                               styleClass="form-input"
+                               maxWidth="Infinity"/>
+                    <Label fx:id="dureeError" styleClass="field-error-label"/>
 
-            <HBox spacing="10" styleClass="action-bar">
-                <Button text="Enregistrer" onAction="#onSave" styleClass="btn-primary"/>
-                <Button text="Annuler" onAction="#onCancel" styleClass="btn-secondary"/>
-            </HBox>
+                    <Label text="Description" styleClass="form-field-label"/>
+                    <TextArea fx:id="descArea"
+                              promptText="Description..."
+                              prefRowCount="4"
+                              wrapText="true"
+                              styleClass="form-textarea"/>
+                    <Label fx:id="descError" styleClass="field-error-label"/>
 
-        </VBox>
+                    <!-- ✅ Galerie images -->
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Button text="📷 Choisir images"
+                                onAction="#onChooseImages"
+                                styleClass="btn-browse"/>
+                        <Label text="(PNG/JPG/WebP)" styleClass="subtitle-label"/>
+                    </HBox>
+
+                    <ScrollPane fitToHeight="true"
+                                hbarPolicy="AS_NEEDED"
+                                vbarPolicy="NEVER"
+                                styleClass="gallery-scroll">
+                        <content>
+                            <HBox fx:id="imagesStrip" styleClass="gallery-strip" spacing="10"/>
+                        </content>
+                    </ScrollPane>
+
+                    <HBox spacing="10" styleClass="action-bar">
+                        <Button fx:id="saveBtn" text="Enregistrer" onAction="#onSave" styleClass="btn-primary"/>
+                        <Button text="Annuler" onAction="#onCancel" styleClass="btn-secondary"/>
+                    </HBox>
+
+                </VBox>
+            </content>
+        </ScrollPane>
     </center>
 
 </BorderPane>

@@ -3,47 +3,100 @@ package com.esprit.services;
 import com.esprit.entities.Activite;
 import com.esprit.utils.MyDataBase;
 
+import java.math.BigDecimal;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActiviteServices {
+public class ActiviteServices implements ICrud<Activite> {
 
-    private final Connection cnx = MyDataBase.getInstance().getConnection();
+    private final Connection cnx;
 
+    public ActiviteServices() {
+        cnx = MyDataBase.getInstance().getConnection();
+    }
+
+    private String normalizeEnum(String v, String def) {
+        if (v == null || v.isBlank()) return def;
+        return v.trim().toLowerCase();
+    }
+
+    // ================= CREATE =================
+    @Override
     public void ajouter(Activite a) throws SQLException {
-        String sql = "INSERT INTO activite (nomActivite, description, categorie, duree, niveau, image_url) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO activite (" +
+                "nomActivite, description, categorie, duree, niveau, prix, devise, " +
+                "date_debut, date_fin, nb_places, places_dispo, adresse_depart, age_min, " +
+                "equipement_inclus, conditions_annulation, statut" +
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
-            ps.setString(1, a.getNomActivite());
-            ps.setString(2, a.getDescription());
-            ps.setString(3, a.getCategorie());
-
-            if (a.getDuree() == null) ps.setNull(4, Types.INTEGER);
-            else ps.setInt(4, a.getDuree());
-
-            ps.setString(5, a.getNiveau());
-            ps.setString(6, a.getImageUrl()); // ✅ NEW
+            fillInsertOrUpdate(ps, a, false);
             ps.executeUpdate();
         }
     }
 
+    // ✅ CREATE + retourne ID
+    public int ajouterEtRetournerId(Activite a) throws SQLException {
+        String sql = "INSERT INTO activite (" +
+                "nomActivite, description, categorie, duree, niveau, prix, devise, " +
+                "date_debut, date_fin, nb_places, places_dispo, adresse_depart, age_min, " +
+                "equipement_inclus, conditions_annulation, statut" +
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+        try (PreparedStatement ps = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            fillInsertOrUpdate(ps, a, false);
+            ps.executeUpdate();
+
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return -1;
+    }
+
+    // ================= READ =================
+    @Override
+    public List<Activite> afficher() throws SQLException {
+        List<Activite> list = new ArrayList<>();
+        String sql = "SELECT * FROM activite ORDER BY idActivite DESC";
+
+        try (PreparedStatement ps = cnx.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) list.add(map(rs));
+        }
+        return list;
+    }
+
+    public Activite findById(int id) throws SQLException {
+        String sql = "SELECT * FROM activite WHERE idActivite=?";
+        try (PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return map(rs);
+            }
+        }
+        return null;
+    }
+
+    // ================= UPDATE =================
+    @Override
     public void modifier(Activite a) throws SQLException {
-        String sql = "UPDATE activite SET nomActivite=?, description=?, categorie=?, duree=?, niveau=?, image_url=? WHERE idActivite=?";
+        String sql = "UPDATE activite SET " +
+                "nomActivite=?, description=?, categorie=?, duree=?, niveau=?, prix=?, devise=?, " +
+                "date_debut=?, date_fin=?, nb_places=?, places_dispo=?, adresse_depart=?, age_min=?, " +
+                "equipement_inclus=?, conditions_annulation=?, statut=? " +
+                "WHERE idActivite=?";
+
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
-            ps.setString(1, a.getNomActivite());
-            ps.setString(2, a.getDescription());
-            ps.setString(3, a.getCategorie());
-
-            if (a.getDuree() == null) ps.setNull(4, Types.INTEGER);
-            else ps.setInt(4, a.getDuree());
-
-            ps.setString(5, a.getNiveau());
-            ps.setString(6, a.getImageUrl()); // ✅ NEW
-            ps.setInt(7, a.getIdActivite());
+            fillInsertOrUpdate(ps, a, true);
+            ps.setInt(17, a.getIdActivite());
             ps.executeUpdate();
         }
     }
 
+    // ================= DELETE =================
+    @Override
     public void supprimer(int id) throws SQLException {
         String sql = "DELETE FROM activite WHERE idActivite=?";
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
@@ -52,31 +105,89 @@ public class ActiviteServices {
         }
     }
 
-    public List<Activite> afficher() throws SQLException {
-        String sql = "SELECT idActivite, nomActivite, description, categorie, duree, niveau, image_url FROM activite";
-        List<Activite> list = new ArrayList<>();
+    // ================= Helpers =================
+    private void fillInsertOrUpdate(PreparedStatement ps, Activite a, boolean isUpdate) throws SQLException {
+        ps.setString(1, a.getNomActivite());
 
-        try (Statement st = cnx.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+        if (a.getDescription() == null || a.getDescription().isBlank()) ps.setNull(2, Types.VARCHAR);
+        else ps.setString(2, a.getDescription());
 
-            while (rs.next()) {
-                Activite a = new Activite();
-                a.setIdActivite(rs.getInt("idActivite"));
-                a.setNomActivite(rs.getString("nomActivite"));
-                a.setDescription(rs.getString("description"));
-                a.setCategorie(rs.getString("categorie"));
+        ps.setString(3, normalizeEnum(a.getCategorie(), "autre"));
 
-                int d = rs.getInt("duree");
-                a.setDuree(rs.wasNull() ? null : d);
+        if (a.getDuree() == null) ps.setNull(4, Types.INTEGER);
+        else ps.setInt(4, a.getDuree());
 
-                a.setNiveau(rs.getString("niveau"));
+        if (a.getNiveau() == null || a.getNiveau().isBlank()) ps.setNull(5, Types.VARCHAR);
+        else ps.setString(5, normalizeEnum(a.getNiveau(), "debutant"));
 
-                // ✅ NEW
-                a.setImageUrl(rs.getString("image_url"));
+        if (a.getPrix() == null) ps.setNull(6, Types.DECIMAL);
+        else ps.setBigDecimal(6, a.getPrix());
 
-                list.add(a);
-            }
-        }
-        return list;
+        String devise = (a.getDevise() == null || a.getDevise().isBlank()) ? "TND" : a.getDevise().trim();
+        ps.setString(7, devise);
+
+        if (a.getDateDebut() == null) ps.setNull(8, Types.TIMESTAMP);
+        else ps.setTimestamp(8, a.getDateDebut());
+
+        if (a.getDateFin() == null) ps.setNull(9, Types.TIMESTAMP);
+        else ps.setTimestamp(9, a.getDateFin());
+
+        if (a.getNbPlaces() == null) ps.setNull(10, Types.INTEGER);
+        else ps.setInt(10, a.getNbPlaces());
+
+        if (a.getPlacesDispo() == null) ps.setNull(11, Types.INTEGER);
+        else ps.setInt(11, a.getPlacesDispo());
+
+        if (a.getAdresseDepart() == null || a.getAdresseDepart().isBlank()) ps.setNull(12, Types.VARCHAR);
+        else ps.setString(12, a.getAdresseDepart());
+
+        if (a.getAgeMin() == null) ps.setNull(13, Types.INTEGER);
+        else ps.setInt(13, a.getAgeMin());
+
+        if (a.getEquipementInclus() == null || a.getEquipementInclus().isBlank()) ps.setNull(14, Types.VARCHAR);
+        else ps.setString(14, a.getEquipementInclus());
+
+        if (a.getConditionsAnnulation() == null || a.getConditionsAnnulation().isBlank()) ps.setNull(15, Types.VARCHAR);
+        else ps.setString(15, a.getConditionsAnnulation());
+
+        ps.setString(16, normalizeEnum(a.getStatut(), "disponible"));
+    }
+
+    private Activite map(ResultSet rs) throws SQLException {
+        Activite a = new Activite();
+
+        a.setIdActivite(rs.getInt("idActivite"));
+        a.setNomActivite(rs.getString("nomActivite"));
+        a.setDescription(rs.getString("description"));
+        a.setCategorie(rs.getString("categorie"));
+
+        int d = rs.getInt("duree");
+        a.setDuree(rs.wasNull() ? null : d);
+
+        a.setNiveau(rs.getString("niveau"));
+
+        BigDecimal prix = rs.getBigDecimal("prix");
+        a.setPrix(prix);
+
+        a.setDevise(rs.getString("devise"));
+        a.setDateDebut(rs.getTimestamp("date_debut"));
+        a.setDateFin(rs.getTimestamp("date_fin"));
+
+        int nb = rs.getInt("nb_places");
+        a.setNbPlaces(rs.wasNull() ? null : nb);
+
+        int dispo = rs.getInt("places_dispo");
+        a.setPlacesDispo(rs.wasNull() ? null : dispo);
+
+        a.setAdresseDepart(rs.getString("adresse_depart"));
+
+        int age = rs.getInt("age_min");
+        a.setAgeMin(rs.wasNull() ? null : age);
+
+        a.setEquipementInclus(rs.getString("equipement_inclus"));
+        a.setConditionsAnnulation(rs.getString("conditions_annulation"));
+        a.setStatut(rs.getString("statut"));
+
+        return a;
     }
 }

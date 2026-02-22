@@ -3,42 +3,34 @@ package com.esprit.entities;
 public class Etablissement {
     private int idEtablissement;
     private String nom;
+    private String description;
     private String adresse;
     private String ville;
     private String telephone;
     private String email;
-    private String description;
     private String horaires;
     private String gammePrix;
-    private String imageUrl; // NEW (colonne: image_url)
+
+    private String type;
+    private Double latitude;
+    private Double longitude;
 
     public Etablissement() {}
 
-    public Etablissement(String nom, String adresse, String ville, String telephone,
-                         String email, String description, String horaires, String gammePrix, String imageUrl) {
+    public Etablissement(String nom, String description, String adresse, String ville,
+                         String telephone, String email, String horaires, String gammePrix,
+                         String type, Double latitude, Double longitude) {
         this.nom = nom;
+        this.description = description;
         this.adresse = adresse;
         this.ville = ville;
         this.telephone = telephone;
         this.email = email;
-        this.description = description;
         this.horaires = horaires;
         this.gammePrix = gammePrix;
-        this.imageUrl = imageUrl;
-    }
-
-    public Etablissement(int idEtablissement, String nom, String adresse, String ville, String telephone,
-                         String email, String description, String horaires, String gammePrix, String imageUrl) {
-        this.idEtablissement = idEtablissement;
-        this.nom = nom;
-        this.adresse = adresse;
-        this.ville = ville;
-        this.telephone = telephone;
-        this.email = email;
-        this.description = description;
-        this.horaires = horaires;
-        this.gammePrix = gammePrix;
-        this.imageUrl = imageUrl;
+        this.type = type;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public int getIdEtablissement() { return idEtablissement; }
@@ -46,6 +38,9 @@ public class Etablissement {
 
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     public String getAdresse() { return adresse; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
@@ -59,20 +54,18 @@ public class Etablissement {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
     public String getHoraires() { return horaires; }
     public void setHoraires(String horaires) { this.horaires = horaires; }
 
     public String getGammePrix() { return gammePrix; }
     public void setGammePrix(String gammePrix) { this.gammePrix = gammePrix; }
 
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
-    @Override
-    public String toString() {
-        return nom + " (" + ville + ")";
-    }
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

@@ -2,9 +2,9 @@ package com.esprit.controllers;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.Node;
 import javafx.stage.Stage;
 
 import java.net.URL;
@@ -21,20 +21,17 @@ public class NavigationUtils {
             Parent root = FXMLLoader.load(url);
 
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            Scene scene = new Scene(root);
+            Scene scene = stage.getScene();
 
-            // garder le CSS
-            URL cssUrl = NavigationUtils.class.getResource("/style.css");
-            if (cssUrl != null) {
-                scene.getStylesheets().add(cssUrl.toExternalForm());
+            // ✅ on garde la même scene -> FULL SCREEN reste OK
+            if (scene != null) {
+                scene.setRoot(root);
+            } else {
+                stage.setScene(new Scene(root));
             }
 
-            stage.setScene(scene);
-
-            // ✅ IMPORTANT : plein écran partout
+            // ✅ force maximized après changement de root
             stage.setMaximized(true);
-
-            stage.show();
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,6 +1,7 @@
 package com.esprit.controllers;
 
 import com.esprit.entities.Activite;
+import com.esprit.services.ActiviteImageServices;
 import com.esprit.services.ActiviteServices;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,13 +26,17 @@ public class ActiviteController {
     @FXML private ComboBox<String> filterCategorie;
     @FXML private ComboBox<String> filterNiveau;
     @FXML private ComboBox<String> sortBox;
-
     @FXML private TilePane cardsPane;
 
     private final ActiviteServices service = new ActiviteServices();
+    private final ActiviteImageServices imageService = new ActiviteImageServices();
+
     private final ObservableList<Activite> masterData = FXCollections.observableArrayList();
     private FilteredList<Activite> filteredData;
     private SortedList<Activite> sortedData;
+
+    // ✅ cover images cache : idActivite -> image_path
+    private Map<Integer, String> coverMap = new HashMap<>();
 
     public static Activite activiteToEdit = null;
 
@@ -67,7 +72,6 @@ public class ActiviteController {
         NavigationUtils.goTo("/ajouter_activite.fxml", event);
     }
 
-
     @FXML
     private void onRefresh() {
         loadData();
@@ -81,6 +85,11 @@ public class ActiviteController {
         try {
             masterData.addAll(service.afficher());
             refreshCategorieFilterFromDB();
+
+            // ✅ charge covers en 1 fois (mieux que N requêtes)
+            List<Integer> ids = masterData.stream().map(Activite::getIdActivite).collect(Collectors.toList());
+            coverMap = imageService.getCoverMap(ids);
+
         } catch (SQLException e) {
             showError("Erreur chargement: " + e.getMessage());
         }
@@ -167,8 +176,9 @@ public class ActiviteController {
         img.setPreserveRatio(false);
         img.getStyleClass().add("card-image");
 
-        Image fxImg = loadImage(a.getImageUrl());
-        img.setImage(fxImg);
+        // ✅ image cover depuis DB activite_image
+        String imagePath = coverMap.get(a.getIdActivite());
+        img.setImage(loadImageFromDBPath(imagePath));
 
         StackPane imageWrap = new StackPane(img);
         imageWrap.getStyleClass().add("card-image-wrap");
@@ -210,10 +220,7 @@ public class ActiviteController {
 
             try {
                 service.supprimer(a.getIdActivite());
-                loadData();
-                applyFilters();
-                applySort();
-                rebuildGrid();
+                onRefresh();
             } catch (Exception ex) {
                 showError("Erreur suppression: " + ex.getMessage());
             }
@@ -229,23 +236,28 @@ public class ActiviteController {
         return card;
     }
 
-    private Image loadImage(String urlOrPath) {
+    /**
+     * image_path dans DB = ex: "act_1700_xxx.jpg"
+     * => on charge depuis resources/images/ si tu copies là-bas (comme établissement)
+     * sinon fallback placeholder.
+     */
+    private Image loadImageFromDBPath(String imagePath) {
         try {
-            if (urlOrPath == null || urlOrPath.isBlank()) {
-                return loadPlaceholderSafe();
+            if (imagePath == null || imagePath.isBlank()) return loadPlaceholderSafe();
+
+            // 1) si c’est une URL
+            if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+                return new Image(imagePath, true);
             }
 
-            if (urlOrPath.startsWith("http://") || urlOrPath.startsWith("https://")) {
-                return new Image(urlOrPath, true);
-            }
-
-            File f = new File(urlOrPath);
+            // 2) si c’est un chemin fichier absolu (optionnel)
+            File f = new File(imagePath);
             if (f.exists()) return new Image(f.toURI().toString(), true);
 
-            if (urlOrPath.startsWith("/")) {
-                var is = getClass().getResourceAsStream(urlOrPath);
-                if (is != null) return new Image(is);
-            }
+            // 3) sinon on suppose resources/images/<imagePath>
+            var is = getClass().getResourceAsStream("/images/" + imagePath);
+            if (is != null) return new Image(is);
+
         } catch (Exception ignored) { }
 
         return loadPlaceholderSafe();
@@ -257,10 +269,8 @@ public class ActiviteController {
             if (is != null) return new Image(is);
         } catch (Exception ignored) { }
 
-        // ✅ Image vide (ne crash jamais)
         return new Image("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9NwAAAABJRU5ErkJggg==");
     }
-
 
     private boolean confirm(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -278,7 +288,6 @@ public class ActiviteController {
         a.showAndWait();
     }
 
-
     @FXML
     private void goHome(ActionEvent event) {
         NavigationUtils.goTo("/home.fxml", event);
@@ -286,5 +295,3 @@ public class ActiviteController {
 
     private String safe(String s) { return s == null ? "" : s; }
 }
-
-

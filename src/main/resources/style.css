@@ -1,709 +1,508 @@
 /* =========================================================
-   PREMIUM DASHBOARD — BLACK & GOLD (JavaFX)
-   Compatible with your existing FXML class names
-   (app-root, topbar, page-title, cards-list, btn-primary...)
+   LUXURY BLACK & GOLD — CLEAN APP THEME (JavaFX 17)
+   Adapted to your FXML classes: app-root, form-section, etc.
    ========================================================= */
 
-/* -------------------- THEME TOKENS (visual consistency) -------------------- */
-.root, .app-root, .root-pane, .border-pane, .stack-pane {
+/* -----------------------
+   1) Root variables
+------------------------ */
+.root, .app-root {
+    -fx-bg: #030308;
+    -fx-surface: rgba(16,16,28,0.95);
+    -fx-surface-2: rgba(14,14,24,0.92);
+    -fx-border: rgba(191,162,0,0.18);
+
+    -fx-gold: #BFA200;
+    -fx-gold-2: #D4B530;
+
+    -fx-text: #d8d8d8;
+    -fx-muted: rgba(200,200,210,0.65);
+
+    -fx-danger: #e63946;
+    -fx-success: #2ecc71;
+
+    -fx-radius: 16;
+    -fx-radius-sm: 12;
+
+    -fx-shadow: dropshadow(gaussian, rgba(0,0,0,0.55), 22, 0.35, 0, 6);
+    -fx-gold-shadow: dropshadow(gaussian, rgba(191,162,0,0.35), 22, 0.55, 0, 2);
+
+    -fx-background-color: -fx-bg;
     -fx-font-family: "Segoe UI", Arial, sans-serif;
-    -fx-background-color: #07070c;
+    -fx-font-smoothing-type: gray;
 }
 
-/* Soft premium background (like your screenshots) */
-.app-root {
-    -fx-background-color:
-            radial-gradient(center 25% 10%, radius 90%,
-            rgba(212,181,48,0.10),
-            rgba(7,7,12,1)
-            );
-}
-
-/* -------------------- TEXT -------------------- */
+/* Labels */
 .label {
-    -fx-text-fill: rgba(235,235,245,0.88);
+    -fx-text-fill: -fx-text;
     -fx-font-size: 13px;
 }
-
-.page-title, .h1, .title-label {
-    -fx-text-fill: #D4B530;
-    -fx-font-size: 24px;
-    -fx-font-weight: 800;
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.30), 18, 0.5, 0, 0);
-}
-
-.card-title {
-    -fx-text-fill: #D4B530;
-    -fx-font-size: 16px;
-    -fx-font-weight: 800;
-}
-.card-meta {
-    -fx-text-fill: rgba(190,190,205,0.62);
+.muted {
+    -fx-text-fill: -fx-muted;
     -fx-font-size: 12px;
-}
-.card-desc {
-    -fx-text-fill: rgba(235,235,245,0.72);
-    -fx-font-size: 12px;
+    -fx-font-style: italic;
 }
 
-/* -------------------- TOP BAR / HEADER (glass) -------------------- */
-.topbar, .nav-bar {
-    -fx-background-color: linear-gradient(to right,
-    rgba(12,12,18,0.92),
-    rgba(18,18,28,0.92),
-    rgba(12,12,18,0.92)
-    );
-    -fx-padding: 14 18;
-    -fx-spacing: 12;
-    -fx-alignment: CENTER_LEFT;
-
-    -fx-border-color: rgba(212,181,48,0.18);
-    -fx-border-width: 0 0 1 0;
-
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.60), 28, 0.35, 0, 8);
-}
-
-/* Optional decorative line */
-.accent-line {
-    -fx-background-color: linear-gradient(to right,
-    transparent 0%,
-    rgba(212,181,48,0.25) 25%,
-    rgba(212,181,48,0.85) 50%,
-    rgba(212,181,48,0.25) 75%,
-    transparent 100%
-    );
-    -fx-pref-height: 2;
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.35), 10, 0.6, 0, 0);
-}
-
-/* -------------------- INPUTS -------------------- */
-.text-field, .password-field, .text-area {
-    -fx-background-color: rgba(16,16,24,0.88);
-    -fx-text-fill: rgba(245,245,255,0.92);
-    -fx-prompt-text-fill: rgba(150,150,170,0.55);
-
-    -fx-background-radius: 14;
-    -fx-border-radius: 14;
-
-    -fx-border-color: rgba(212,181,48,0.18);
-    -fx-border-width: 1;
-
-    -fx-padding: 10 14;
-    -fx-font-size: 13px;
-
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 14, 0.30, 0, 4);
-}
-
-.text-field:hover, .password-field:hover, .text-area:hover {
-    -fx-border-color: rgba(212,181,48,0.38);
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.10), 20, 0.45, 0, 4);
-}
-
-.text-field:focused, .password-field:focused, .text-area:focused {
-    -fx-background-color: rgba(20,20,32,0.95);
-    -fx-border-color: rgba(212,181,48,0.85);
-    -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.25), 26, 0.55, 0, 6);
-}
-
-/* TextArea inner */
-.text-area .content {
-    -fx-background-color: transparent;
-}
-
-/* -------------------- COMBOBOX -------------------- */
-.combo-box {
-    -fx-background-color: rgba(16,16,24,0.88);
-    -fx-background-radius: 14;
-    -fx-border-radius: 14;
-    -fx-border-color: rgba(212,181,48,0.18);
-    -fx-border-width: 1;
-
-    -fx-padding: 2 10 2 10;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 14, 0.30, 0, 4);
-    -fx-cursor: hand;
-}
-
-.combo-box .list-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: rgba(245,245,255,0.90);
-    -fx-padding: 8 10;
-}
-
-.combo-box .arrow-button {
-    -fx-background-color: transparent;
-    -fx-padding: 0 10 0 6;
-}
-.combo-box .arrow {
-    -fx-background-color: #D4B530;
-    -fx-shape: "M 0 0 L 6 6 L 12 0 Z";
-}
-
-.combo-box:hover {
-    -fx-border-color: rgba(212,181,48,0.38);
-}
-
-.combo-box:focused, .combo-box:showing {
-    -fx-border-color: rgba(212,181,48,0.85);
-    -fx-border-width: 2;
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.25), 26, 0.55, 0, 6);
-}
-
-/* Dropdown list */
-.combo-box-popup .list-view {
-    -fx-background-color: rgba(10,10,16,0.98);
-    -fx-border-color: rgba(212,181,48,0.22);
-    -fx-border-radius: 14;
-    -fx-background-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.75), 22, 0.35, 0, 8);
-}
-.combo-box-popup .list-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: rgba(230,230,240,0.85);
-    -fx-padding: 10 14;
-}
-.combo-box-popup .list-cell:hover {
-    -fx-background-color: rgba(212,181,48,0.10);
-    -fx-text-fill: #D4B530;
-}
-.combo-box-popup .list-cell:selected {
-    -fx-background-color: rgba(212,181,48,0.18);
-    -fx-text-fill: #D4B530;
+/* -----------------------
+   2) Titles / separators
+------------------------ */
+.page-title {
+    -fx-font-size: 22px;
     -fx-font-weight: 800;
+    -fx-text-fill: -fx-gold;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 14, 0.5, 0, 0);
 }
 
-/* -------------------- BUTTONS -------------------- */
-.button {
-    -fx-cursor: hand;
+.section-title {
+    -fx-font-size: 14px;
     -fx-font-weight: 800;
-    -fx-background-radius: 16;
-    -fx-border-radius: 16;
+    -fx-text-fill: -fx-gold;
+    -fx-opacity: 0.9;
 }
 
-/* Primary (Gold filled) */
-.btn-primary, .btn-warning, .dashboard-button, .login-button-modern {
-    -fx-background-color: linear-gradient(to bottom right, #FFF0A6, #D4B530, #BFA200);
-    -fx-text-fill: #0b0b10;
-    -fx-padding: 10 22;
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.30), 18, 0.35, 0, 4);
-}
-.btn-primary:hover, .btn-warning:hover, .dashboard-button:hover, .login-button-modern:hover {
-    -fx-background-color: linear-gradient(to bottom right, #FFF6C7, #E8C840, #CCAB28);
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.55), 26, 0.55, 0, 6);
-    -fx-scale-x: 1.03;
-    -fx-scale-y: 1.03;
-}
-.btn-primary:pressed, .btn-warning:pressed, .dashboard-button:pressed, .login-button-modern:pressed {
-    -fx-scale-x: 0.96;
-    -fx-scale-y: 0.96;
-    -fx-background-color: #9E8500;
+.accent-line-thin {
+    -fx-background-color: linear-gradient(to right, transparent, rgba(191,162,0,0.45), transparent);
+    -fx-pref-height: 1;
+    -fx-max-height: 1;
 }
 
-/* Secondary (Glass outline) */
-.btn-secondary {
-    -fx-background-color: rgba(212,181,48,0.08);
-    -fx-text-fill: #D4B530;
-
-    -fx-border-color: rgba(212,181,48,0.30);
-    -fx-border-width: 1.3;
-
-    -fx-padding: 10 22;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 14, 0.25, 0, 4);
-}
-.btn-secondary:hover {
-    -fx-background-color: rgba(212,181,48,0.14);
-    -fx-border-color: rgba(212,181,48,0.60);
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.20), 20, 0.45, 0, 5);
-    -fx-scale-x: 1.03;
-    -fx-scale-y: 1.03;
-}
-
-/* Danger */
-.btn-danger, .dashboard-button-danger {
-    -fx-background-color: linear-gradient(to bottom right, #FF9AA0, #FF6B6B, #E63946);
-    -fx-text-fill: white;
-    -fx-padding: 10 22;
-    -fx-effect: dropshadow(gaussian, rgba(230,57,70,0.35), 18, 0.35, 0, 4);
-}
-.btn-danger:hover, .dashboard-button-danger:hover {
-    -fx-background-color: linear-gradient(to bottom right, #FFB2B6, #FF7B7B, #FF6B6B);
-    -fx-effect: dropshadow(gaussian, rgba(230,57,70,0.60), 26, 0.55, 0, 6);
-    -fx-scale-x: 1.03;
-    -fx-scale-y: 1.03;
-}
-
-/* Round icon buttons (optional: keep your icon-yellow-btn) */
-.icon-yellow-btn, .carousel-arrow {
-    -fx-background-color: linear-gradient(to bottom right, #FFF0A6, #D4B530, #BFA200);
-    -fx-text-fill: #0b0b10;
-    -fx-font-weight: 900;
-    -fx-background-radius: 999;
-    -fx-min-width: 44;
-    -fx-min-height: 44;
-    -fx-max-width: 44;
-    -fx-max-height: 44;
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.40), 18, 0.35, 0, 4);
-}
-.icon-yellow-btn:hover, .carousel-arrow:hover {
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.70), 26, 0.55, 0, 6);
-    -fx-scale-x: 1.10;
-    -fx-scale-y: 1.10;
-}
-
-/* -------------------- LISTVIEW as PREMIUM CARDS -------------------- */
-.list-view {
-    -fx-background-color: transparent;
-    -fx-padding: 6;
-}
-
-/* IMPORTANT: you already use styleClass="cards-list" on ListView */
-.cards-list {
-    -fx-background-color: transparent;
-}
-
-/* Each row = glass card */
-.cards-list .list-cell {
-    -fx-background-color: linear-gradient(to bottom,
-    rgba(14,14,22,0.92),
-    rgba(10,10,16,0.96)
-    );
-    -fx-background-radius: 18;
-    -fx-padding: 16;
-
-    -fx-border-color: rgba(212,181,48,0.14);
-    -fx-border-width: 1;
-    -fx-border-radius: 18;
-
-    -fx-text-fill: rgba(235,235,245,0.90);
-
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.70), 22, 0.35, 0, 8);
-}
-
-/* remove blue selection highlight */
-.cards-list .list-cell:filled:selected,
-.cards-list .list-cell:filled:selected:hover {
-    -fx-background-color: linear-gradient(to right,
-    rgba(212,181,48,0.80),
-    rgba(255,240,166,0.80)
-    );
-    -fx-text-fill: #0b0b10;
-    -fx-font-weight: 900;
-
-    -fx-border-color: rgba(212,181,48,0.80);
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.35), 22, 0.45, 0, 8);
-}
-
-.cards-list .list-cell:hover {
-    -fx-background-color: linear-gradient(to bottom,
-    rgba(18,18,30,0.96),
-    rgba(12,12,22,0.98)
-    );
-    -fx-border-color: rgba(212,181,48,0.40);
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.18), 28, 0.45, 0, 10);
-    -fx-scale-x: 1.01;
-    -fx-scale-y: 1.01;
-}
-
-/* ensure empty rows are invisible */
-.cards-list .list-cell:empty {
-    -fx-background-color: transparent;
+/* -----------------------
+   3) ScrollPane
+------------------------ */
+.scroll-pane,
+.content-scroll,
+.gallery-scroll {
+    -fx-background-color: -fx-bg;
     -fx-border-color: transparent;
-    -fx-effect: none;
+    -fx-background: -fx-bg;
+}
+.scroll-pane > .viewport,
+.content-scroll > .viewport,
+.gallery-scroll > .viewport {
+    -fx-background-color: -fx-bg;
 }
 
-/* Optional: Card root containers inside cells */
-.card-root { -fx-background-color: transparent; }
-
-/* -------------------- TABLEVIEW PREMIUM (like screenshot) -------------------- */
-.table-view {
-    -fx-background-color: rgba(12,12,18,0.90);
-    -fx-background-radius: 16;
-    -fx-border-color: rgba(212,181,48,0.16);
-    -fx-border-radius: 16;
-    -fx-padding: 6;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.70), 22, 0.35, 0, 8);
-}
-
-/* Header gold */
-.table-view .column-header-background {
-    -fx-background-color: linear-gradient(to bottom, #FFF0A6, #D4B530, #BFA200);
-    -fx-background-radius: 14 14 0 0;
-}
-.table-view .column-header .label {
-    -fx-text-fill: #0b0b10;
-    -fx-font-weight: 900;
-    -fx-font-size: 12px;
-    -fx-alignment: CENTER_LEFT;
-}
-
-/* Rows */
-.table-row-cell {
-    -fx-background-color: rgba(10,10,16,0.92);
-    -fx-border-color: transparent transparent rgba(212,181,48,0.06) transparent;
-    -fx-border-width: 0 0 1 0;
-    -fx-cell-size: 44;
-}
-.table-row-cell:odd {
-    -fx-background-color: rgba(14,14,22,0.92);
-}
-.table-row-cell:hover {
-    -fx-background-color: rgba(212,181,48,0.08);
-}
-.table-row-cell:selected {
-    -fx-background-color: linear-gradient(to right,
-    rgba(212,181,48,0.75),
-    rgba(255,240,166,0.75)
-    );
-}
-.table-cell {
-    -fx-text-fill: rgba(235,235,245,0.88);
-    -fx-padding: 6 10;
-}
-
-/* -------------------- SCROLLPANES / SCROLLBARS -------------------- */
-.scroll-pane, .content-scroll {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-}
-.scroll-pane .viewport, .content-scroll .viewport {
-    -fx-background-color: transparent;
-}
-
+/* Scrollbars */
 .scroll-bar {
-    -fx-background-color: rgba(10,10,16,0.25);
+    -fx-background-color: rgba(10,10,16,0.45);
 }
 .scroll-bar .track {
-    -fx-background-color: rgba(10,10,16,0.25);
-    -fx-background-radius: 12;
+    -fx-background-color: rgba(10,10,16,0.45);
+    -fx-background-radius: 10;
 }
-.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
-    -fx-background-color: rgba(212,181,48,0.28);
-    -fx-background-radius: 12;
+.scroll-bar .thumb {
+    -fx-background-color: rgba(191, 162, 0, 0.28);
+    -fx-background-radius: 10;
 }
-.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
-    -fx-background-color: rgba(212,181,48,0.55);
+.scroll-bar .thumb:hover {
+    -fx-background-color: rgba(191, 162, 0, 0.55);
 }
-
-/* remove arrows */
-.scroll-bar .increment-button, .scroll-bar .decrement-button {
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
     -fx-background-color: transparent;
     -fx-padding: 0;
 }
-.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow {
+.scroll-bar .increment-arrow,
+.scroll-bar .decrement-arrow {
     -fx-shape: "";
     -fx-padding: 0;
 }
 
-/* -------------------- DIALOG / ALERT PREMIUM -------------------- */
-.dialog-pane {
-    -fx-background-color: rgba(10,10,16,0.98);
-    -fx-border-color: rgba(212,181,48,0.25);
-    -fx-border-width: 1.5;
-    -fx-background-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(212,181,48,0.14), 28, 0.45, 0, 10);
-}
-.dialog-pane .header-panel {
-    -fx-background-color: linear-gradient(to right, rgba(12,12,18,0.98), rgba(18,18,28,0.98));
-    -fx-border-color: rgba(212,181,48,0.20);
-    -fx-border-width: 0 0 1 0;
-}
-.dialog-pane .header-panel .label {
-    -fx-text-fill: #D4B530;
-    -fx-font-size: 18px;
-    -fx-font-weight: 900;
-}
-.dialog-pane .content.label {
-    -fx-text-fill: rgba(235,235,245,0.86);
+/* -----------------------
+   4) Cards / containers
+------------------------ */
+.form-section {
+    -fx-background-color: linear-gradient(to bottom, rgba(16,16,28,0.95), rgba(12,12,22,0.98));
+    -fx-border-color: -fx-border;
+    -fx-border-width: 1;
+    -fx-border-radius: -fx-radius;
+    -fx-background-radius: -fx-radius;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.06), 18, 0.4, 0, 3);
 }
 
-/* Dialog buttons adopt your premium style */
-.dialog-pane .button-bar .button {
-    -fx-background-color: linear-gradient(to bottom right, #FFF0A6, #D4B530, #BFA200);
-    -fx-text-fill: #0b0b10;
-    -fx-font-weight: 900;
-    -fx-background-radius: 16;
-    -fx-padding: 9 20;
+.form-section:hover {
+    -fx-border-color: rgba(191, 162, 0, 0.45);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.18), 28, 0.7, 0, 4);
 }
 
-/* -------------------- VALIDATION -------------------- */
-.field-error, .input-error {
-    -fx-border-color: #e74c3c !important;
-    -fx-border-width: 2 !important;
-    -fx-effect: dropshadow(gaussian, rgba(231,76,60,0.40), 18, 0.50, 0, 0) !important;
+.image-preview-card {
+    -fx-background-color: -fx-surface-2;
+    -fx-border-color: rgba(191, 162, 0, 0.25);
+    -fx-border-width: 1;
+    -fx-border-radius: -fx-radius-sm;
+    -fx-background-radius: -fx-radius-sm;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.06), 10, 0.3, 0, 2);
+}
+.image-preview-card:hover {
+    -fx-border-color: rgba(191, 162, 0, 0.55);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.18), 18, 0.5, 0, 3);
+}
+
+/* -----------------------
+   5) Form labels / errors
+------------------------ */
+.form-field-label {
+    -fx-text-fill: -fx-gold;
+    -fx-font-weight: 800;
+    -fx-font-size: 13px;
+    -fx-opacity: 0.85;
+}
+
+.field-error-label,
+.error-label {
+    -fx-text-fill: -fx-danger;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-opacity: 0.95;
+    -fx-padding: 2 0 0 4;
+}
+
+/* -----------------------
+   6) Inputs (TextField/TextArea)
+------------------------ */
+.text-field,
+.text-area,
+.form-input {
+    -fx-background-color: rgba(18,18,30,0.90);
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: #555;
+
+    -fx-border-color: rgba(191, 162, 0, 0.20);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+
+    -fx-font-size: 13px;
+    -fx-padding: 10 14;
+    -fx-min-height: 38;
+    -fx-cursor: text;
+}
+
+.text-field:hover,
+.text-area:hover,
+.form-input:hover {
+    -fx-border-color: rgba(191, 162, 0, 0.55);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.12), 12, 0.5, 0, 2);
+}
+
+.text-field:focused,
+.text-area:focused,
+.form-input:focused {
+    -fx-border-color: -fx-gold;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.40), 20, 0.6, 0, 3);
+    -fx-background-color: rgba(22,22,38,0.95);
+}
+
+/* TextArea */
+.text-area .content {
+    -fx-background-color: transparent;
+}
+
+/* Validation helpers (you add these style classes from controller) */
+.input-error {
+    -fx-border-color: #e74c3c;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(231, 76, 60, 0.35), 12, 0.5, 0, 0);
 }
 .input-valid {
-    -fx-border-color: #2ecc71 !important;
-    -fx-border-width: 2 !important;
-    -fx-effect: dropshadow(gaussian, rgba(46,204,113,0.25), 16, 0.40, 0, 0) !important;
+    -fx-border-color: #2ecc71;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(46, 204, 113, 0.25), 10, 0.4, 0, 0);
 }
 
-/* -------------------- OPTIONAL: STATUS CHIPS (if you want like “ACTIF”) --------------------
-   You can apply these classes to Labels inside table/list cells: styleClass="chip chip-success"
-*/
-.chip {
-    -fx-padding: 6 12;
-    -fx-background-radius: 999;
-    -fx-border-radius: 999;
-    -fx-font-weight: 900;
-    -fx-font-size: 11px;
-}
-.chip-success {
-    -fx-background-color: rgba(46,204,113,0.16);
-    -fx-border-color: rgba(46,204,113,0.35);
-    -fx-border-width: 1;
-    -fx-text-fill: #2ecc71;
-}
-.chip-warning {
-    -fx-background-color: rgba(212,181,48,0.16);
-    -fx-border-color: rgba(212,181,48,0.40);
-    -fx-border-width: 1;
-    -fx-text-fill: #D4B530;
-}
-.chip-danger {
-    -fx-background-color: rgba(230,57,70,0.16);
-    -fx-border-color: rgba(230,57,70,0.40);
-    -fx-border-width: 1;
-    -fx-text-fill: #FF6B6B;
-}
-/* ===== Premium gallery vibe ===== */
-.section-title {
-    -fx-text-fill: #D4B530;
-    -fx-font-size: 26px;
-    -fx-font-weight: 800;
-}
-
-.btn-primary.pill {
-    -fx-background-radius: 999;
-    -fx-border-radius: 999;
-    -fx-padding: 10 18;
-}
-
-/* Scroll background */
-.content-scroll {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-    -fx-border-color: transparent;
-}
-.content-scroll .viewport {
-    -fx-background-color: transparent;
-}
-
-/* TilePane grid */
-.cards-grid {
-    -fx-padding: 10;
-}
-
-/* Card */
-.premium-card {
-    -fx-pref-width: 360;
-    -fx-background-color: rgba(12,12,20,0.92);
-    -fx-border-color: rgba(191,162,0,0.18);
-    -fx-border-width: 1;
-    -fx-border-radius: 18;
-    -fx-background-radius: 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 26, 0.35, 0, 10);
-    -fx-padding: 0;
-}
-
-.premium-card:hover {
-    -fx-border-color: rgba(191,162,0,0.45);
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.18), 35, 0.45, 0, 12);
-    -fx-translate-y: -2;
-}
-
-/* Image */
-.card-image-wrap {
-    -fx-background-radius: 18 18 0 0;
-    -fx-border-radius: 18 18 0 0;
-    -fx-overflow: hidden;
-}
-
-.card-image {
-    -fx-background-radius: 18 18 0 0;
-    -fx-border-radius: 18 18 0 0;
-}
-
-/* Content */
-.card-content {
-    -fx-padding: 14 16 10 16;
-}
-
-.card-title {
-    -fx-text-fill: #D4B530;
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-}
-
-.card-meta {
-    -fx-text-fill: rgba(220,220,235,0.62);
-    -fx-font-size: 12px;
-}
-
-.card-desc {
-    -fx-text-fill: rgba(230,230,245,0.72);
-    -fx-font-size: 12px;
-}
-
-/* Actions */
-.card-actions {
-    -fx-padding: 10 14 14 14;
-    -fx-alignment: CENTER_RIGHT;
-}
-
-.icon-btn {
-    -fx-background-color: rgba(191,162,0,0.12);
-    -fx-text-fill: #D4B530;
-    -fx-font-weight: 900;
-    -fx-background-radius: 10;
+/* -----------------------
+   7) ComboBox (form-combo)
+------------------------ */
+.combo-box,
+.combo-box-base,
+.form-combo {
+    -fx-background-color: rgba(18,18,30,0.90);
+    -fx-border-color: rgba(191, 162, 0, 0.20);
     -fx-border-radius: 10;
-    -fx-border-color: rgba(191,162,0,0.30);
-    -fx-padding: 8 12;
+    -fx-background-radius: 10;
+    -fx-min-height: 38;
+    -fx-cursor: hand;
 }
 
-.icon-btn:hover {
-    -fx-background-color: #D4B530;
-    -fx-text-fill: #0a0a0a;
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.55), 18, 0.45, 0, 4);
-}
-
-.icon-delete:hover {
-    -fx-background-color: #e63946;
+.form-combo .list-cell,
+.combo-box .list-cell {
     -fx-text-fill: white;
-    -fx-border-color: rgba(230,57,70,0.6);
-}
-.premium-card {
-    -fx-background-color: rgba(12,12,20,0.95);
-    -fx-border-color: rgba(191,162,0,0.22);
-    -fx-border-radius: 18;
-    -fx-background-radius: 18;
-    -fx-padding: 0;
-    -fx-pref-width: 360;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.55), 22, 0.3, 0, 6);
-}
-.premium-card:hover {
-    -fx-border-color: rgba(191,162,0,0.55);
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.18), 28, 0.5, 0, 8);
+    -fx-font-size: 13px;
+    -fx-padding: 8 14;
+    -fx-background-color: transparent;
 }
 
-.card-image-wrap { -fx-background-radius: 18 18 0 0; -fx-overflow: hidden; }
-.card-image { -fx-background-radius: 18 18 0 0; }
-
-.card-content { -fx-padding: 14 14 10 14; }
-.card-actions { -fx-padding: 0 14 14 14; -fx-alignment: center-right; }
-
-.icon-btn {
-    -fx-background-radius: 999;
-    -fx-min-width: 42; -fx-min-height: 42;
-    -fx-max-width: 42; -fx-max-height: 42;
-    -fx-font-weight: 900;
-}
-.icon-edit { -fx-background-color: linear-gradient(to bottom right, #FFED80, #CCAB28, #BFA200); -fx-text-fill: #0a0a0a; }
-.icon-delete { -fx-background-color: linear-gradient(to bottom right, #FF9AA0, #FF6B6B, #e63946); -fx-text-fill: white; }
-/* ================= HOME BUTTONS PREMIUM ================= */
-
-.home-btn {
-    -fx-background-color: linear-gradient(to bottom right, #FFED80, #D4B530, #BFA200);
-    -fx-text-fill: #0a0a0a;
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-
-    -fx-background-radius: 22;
-    -fx-padding: 14 35;
-
-    -fx-cursor: hand;
-
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.45), 20, 0.40, 0, 6);
-
-    -fx-transition: all 0.3s ease;
+.form-combo:hover,
+.combo-box:hover {
+    -fx-border-color: rgba(191, 162, 0, 0.55);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.12), 12, 0.5, 0, 2);
 }
 
-/* Hover effect */
-.home-btn:hover {
-    -fx-background-color: linear-gradient(to bottom right, #FFF3A6, #E5C94D, #D4B530);
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.80), 28, 0.55, 0, 8);
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
+.form-combo:focused,
+.form-combo:showing,
+.combo-box:focused,
+.combo-box:showing {
+    -fx-border-color: -fx-gold;
+    -fx-border-width: 2;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.40), 20, 0.6, 0, 3);
+    -fx-background-color: rgba(22,22,38,0.95);
 }
 
-/* Click animation */
-.home-btn:pressed {
-    -fx-scale-x: 0.95;
-    -fx-scale-y: 0.95;
-    -fx-background-color: #9E8500;
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0 12 0 0;
+}
+.combo-box .arrow {
+    -fx-background-color: -fx-gold;
+    -fx-shape: "M 0 0 L 6 6 L 12 0 Z";
 }
 
-/* Optional secondary button */
-.home-btn-secondary {
-    -fx-background-color: rgba(191,162,0,0.12);
-    -fx-text-fill: #D4B530;
-
-    -fx-background-radius: 22;
-    -fx-border-radius: 22;
-    -fx-border-color: rgba(191,162,0,0.4);
-    -fx-border-width: 1.5;
-
-    -fx-padding: 14 35;
-    -fx-font-size: 16px;
+/* Popup list */
+.combo-box-popup .list-view {
+    -fx-background-color: rgba(14,14,24,0.98);
+    -fx-border-color: rgba(191, 162, 0, 0.30);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.70), 20, 0.3, 0, 6);
+    -fx-padding: 6;
+}
+.combo-box-popup .list-view .list-cell {
+    -fx-text-fill: rgba(255,255,255,0.85);
+    -fx-padding: 10 14;
+    -fx-background-radius: 8;
+}
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: rgba(191, 162, 0, 0.12);
+    -fx-text-fill: -fx-gold;
+}
+.combo-box-popup .list-view .list-cell:selected {
+    -fx-background-color: rgba(191, 162, 0, 0.20);
+    -fx-text-fill: -fx-gold;
     -fx-font-weight: 800;
-
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 15, 0.35, 0, 4);
 }
 
-.home-btn-secondary:hover {
-    -fx-background-color: rgba(191,162,0,0.25);
-    -fx-border-color: #D4B530;
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.60), 25, 0.55, 0, 6);
-}
-/* ===========================
-   HOME BUTTONS PREMIUM
-   =========================== */
-
-.home-btn {
-    -fx-background-color: linear-gradient(to bottom right, #FFED80, #D4B530, #BFA200);
-    -fx-text-fill: #0a0a0a;
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-
-    -fx-background-radius: 25;
-    -fx-padding: 16 40;
-
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.45), 25, 0.45, 0, 6);
+/* -----------------------
+   8) Buttons (mapped to your names)
+------------------------ */
+.button {
     -fx-cursor: hand;
 }
 
-/* Hover */
-.home-btn:hover {
-    -fx-background-color: linear-gradient(to bottom right, #FFF3B0, #E0C24A, #D4B530);
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.75), 35, 0.55, 0, 8);
-    -fx-scale-x: 1.05;
-    -fx-scale-y: 1.05;
+/* Primary (Enregistrer) */
+.btn-primary {
+    -fx-font-weight: 900;
+    -fx-font-size: 13px;
+    -fx-padding: 10 26;
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+    -fx-border-width: 0;
+    -fx-text-fill: #0a0a0a;
+    -fx-background-color: linear-gradient(to bottom right, #CCAB28, #BFA200);
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 10, 0.4, 0, 3);
 }
-
-/* Click effect */
-.home-btn:pressed {
-    -fx-scale-x: 0.97;
-    -fx-scale-y: 0.97;
+.btn-primary:hover {
+    -fx-background-color: linear-gradient(to bottom right, #FFED80, #CCAB28);
+    -fx-scaleX: 1.08;
+    -fx-scaleY: 1.08;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.65), 28, 0.9, 0, 4);
+}
+.btn-primary:pressed {
+    -fx-scaleX: 0.92;
+    -fx-scaleY: 0.92;
     -fx-background-color: #9E8500;
 }
 
-/* Version plus grande */
-.home-btn-large {
-    -fx-min-width: 300;
-    -fx-min-height: 80;
+/* Secondary (Annuler) */
+.btn-secondary {
+    -fx-font-weight: 900;
+    -fx-font-size: 13px;
+    -fx-padding: 10 26;
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+
+    -fx-text-fill: rgba(200,200,200,0.90);
+    -fx-background-color: linear-gradient(to bottom, rgba(191,162,0,0.06), rgba(191,162,0,0.02));
+    -fx-border-color: rgba(191, 162, 0, 0.18);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 8, 0.3, 0, 2);
 }
-.home-btn-small {
-    -fx-background-color: rgba(18,18,22,0.95);
-    -fx-text-fill: #f5d547;
-    -fx-background-radius: 18;
-    -fx-border-radius: 18;
-    -fx-border-color: rgba(245,213,71,0.6);
-    -fx-border-width: 1.3;
-    -fx-padding: 8 18;
-    -fx-font-weight: bold;
-    -fx-cursor: hand;
+.btn-secondary:hover {
+    -fx-background-color: linear-gradient(to bottom, #CCAB28, #BFA200);
+    -fx-text-fill: #0a0a0a;
+    -fx-scaleX: 1.06;
+    -fx-scaleY: 1.06;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.60), 22, 0.8, 0, 3);
+    -fx-border-color: -fx-gold;
+}
+.btn-secondary:pressed {
+    -fx-scaleX: 0.94;
+    -fx-scaleY: 0.94;
+    -fx-background-color: #9E8500;
 }
 
+/* Small top back button */
+.home-btn-small {
+    -fx-font-weight: 900;
+    -fx-font-size: 12px;
+    -fx-padding: 8 16;
+    -fx-background-radius: 25;
+    -fx-border-radius: 25;
+
+    -fx-background-color: rgba(191, 162, 0, 0.08);
+    -fx-text-fill: -fx-gold;
+    -fx-border-color: rgba(191, 162, 0, 0.28);
+}
 .home-btn-small:hover {
-    -fx-border-color: #f5d547;
-    -fx-effect: dropshadow(gaussian, rgba(245,213,71,0.5), 20, 0.4, 0, 5);
+    -fx-background-color: -fx-gold;
+    -fx-text-fill: #0a0a0a;
+    -fx-scaleX: 1.06;
+    -fx-scaleY: 1.06;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.50), 15, 0.6, 0, 3);
+}
+.home-btn-small:pressed {
+    -fx-scaleX: 0.94;
+    -fx-scaleY: 0.94;
+}
+
+/* Browse images button */
+.btn-browse {
+    -fx-font-weight: 900;
+    -fx-font-size: 12px;
+    -fx-padding: 9 18;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+
+    -fx-background-color: rgba(191, 162, 0, 0.10);
+    -fx-text-fill: -fx-gold;
+    -fx-border-color: rgba(191, 162, 0, 0.35);
+}
+.btn-browse:hover {
+    -fx-background-color: -fx-gold;
+    -fx-text-fill: #0a0a0a;
+    -fx-scaleX: 1.06;
+    -fx-scaleY: 1.06;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.50), 15, 0.6, 0, 3);
+}
+.btn-browse:pressed {
+    -fx-scaleX: 0.94;
+    -fx-scaleY: 0.94;
+}
+
+/* -----------------------
+   9) Gallery strip (for your imagesStrip HBox)
+------------------------ */
+.gallery-strip {
+    -fx-spacing: 8;
+    -fx-padding: 4;
+}
+
+/* If you create thumbnail cards in code, give them "gallery-thumb-card" */
+.gallery-thumb-card {
+    -fx-background-color: rgba(18,18,30,0.90);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(191,162,0,0.22);
+    -fx-border-radius: 10;
+    -fx-border-width: 1.2;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.35), 8, 0.25, 0, 2);
+}
+.gallery-thumb-card:hover {
+    -fx-border-color: -fx-gold;
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.50), 14, 0.45, 0, 2);
+}
+
+/* delete badge if you use it */
+.gallery-thumb-delete {
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: 900;
+    -fx-background-color: rgba(230,57,70,0.88);
+    -fx-background-radius: 10;
+    -fx-padding: 0 5 1 5;
+}
+
+/* -----------------------
+   10) TableView (global, for other pages)
+------------------------ */
+.table-view {
+    -fx-background-color: rgba(14,14,22,0.95);
+    -fx-background-radius: 12;
+}
+.table-view .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #CCAB28, #BFA200);
+    -fx-background-radius: 10 10 0 0;
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.20), 6, 0.3, 0, 2);
+}
+.table-view .filler {
+    -fx-background-color: linear-gradient(to bottom, #CCAB28, #BFA200);
+}
+.table-view .column-header .label {
+    -fx-text-fill: #0a0a0a;
+    -fx-font-weight: 900;
+    -fx-font-size: 12px;
+    -fx-alignment: CENTER;
+}
+.table-row-cell {
+    -fx-background-color: rgba(12,12,20,0.90);
+    -fx-border-color: transparent transparent rgba(191, 162, 0, 0.05) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 40;
+}
+.table-row-cell:odd {
+    -fx-background-color: rgba(18,18,28,0.90);
+}
+.table-row-cell:hover {
+    -fx-background-color: rgba(191, 162, 0, 0.07);
+}
+.table-row-cell:selected {
+    -fx-background-color: linear-gradient(to right, rgba(191,162,0,0.85), rgba(255,228,77,0.85));
+}
+.table-cell {
+    -fx-text-fill: -fx-text;
+    -fx-padding: 5 10;
+    -fx-alignment: CENTER_LEFT;
+}
+.table-row-cell:selected .text,
+.table-row-cell:selected .label {
+    -fx-fill: #0a0a0a;
+    -fx-text-fill: #0a0a0a;
+    -fx-font-weight: 900;
+}
+
+/* -----------------------
+   11) Tooltip / dialogs
+------------------------ */
+.tooltip {
+    -fx-background-color: rgba(22,22,35,0.95);
+    -fx-text-fill: -fx-gold;
+    -fx-font-weight: 900;
+    -fx-border-color: rgba(191, 162, 0, 0.40);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-size: 12px;
+    -fx-padding: 8 16;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.15), 12, 0.4, 0, 3);
+}
+
+.dialog-pane {
+    -fx-background-color: -fx-bg;
+}
+.dialog-pane .header-panel {
+    -fx-background-color: linear-gradient(to right, rgba(12,12,20,0.97), rgba(22,22,35,0.97), rgba(12,12,20,0.97));
+    -fx-border-color: -fx-gold;
+    -fx-border-width: 0 0 2 0;
+}
+.dialog-pane .label {
+    -fx-text-fill: -fx-text;
+}
+.dialog-pane .button-bar .button {
+    -fx-background-color: linear-gradient(to bottom right, #CCAB28, #BFA200);
+    -fx-text-fill: #0a0a0a;
+    -fx-font-weight: 900;
+    -fx-background-radius: 22;
+    -fx-padding: 10 26;
+}
+.dialog-pane .button-bar .button:hover {
+    -fx-background-color: linear-gradient(to bottom right, #FFED80, #CCAB28);
+}
+.combo-placeholder {
+    -fx-text-fill: rgba(200,200,200,0.45);
 }

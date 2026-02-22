@@ -10,35 +10,51 @@
             stylesheets="@style.css"
             styleClass="app-root">
 
+    <!-- TOP BAR -->
     <top>
         <VBox styleClass="topbar" spacing="10">
             <padding>
                 <Insets top="18" right="22" bottom="16" left="22"/>
             </padding>
-            <Label text="Premium Dashboard" styleClass="page-title"/>
+
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Premium Dashboard" styleClass="page-title"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Label text="Bienvenue 👋" styleClass="topbar-subtitle"/>
+            </HBox>
+
             <Region styleClass="accent-line-thin"/>
         </VBox>
     </top>
 
+    <!-- CENTER -->
     <center>
-        <VBox spacing="18" styleClass="content-root" alignment="CENTER">
+        <StackPane styleClass="page-body">
             <padding>
-                <Insets top="30" right="22" bottom="22" left="22"/>
+                <Insets top="18" right="22" bottom="22" left="22"/>
             </padding>
 
-            <Label text="Choisissez un module" styleClass="section-title"/>
+            <VBox alignment="CENTER" spacing="18" styleClass="home-card">
+                <Label text="Choisissez un module" styleClass="home-title"/>
+                <Label text="Accédez rapidement à la gestion des activités ou des établissements."
+                       wrapText="true"
+                       styleClass="home-subtitle"/>
 
-            <HBox spacing="18" alignment="CENTER">
-                <Button text="Gestion des Activités"
-                        onAction="#goActivites"
-                        styleClass="home-btn home-btn-large"/>
+                <HBox spacing="30" alignment="CENTER">
 
-                <Button text="Gestion des Établissements"
-                        onAction="#goEtablissements"
-                        styleClass="home-btn home-btn-large"/>
-            </HBox>
+                    <Button text="🏃  Gestion des Activités"
+                            onAction="#goActivites"
+                            styleClass="btn-yellow"/>
 
-        </VBox>
+                    <Button text="🏢  Gestion des Établissements"
+                            onAction="#goEtablissements"
+                            styleClass="btn-yellow"/>
+
+                </HBox>
+
+            </VBox>
+
+        </StackPane>
     </center>
 
 </BorderPane>

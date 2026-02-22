@@ -1,42 +1,21 @@
 package com.esprit.controllers;
 
-import javafx.event.ActionEvent;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Stage;
-import javafx.scene.Node;
-
 import com.esprit.entities.Etablissement;
 import com.esprit.services.EtablissementServices;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
 
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class EtablissementController {
-    @FXML
-    private void onShowAjouter(ActionEvent event) {
-        NavigationUtils.goTo("/ajouter_etablissement.fxml", event);
-    }
-
-    @FXML
-    private void onShowModifier(ActionEvent event) {
-        // Optionnel : Pré-remplir le formulaire si un établissement est sélectionné
-        NavigationUtils.goTo("/ajouter_etablissement.fxml", event);
-    }
 
     // ===== Form fields =====
     @FXML private TextField nomField;
@@ -46,7 +25,11 @@ public class EtablissementController {
     @FXML private TextField emailField;
     @FXML private TextField horairesField;
     @FXML private ComboBox<String> gammePrixField;
-    @FXML private TextField imageUrlField;
+
+    @FXML private ComboBox<String> typeField;
+    @FXML private TextField latitudeField;
+    @FXML private TextField longitudeField;
+
     @FXML private TextArea descriptionArea;
 
     @FXML private Label messageLabel;
@@ -59,11 +42,13 @@ public class EtablissementController {
     // TOP filters
     @FXML private ComboBox<String> filterVille;
     @FXML private ComboBox<String> filterGamme;
+    @FXML private ComboBox<String> filterType;
     @FXML private ComboBox<String> sortBox;
 
-    // SIDE filters (panel gauche)
+    // SIDE filters
     @FXML private ComboBox<String> filterVilleSide;
     @FXML private ComboBox<String> filterGammeSide;
+    @FXML private ComboBox<String> filterTypeSide;
 
     private final EtablissementServices service = new EtablissementServices();
 
@@ -73,146 +58,63 @@ public class EtablissementController {
 
     private Etablissement selected = null;
 
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9+ ]*$");
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+
+    // تونس: 8 chiffres يبدأ بـ 2/3/4/5/7/9
+    private static final Pattern TN_PHONE_PATTERN =
+            Pattern.compile("^[234579][0-9]{7}$");
 
     @FXML
     public void initialize() {
 
-        // ==== form combo ====
+        // ===== combos form =====
         gammePrixField.setItems(FXCollections.observableArrayList("€", "€€", "€€€"));
+        typeField.setItems(FXCollections.observableArrayList("hotel", "restaurant", "cafe", "museum", "bar", "autre"));
 
-        // ==== filters combos ====
+        // ===== combos filters =====
         filterGamme.setItems(FXCollections.observableArrayList("Tous", "€", "€€", "€€€"));
         filterGamme.getSelectionModel().selectFirst();
+
+        filterType.setItems(FXCollections.observableArrayList("Tous", "hotel", "restaurant", "cafe", "museum", "bar", "autre"));
+        filterType.getSelectionModel().selectFirst();
 
         filterVille.setItems(FXCollections.observableArrayList("Tous"));
         filterVille.getSelectionModel().selectFirst();
 
-        sortBox.setItems(FXCollections.observableArrayList("Aucun", "Nom A→Z", "Ville A→Z"));
+        sortBox.setItems(FXCollections.observableArrayList("Aucun", "Nom A→Z", "Ville A→Z", "Type A→Z"));
         sortBox.getSelectionModel().selectFirst();
 
-        // ==== load data ====
+        // ===== load =====
         loadData();
 
         filteredData = new FilteredList<>(masterData, e -> true);
         sortedData = new SortedList<>(filteredData);
         etablissementList.setItems(sortedData);
 
-        // ==== cell factory (cards) ====
+        // ✅ pour l’instant texte simple (tu peux remettre tes cards après)
         etablissementList.setCellFactory(list -> new ListCell<>() {
-            @Override
-            protected void updateItem(Etablissement e, boolean empty) {
+            @Override protected void updateItem(Etablissement e, boolean empty) {
                 super.updateItem(e, empty);
-
-                if (empty || e == null) {
-                    setText(null);
-                    setGraphic(null);
-                    return;
-                }
-
-                // Image
-                ImageView iv = new ImageView();
-                iv.setFitWidth(90);
-                iv.setFitHeight(70);
-                iv.setPreserveRatio(true);
-
-                String img = e.getImageUrl();
-                // load default image URL if present on classpath
-                java.net.URL defaultUrl = getClass().getResource("/img/default.png");
-                javafx.scene.image.Image defaultImage = null;
-                if (defaultUrl != null) {
-                    try {
-                        defaultImage = new Image(defaultUrl.toExternalForm());
-                    } catch (Exception ignored) {
-                        defaultImage = null;
-                    }
-                }
-
-                if (img != null && !img.isBlank()) {
-                    try {
-                        iv.setImage(new Image(img, true));
-                    } catch (Exception ex) {
-                        // fallback to bundled default image if available
-                        iv.setImage(defaultImage);
-                    }
-                } else {
-                    iv.setImage(defaultImage);
-                }
-
-                // Infos
-                Label nom = new Label(safe(e.getNom()));
-                nom.setStyle("-fx-font-size:16; -fx-text-fill:#FFD700; -fx-font-weight:bold;");
-
-                Label meta = new Label(safe(e.getVille()) + "   •   " + safe(e.getGammePrix()));
-                meta.setStyle("-fx-text-fill:#94a3b8; -fx-font-size:12;");
-
-                String desc = safe(e.getDescription());
-                if (desc.length() > 100) desc = desc.substring(0, 100) + "...";
-                Label description = new Label(desc);
-                description.setWrapText(true);
-                description.setStyle("-fx-text-fill:#cccccc; -fx-font-size:12;");
-
-                Label contact = new Label(
-                        (!safe(e.getTelephone()).isBlank() ? "📞 " + safe(e.getTelephone()) + "   " : "") +
-                                (!safe(e.getEmail()).isBlank() ? "✉ " + safe(e.getEmail()) : "")
-                );
-                contact.setStyle("-fx-text-fill:#aaaaaa; -fx-font-size:12;");
-
-                VBox infoBox = new VBox(4, nom, meta, contact, description);
-                HBox.setHgrow(infoBox, Priority.ALWAYS);
-
-                // Buttons inside card
-                Button btnEdit = new Button("Modifier");
-                btnEdit.setStyle("-fx-padding:8 14; -fx-font-size:12; -fx-background-radius:10; -fx-background-color: rgba(255,255,255,0.12); -fx-text-fill:white;");
-                btnEdit.setOnAction(ev -> {
-                    etablissementList.getSelectionModel().select(e);
-                    fillForm(e);
-                });
-
-                Button btnDelete = new Button("Supprimer");
-                btnDelete.setStyle("-fx-padding:8 14; -fx-font-size:12; -fx-background-radius:10; -fx-background-color:#ff4d4d; -fx-text-fill:white;");
-                btnDelete.setOnAction(ev -> {
-                    boolean ok = AlertUtils.confirm("Confirmation", "Supprimer établissement",
-                            "Voulez-vous supprimer : " + safe(e.getNom()) + " ?");
-                    if (!ok) return;
-
-                    try {
-                        service.supprimer(e.getIdEtablissement());
-                        loadData();
-                        applyFilters();
-                        clearForm();
-                        setMessage("✅ Supprimé.", true);
-                    } catch (Exception ex) {
-                        setMessage("❌ " + ex.getMessage(), false);
-                    }
-                });
-
-                VBox actions = new VBox(8, btnEdit, btnDelete);
-                actions.setMinWidth(120);
-
-                HBox root = new HBox(15, iv, infoBox, actions);
-                root.setStyle("-fx-background-color: rgba(10,10,10,0.98); -fx-background-radius:15; -fx-padding:15;");
-
-                setGraphic(root);
-                setText(null);
+                if (empty || e == null) { setText(null); setGraphic(null); return; }
+                setText(safe(e.getNom()) + " — " + safe(e.getVille()) + " — " + safe(e.getType()));
             }
         });
 
-        // ==== sync TOP <-> SIDE filters (optional panel gauche) ====
+        // sync top/side
         syncTopAndSideFilters();
 
-        // ==== listeners ====
+        // listeners
         searchField.textProperty().addListener((obs, o, n) -> applyFilters());
         filterVille.valueProperty().addListener((obs, o, n) -> applyFilters());
         filterGamme.valueProperty().addListener((obs, o, n) -> applyFilters());
-
-        if (filterVilleSide != null) filterVilleSide.valueProperty().addListener((obs, o, n) -> applyFilters());
-        if (filterGammeSide != null) filterGammeSide.valueProperty().addListener((obs, o, n) -> applyFilters());
-
+        filterType.valueProperty().addListener((obs, o, n) -> applyFilters());
         sortBox.valueProperty().addListener((obs, o, n) -> applySort());
-        applySort();
 
-        // Selection -> fill form
+        applySort();
+        applyFilters();
+
+        // selection
         etablissementList.getSelectionModel().selectedItemProperty().addListener((obs, o, n) -> {
             selected = n;
             if (n != null) {
@@ -224,38 +126,13 @@ public class EtablissementController {
         });
     }
 
-    private void syncTopAndSideFilters() {
-        // Copier items top -> side
-        if (filterVilleSide != null) {
-            filterVilleSide.setItems(filterVille.getItems());
-            filterVilleSide.setValue(filterVille.getValue());
-        }
-        if (filterGammeSide != null) {
-            filterGammeSide.setItems(filterGamme.getItems());
-            filterGammeSide.setValue(filterGamme.getValue());
-        }
-
-        // side -> top
-        if (filterVilleSide != null) {
-            filterVilleSide.valueProperty().addListener((obs, o, n) -> {
-                if (n != null) filterVille.setValue(n);
-            });
-        }
-        if (filterGammeSide != null) {
-            filterGammeSide.valueProperty().addListener((obs, o, n) -> {
-                if (n != null) filterGamme.setValue(n);
-            });
-        }
-
-        // top -> side
-        filterVille.valueProperty().addListener((obs, o, n) -> {
-            if (filterVilleSide != null && n != null) filterVilleSide.setValue(n);
-        });
-        filterGamme.valueProperty().addListener((obs, o, n) -> {
-            if (filterGammeSide != null && n != null) filterGammeSide.setValue(n);
-        });
+    // ===== NAV =====
+    @FXML
+    private void onShowAjouter(ActionEvent event) {
+        NavigationUtils.goTo("/ajouter_etablissement.fxml", event);
     }
 
+    // ===== DATA =====
     private void loadData() {
         masterData.clear();
         try {
@@ -285,7 +162,6 @@ public class EtablissementController {
         if (current != null && items.contains(current)) filterVille.setValue(current);
         else filterVille.getSelectionModel().selectFirst();
 
-        // resync side
         if (filterVilleSide != null) {
             filterVilleSide.setItems(filterVille.getItems());
             filterVilleSide.setValue(filterVille.getValue());
@@ -295,22 +171,24 @@ public class EtablissementController {
     private void applyFilters() {
         String q = safe(searchField.getText()).toLowerCase().trim();
 
-        // On prend la valeur TOP (car side est synchronisé)
         String ville = safe(filterVille.getValue());
         String gamme = safe(filterGamme.getValue());
+        String type = safe(filterType.getValue());
 
         filteredData.setPredicate(e -> {
             if (e == null) return false;
 
             if (!"Tous".equalsIgnoreCase(ville) && !safe(e.getVille()).equalsIgnoreCase(ville)) return false;
             if (!"Tous".equalsIgnoreCase(gamme) && !safe(e.getGammePrix()).equalsIgnoreCase(gamme)) return false;
+            if (!"Tous".equalsIgnoreCase(type) && !safe(e.getType()).equalsIgnoreCase(type)) return false;
 
             if (q.isEmpty()) return true;
 
             return safe(e.getNom()).toLowerCase().contains(q)
                     || safe(e.getVille()).toLowerCase().contains(q)
                     || safe(e.getEmail()).toLowerCase().contains(q)
-                    || safe(e.getTelephone()).toLowerCase().contains(q);
+                    || safe(e.getTelephone()).toLowerCase().contains(q)
+                    || safe(e.getType()).toLowerCase().contains(q);
         });
     }
 
@@ -325,14 +203,35 @@ public class EtablissementController {
             case "Ville A→Z":
                 c = Comparator.comparing(e -> safe(e.getVille()).toLowerCase());
                 break;
+            case "Type A→Z":
+                c = Comparator.comparing(e -> safe(e.getType()).toLowerCase());
+                break;
             default:
                 c = null;
         }
         sortedData.setComparator(c);
     }
 
+    private void syncTopAndSideFilters() {
+        // copy items
+        if (filterVilleSide != null) { filterVilleSide.setItems(filterVille.getItems()); filterVilleSide.setValue(filterVille.getValue()); }
+        if (filterGammeSide != null) { filterGammeSide.setItems(filterGamme.getItems()); filterGammeSide.setValue(filterGamme.getValue()); }
+        if (filterTypeSide != null)  { filterTypeSide.setItems(filterType.getItems());  filterTypeSide.setValue(filterType.getValue());  }
+
+        // side -> top
+        if (filterVilleSide != null) filterVilleSide.valueProperty().addListener((obs,o,n)-> { if (n != null) filterVille.setValue(n); });
+        if (filterGammeSide != null) filterGammeSide.valueProperty().addListener((obs,o,n)-> { if (n != null) filterGamme.setValue(n); });
+        if (filterTypeSide != null)  filterTypeSide.valueProperty().addListener((obs,o,n)-> { if (n != null) filterType.setValue(n); });
+
+        // top -> side
+        filterVille.valueProperty().addListener((obs,o,n)-> { if (filterVilleSide != null && n != null) filterVilleSide.setValue(n); });
+        filterGamme.valueProperty().addListener((obs,o,n)-> { if (filterGammeSide != null && n != null) filterGammeSide.setValue(n); });
+        filterType.valueProperty().addListener((obs,o,n)-> { if (filterTypeSide != null && n != null) filterTypeSide.setValue(n); });
+    }
+
     // ===== CRUD =====
-    @FXML private void onAjouter() {
+    @FXML
+    private void onAjouter() {
         setMessage("", true);
 
         Etablissement e = readForm();
@@ -348,7 +247,8 @@ public class EtablissementController {
         }
     }
 
-    @FXML private void onModifier() {
+    @FXML
+    private void onModifier() {
         setMessage("", true);
 
         if (selected == null) {
@@ -370,7 +270,8 @@ public class EtablissementController {
         }
     }
 
-    @FXML private void onSupprimer() {
+    @FXML
+    private void onSupprimer() {
         setMessage("", true);
 
         if (selected == null) {
@@ -392,16 +293,20 @@ public class EtablissementController {
         }
     }
 
-    @FXML private void onVider() {
+    @FXML
+    private void onVider() {
         clearForm();
         setMessage("", true);
     }
 
-    @FXML private void onRefresh() {
+    @FXML
+    private void onRefresh() {
         loadData();
         applyFilters();
+        applySort();
     }
 
+    // ===== form helpers =====
     private void clearForm() {
         nomField.clear();
         adresseField.clear();
@@ -410,7 +315,11 @@ public class EtablissementController {
         emailField.clear();
         horairesField.clear();
         gammePrixField.getSelectionModel().clearSelection();
-        imageUrlField.clear();
+
+        typeField.getSelectionModel().clearSelection();
+        latitudeField.clear();
+        longitudeField.clear();
+
         descriptionArea.clear();
 
         selected = null;
@@ -425,24 +334,57 @@ public class EtablissementController {
         telephoneField.setText(safe(e.getTelephone()));
         emailField.setText(safe(e.getEmail()));
         horairesField.setText(safe(e.getHoraires()));
-        gammePrixField.setValue(safe(e.getGammePrix()).isBlank() ? null : e.getGammePrix());
-        imageUrlField.setText(safe(e.getImageUrl()));
+        gammePrixField.setValue(blankToNull(e.getGammePrix()));
+
+        typeField.setValue(blankToNull(e.getType()));
+        latitudeField.setText(e.getLatitude() == null ? "" : String.valueOf(e.getLatitude()));
+        longitudeField.setText(e.getLongitude() == null ? "" : String.valueOf(e.getLongitude()));
+
         descriptionArea.setText(safe(e.getDescription()));
     }
 
     private Etablissement readForm() {
         String nom = safe(nomField.getText()).trim();
         String ville = safe(villeField.getText()).trim();
-        String tel = safe(telephoneField.getText()).trim();
-        String email = safe(emailField.getText()).trim();
-        String gamme = (gammePrixField.getValue() == null) ? "" : gammePrixField.getValue().trim();
 
-        if (nom.isBlank()) { setMessage("❌ Nom obligatoire.", false); return null; }
-        if (ville.isBlank()) { setMessage("❌ Ville obligatoire.", false); return null; }
-        if (!email.isBlank() && !email.contains("@")) { setMessage("❌ Email invalide.", false); return null; }
-        if (!tel.isBlank() && !PHONE_PATTERN.matcher(tel).matches()) { setMessage("❌ Téléphone invalide.", false); return null; }
+        String tel = safe(telephoneField.getText()).trim().replaceAll("\\s+", "");
+        String email = safe(emailField.getText()).trim();
+
+        String gamme = (gammePrixField.getValue() == null) ? "" : gammePrixField.getValue().trim();
+        String type = (typeField.getValue() == null) ? "" : typeField.getValue().trim();
+
+        if (nom.isBlank()) { setMessage("❌ Nom obligatoire.", false); markError(nomField); return null; }
+        if (ville.isBlank()) { setMessage("❌ Ville obligatoire.", false); markError(villeField); return null; }
+
+        if (!email.isBlank() && !EMAIL_PATTERN.matcher(email).matches()) {
+            setMessage("❌ Email invalide.", false);
+            markError(emailField);
+            return null;
+        }
+
+        if (!tel.isBlank() && !TN_PHONE_PATTERN.matcher(tel).matches()) {
+            setMessage("❌ Téléphone invalide (8 chiffres, 2/3/4/5/7/9).", false);
+            markError(telephoneField);
+            return null;
+        }
+
         if (!gamme.isBlank() && !(gamme.equals("€") || gamme.equals("€€") || gamme.equals("€€€"))) {
             setMessage("❌ Gamme prix invalide.", false);
+            markError(gammePrixField);
+            return null;
+        }
+
+        Double lat = parseDoubleOrNull(latitudeField.getText());
+        Double lon = parseDoubleOrNull(longitudeField.getText());
+
+        if (!safe(latitudeField.getText()).trim().isBlank() && lat == null) {
+            setMessage("❌ Latitude invalide.", false);
+            markError(latitudeField);
+            return null;
+        }
+        if (!safe(longitudeField.getText()).trim().isBlank() && lon == null) {
+            setMessage("❌ Longitude invalide.", false);
+            markError(longitudeField);
             return null;
         }
 
@@ -454,10 +396,17 @@ public class EtablissementController {
         e.setEmail(email);
         e.setHoraires(safe(horairesField.getText()).trim());
         e.setGammePrix(gamme);
-        e.setImageUrl(safe(imageUrlField.getText()).trim());
+        e.setType(type);
+        e.setLatitude(lat);
+        e.setLongitude(lon);
         e.setDescription(safe(descriptionArea.getText()).trim());
 
         return e;
+    }
+
+    // ===== small UI helpers =====
+    private void markError(Control c) {
+        if (!c.getStyleClass().contains("field-error")) c.getStyleClass().add("field-error");
     }
 
     private void setMessage(String msg, boolean ok) {
@@ -465,6 +414,21 @@ public class EtablissementController {
         messageLabel.setStyle(ok
                 ? "-fx-text-fill:#22c55e; -fx-font-weight:bold;"
                 : "-fx-text-fill:#ef4444; -fx-font-weight:bold;");
+    }
+
+    private Double parseDoubleOrNull(String s) {
+        try {
+            String v = safe(s).trim().replace(",", ".");
+            if (v.isBlank()) return null;
+            return Double.parseDouble(v);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String blankToNull(String s) {
+        String v = safe(s).trim();
+        return v.isBlank() ? null : v;
     }
 
     private String safe(String s) { return s == null ? "" : s; }

@@ -17,12 +17,11 @@
                 <Insets top="18" right="22" bottom="16" left="22"/>
             </padding>
 
-            <!-- ✅ Titre + bouton Home -->
+            <!-- Titre + bouton Home -->
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <Label text="Gestion des établissements" styleClass="page-title"/>
                 <Pane HBox.hgrow="ALWAYS"/>
 
-                <!-- ✅ Bouton retour Home -->
                 <Button text="← Home"
                         onAction="#goHome"
                         styleClass="home-btn-small"/>
@@ -37,6 +36,7 @@
 
                 <ComboBox fx:id="filterVille" prefWidth="170" promptText="Ville" styleClass="filter-combo"/>
                 <ComboBox fx:id="filterGamme" prefWidth="170" promptText="Gamme" styleClass="filter-combo"/>
+                <ComboBox fx:id="filterType" prefWidth="170" promptText="Type" styleClass="filter-combo"/>
                 <ComboBox fx:id="sortBox" prefWidth="170" promptText="Trier" styleClass="filter-combo"/>
 
                 <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
@@ -74,7 +74,7 @@
                             <TilePane fx:id="cardsPane"
                                       prefColumns="3"
                                       prefTileWidth="360"
-                                      prefTileHeight="360"
+                                      prefTileHeight="540"
                                       hgap="22" vgap="22"
                                       tileAlignment="TOP_LEFT"
                                       styleClass="cards-grid"/>

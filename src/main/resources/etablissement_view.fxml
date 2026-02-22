@@ -12,21 +12,32 @@
 
     <!-- TOP BAR -->
     <top>
-        <HBox spacing="10" styleClass="topbar">
+        <VBox styleClass="topbar" spacing="12">
             <padding>
                 <Insets top="16" right="16" bottom="16" left="16"/>
             </padding>
 
-            <TextField fx:id="searchField"
-                       promptText="Rechercher (nom, ville, email, téléphone)..."
-                       HBox.hgrow="ALWAYS"/>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Gestion des établissements" styleClass="page-title"/>
+                <Pane HBox.hgrow="ALWAYS"/>
 
-            <ComboBox fx:id="filterVille" prefWidth="160" promptText="Ville"/>
-            <ComboBox fx:id="filterGamme" prefWidth="140" promptText="Gamme"/>
-            <ComboBox fx:id="sortBox" prefWidth="140" promptText="Trier"/>
+                <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+                <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
+            </HBox>
 
-            <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
-        </HBox>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField"
+                           promptText="Rechercher (nom, ville, email, téléphone)..."
+                           HBox.hgrow="ALWAYS"/>
+
+                <ComboBox fx:id="filterVille" prefWidth="160" promptText="Ville" />
+                <ComboBox fx:id="filterGamme" prefWidth="140" promptText="Gamme" />
+                <ComboBox fx:id="filterType" prefWidth="140" promptText="Type" />
+                <ComboBox fx:id="sortBox" prefWidth="140" promptText="Trier" />
+            </HBox>
+
+            <Region styleClass="accent-line-thin"/>
+        </VBox>
     </top>
 
     <!-- LEFT FILTER PANEL -->
@@ -44,6 +55,9 @@
 
             <Label text="Gamme de prix" styleClass="label"/>
             <ComboBox fx:id="filterGammeSide" promptText="Tous"/>
+
+            <Label text="Type" styleClass="label"/>
+            <ComboBox fx:id="filterTypeSide" promptText="Tous"/>
 
             <Separator/>
             <Label text="Astuce" styleClass="muted"/>
@@ -66,7 +80,7 @@
 
     <!-- RIGHT FORM -->
     <right>
-        <VBox spacing="10" prefWidth="360" styleClass="formpanel">
+        <VBox spacing="10" prefWidth="380" styleClass="formpanel">
             <padding>
                 <Insets top="16" right="16" bottom="16" left="16"/>
             </padding>
@@ -84,8 +98,13 @@
             <TextField fx:id="emailField" promptText="Email"/>
             <TextField fx:id="horairesField" promptText="Horaires"/>
             <ComboBox fx:id="gammePrixField" promptText="Gamme (€ / €€ / €€€)"/>
-            <TextField fx:id="imageUrlField" promptText="URL image (ou vide)"/>
-            <TextArea fx:id="descriptionArea" promptText="Description" prefRowCount="4"/>
+
+            <!-- ✅ nouveaux champs DB -->
+            <ComboBox fx:id="typeField" promptText="Type (hotel/restaurant/...)"/>
+            <TextField fx:id="latitudeField" promptText="Latitude (optionnel)"/>
+            <TextField fx:id="longitudeField" promptText="Longitude (optionnel)"/>
+
+            <TextArea fx:id="descriptionArea" promptText="Description (max 200)" prefRowCount="4"/>
 
             <HBox spacing="10">
                 <Button text="Ajouter" onAction="#onAjouter" styleClass="btn-primary" HBox.hgrow="ALWAYS"/>

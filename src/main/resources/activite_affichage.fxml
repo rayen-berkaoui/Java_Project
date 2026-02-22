@@ -6,39 +6,76 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.esprit.controllers.AffichageActiviteController"
+            fx:controller="com.esprit.controllers.ActiviteController"
             stylesheets="@style.css"
             styleClass="app-root">
 
     <top>
-        <HBox spacing="10" styleClass="topbar">
+        <VBox styleClass="topbar" spacing="12">
             <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
+                <Insets top="18" right="22" bottom="16" left="22"/>
             </padding>
 
-            <TextField fx:id="searchField" promptText="Rechercher (nom, catégorie, niveau)..." HBox.hgrow="ALWAYS"/>
-            <ComboBox fx:id="filterCategorie" prefWidth="170" promptText="Catégorie"/>
-            <ComboBox fx:id="filterNiveau" prefWidth="170" promptText="Niveau"/>
-            <ComboBox fx:id="sortBox" prefWidth="170" promptText="Trier"/>
-            <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
-        </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="Gestion des activités" styleClass="page-title"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button text="← Home" onAction="#goHome" styleClass="home-btn-small"/>
+            </HBox>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField"
+                           promptText="Rechercher (nom, catégorie, niveau)..."
+                           styleClass="search-field"
+                           HBox.hgrow="ALWAYS"/>
+
+                <ComboBox fx:id="filterCategorie" prefWidth="170" promptText="Catégorie" styleClass="filter-combo"/>
+                <ComboBox fx:id="filterNiveau" prefWidth="170" promptText="Niveau" styleClass="filter-combo"/>
+                <ComboBox fx:id="sortBox" prefWidth="170" promptText="Trier" styleClass="filter-combo"/>
+
+                <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
+            </HBox>
+
+            <Region styleClass="accent-line-thin"/>
+        </VBox>
     </top>
 
     <center>
-        <VBox spacing="10">
+        <StackPane styleClass="page-body">
             <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
+                <Insets top="18" right="22" bottom="22" left="22"/>
             </padding>
 
-            <Label text="Liste des activités" styleClass="h1"/>
-            <ListView fx:id="activiteList" VBox.vgrow="ALWAYS" styleClass="cards-list"/>
+            <VBox spacing="16" styleClass="content-root">
 
-            <HBox spacing="10">
-                <Button text="Ajouter" onAction="#onShowAjouter" styleClass="btn-primary"/>
-                <Button text="Modifier" onAction="#onShowModifier" styleClass="btn-warning"/>
-                <Button text="Supprimer" onAction="#onSupprimer" styleClass="btn-danger"/>
-            </HBox>
-        </VBox>
+                <HBox alignment="CENTER_LEFT" spacing="12" styleClass="section-bar">
+                    <Label text="Galerie Premium" styleClass="section-title"/>
+                    <Pane HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+                </HBox>
+
+                <ScrollPane fitToWidth="true"
+                            hbarPolicy="NEVER"
+                            vbarPolicy="AS_NEEDED"
+                            styleClass="content-scroll">
+                    <content>
+                        <VBox styleClass="grid-wrapper">
+                            <padding>
+                                <Insets top="8" right="0" bottom="0" left="0"/>
+                            </padding>
+
+                            <TilePane fx:id="cardsPane"
+                                      prefColumns="3"
+                                      prefTileWidth="360"
+                                      prefTileHeight="330"
+                                      hgap="22" vgap="22"
+                                      tileAlignment="TOP_LEFT"
+                                      styleClass="cards-grid"/>
+                        </VBox>
+                    </content>
+                </ScrollPane>
+
+            </VBox>
+        </StackPane>
     </center>
 
 </BorderPane>
