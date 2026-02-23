@@ -17,6 +17,7 @@ import javafx.scene.Node;
 
 import com.esprit.entities.utilisateur;
 import com.esprit.services.utilisateurServices;
+import com.esprit.utils.ThemeManager;
 
 import java.io.*;
 import java.util.Base64;
@@ -126,6 +127,18 @@ public class UserProfileController {
             languageCombo.getItems().addAll("Français", "English", "العربية");
             languageCombo.setValue("Français");
         }
+
+        // Apply theme to FXML nodes
+        javafx.application.Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) titleBar.getScene().getRoot());
+            }
+        });
+        ThemeManager.addThemeChangeListener(() -> javafx.application.Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) titleBar.getScene().getRoot());
+            }
+        }));
     }
 
     // ================= SET USER =================
@@ -453,6 +466,9 @@ public class UserProfileController {
 
         DialogPane dp = alert.getDialogPane();
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+        if (ThemeManager.getCurrentTheme() == ThemeManager.Theme.LIGHT) {
+            dp.getStylesheets().add(getClass().getResource("/style-light.css").toExternalForm());
+        }
         dp.setMinWidth(450);
 
         VBox content = new VBox(15);
@@ -536,7 +552,8 @@ public class UserProfileController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);

@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import com.esprit.utils.ThemeManager;
 
 public class Main extends Application {
 
@@ -17,12 +18,11 @@ public class Main extends Application {
 
         Scene scene = new Scene(loader.load());
 
-        // ✅ Load CSS correctly
-        scene.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
-        );
+        // Apply theme (loads dark or light based on saved preference)
+        ThemeManager.applyTheme(scene);
+        ThemeManager.trackScene(scene);
 
-        // ✅ Remove white title bar
+        // Remove white title bar
         stage.initStyle(StageStyle.UNDECORATED);
 
         stage.setTitle("Login");

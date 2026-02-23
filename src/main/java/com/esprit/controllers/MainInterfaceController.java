@@ -22,6 +22,8 @@ import com.esprit.services.EtablissementService;
 import com.esprit.services.PanierService;
 import com.esprit.services.ReservationService;
 import com.esprit.services.utilisateurServices;
+import com.esprit.services.ChatbotService;
+import com.esprit.utils.ThemeManager;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -85,6 +87,7 @@ public class MainInterfaceController {
     private final PanierService panierService = new PanierService();
     private final ReservationService reservationService = new ReservationService();
     private final utilisateurServices userService = new utilisateurServices();
+    private final ChatbotService chatbotService = new ChatbotService();
 
     private List<Lieu> lieux;
     private List<Etablissement> etablissements;
@@ -109,6 +112,21 @@ public class MainInterfaceController {
                 stage.setX(event.getScreenX() - xOffset);
                 stage.setY(event.getScreenY() - yOffset);
             });
+            addThemeToggleButton();
+            addChatbotButton();
+
+            // Apply theme to FXML nodes (fix inline dark styles)
+            javafx.application.Platform.runLater(() -> {
+                if (titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                    ThemeManager.applyThemeToFXML((Parent) titleBar.getScene().getRoot());
+                }
+            });
+            // Re-apply when theme changes
+            ThemeManager.addThemeChangeListener(() -> javafx.application.Platform.runLater(() -> {
+                if (titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                    ThemeManager.applyThemeToFXML((Parent) titleBar.getScene().getRoot());
+                }
+            }));
         }
     }
 
@@ -169,7 +187,7 @@ public class MainInterfaceController {
         Button[] allNav = { navAccueil, navLieux, navRestaurants, navPaiements, navProfil };
         for (Button btn : allNav) {
             if (btn != null) btn.setStyle(btn == active
-                ? "-fx-background-color: rgba(255,215,0,0.1); -fx-text-fill: #FFD700; -fx-font-size: 12; -fx-padding: 10 14; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: bold;"
+                ? "-fx-background-color: " + ThemeManager.accentHover() + "; -fx-text-fill: " + ThemeManager.accent() + "; -fx-font-size: 12; -fx-padding: 10 14; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: bold;"
                 : "");
         }
     }
@@ -896,7 +914,8 @@ public class MainInterfaceController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
             newRoot.setOpacity(0); newRoot.setScaleX(1.03); newRoot.setScaleY(1.03); newRoot.setTranslateY(8);
             stage.setScene(newScene); stage.setTitle(title);
             stage.setMaximized(true);
@@ -982,5 +1001,243 @@ public class MainInterfaceController {
             }
         } catch (NumberFormatException ignored) {}
         return 50.0;
+    }
+
+    private StackPane findRootStackPane(Stage stage) {
+        Scene scene = stage.getScene();
+        if (scene == null) return null;
+        Parent root = scene.getRoot();
+        if (root instanceof StackPane) return (StackPane) root;
+        StackPane wrapper = new StackPane();
+        wrapper.getChildren().add(root);
+        scene.setRoot(wrapper);
+        return wrapper;
+    }
+
+    // ================================================================
+    // THEME TOGGLE BUTTON
+    // ================================================================
+    private void addThemeToggleButton() {
+        Button themeBtn = new Button(ThemeManager.themeIcon());
+        themeBtn.setStyle(ThemeManager.themeToggleBtnStyle());
+        themeBtn.setOnMouseEntered(e -> themeBtn.setStyle(ThemeManager.themeToggleBtnStyle().replace("0.1;", "0.2;")));
+        themeBtn.setOnMouseExited(e -> themeBtn.setStyle(ThemeManager.themeToggleBtnStyle()));
+        themeBtn.setOnAction(e -> {
+            ThemeManager.toggleTheme();
+            themeBtn.setText(ThemeManager.themeIcon());
+            themeBtn.setStyle(ThemeManager.themeToggleBtnStyle());
+        });
+        Tooltip tooltip = new Tooltip("Changer le theme");
+        tooltip.setStyle("-fx-font-size: 11;");
+        themeBtn.setTooltip(tooltip);
+
+        int insertIdx = titleBar.getChildren().size() - 1;
+        Region spacer = new Region();
+        spacer.setPrefWidth(6);
+        titleBar.getChildren().add(insertIdx, spacer);
+        titleBar.getChildren().add(insertIdx + 1, themeBtn);
+    }
+
+    // ================================================================
+    // AI CHATBOT
+    // ================================================================
+    private VBox chatPanel;
+    private VBox chatMessages;
+    private boolean chatOpen = false;
+
+    private void addChatbotButton() {
+        Button chatBtn = new Button("\uD83E\uDD16");
+        chatBtn.setStyle("-fx-background-color: " + ThemeManager.chatBtnGradient() + "; -fx-text-fill: white; -fx-font-size: 16; " +
+                "-fx-padding: 6 10; -fx-background-radius: 10; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);");
+        chatBtn.setOnMouseEntered(e -> chatBtn.setStyle("-fx-background-color: " + ThemeManager.chatBtnHoverGradient() + "; -fx-text-fill: white; -fx-font-size: 16; " +
+                "-fx-padding: 6 10; -fx-background-radius: 10; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 12, 0, 0, 3);"));
+        chatBtn.setOnMouseExited(e -> chatBtn.setStyle("-fx-background-color: " + ThemeManager.chatBtnGradient() + "; -fx-text-fill: white; -fx-font-size: 16; " +
+                "-fx-padding: 6 10; -fx-background-radius: 10; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 8, 0, 0, 2);"));
+        chatBtn.setOnAction(e -> toggleChatPanel());
+        Tooltip chatTip = new Tooltip("Assistant IA Tabaani");
+        chatTip.setStyle("-fx-font-size: 11;");
+        chatBtn.setTooltip(chatTip);
+
+        int insertIdx = titleBar.getChildren().size() - 1;
+        Region spacer = new Region();
+        spacer.setPrefWidth(6);
+        titleBar.getChildren().add(insertIdx, spacer);
+        titleBar.getChildren().add(insertIdx + 1, chatBtn);
+    }
+
+    private void toggleChatPanel() {
+        Stage stage = (Stage) titleBar.getScene().getWindow();
+        StackPane rootPane = findRootStackPane(stage);
+        if (rootPane == null) return;
+
+        if (chatOpen && chatPanel != null) {
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(200), chatPanel);
+            fadeOut.setToValue(0);
+            TranslateTransition slideOut = new TranslateTransition(Duration.millis(200), chatPanel);
+            slideOut.setToY(20);
+            ParallelTransition close = new ParallelTransition(fadeOut, slideOut);
+            close.setOnFinished(e -> { rootPane.getChildren().remove(chatPanel); chatPanel = null; });
+            close.play();
+            chatOpen = false;
+            return;
+        }
+
+        chatOpen = true;
+        chatPanel = new VBox(0);
+        chatPanel.setMaxWidth(380);
+        chatPanel.setMaxHeight(520);
+        chatPanel.setStyle("-fx-background-color: " + ThemeManager.cardBg() + "; -fx-background-radius: 16; " +
+                "-fx-border-color: " + ThemeManager.accentBorder() + "; -fx-border-radius: 16; -fx-border-width: 1; " +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 20, 0, 0, 5);");
+        StackPane.setAlignment(chatPanel, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(chatPanel, new Insets(0, 30, 30, 0));
+
+        HBox header = new HBox(10);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(14, 16, 14, 16));
+        header.setStyle("-fx-background-color: " + (ThemeManager.isDark() ? "linear-gradient(to right, rgba(255,215,0,0.15), rgba(255,140,0,0.08))" : "linear-gradient(to right, rgba(37,99,235,0.1), rgba(59,130,246,0.05))") + "; -fx-background-radius: 16 16 0 0;");
+
+        StackPane botAvatar = new StackPane();
+        botAvatar.setPrefSize(32, 32);
+        botAvatar.setStyle("-fx-background-color: " + ThemeManager.chatBtnGradient() + "; -fx-background-radius: 16;");
+        Label botIcon = new Label("\uD83E\uDD16");
+        botIcon.setStyle("-fx-font-size: 14;");
+        botAvatar.getChildren().add(botIcon);
+
+        VBox headerText = new VBox(1);
+        Label chatTitle = new Label("Tabaani AI Assistant");
+        chatTitle.setStyle("-fx-text-fill: " + ThemeManager.accent() + "; -fx-font-size: 13; -fx-font-weight: bold;");
+        Label chatSub = new Label("En ligne - Pret a vous aider");
+        chatSub.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 9;");
+        headerText.getChildren().addAll(chatTitle, chatSub);
+        HBox.setHgrow(headerText, Priority.ALWAYS);
+
+        Button closeChat = new Button("\u2715");
+        closeChat.setStyle("-fx-background-color: transparent; -fx-text-fill: " + ThemeManager.textSecondary() + "; -fx-font-size: 12; -fx-cursor: hand;");
+        closeChat.setOnAction(e -> toggleChatPanel());
+        header.getChildren().addAll(botAvatar, headerText, closeChat);
+
+        chatMessages = new VBox(8);
+        chatMessages.setPadding(new Insets(12));
+        ScrollPane msgScroll = new ScrollPane(chatMessages);
+        msgScroll.setFitToWidth(true);
+        msgScroll.setPrefHeight(340);
+        msgScroll.setStyle("-fx-background: " + ThemeManager.bg() + "; -fx-background-color: " + ThemeManager.bg() + "; -fx-border-width: 0;");
+        msgScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        VBox.setVgrow(msgScroll, Priority.ALWAYS);
+
+        addBotMessage("Bonjour! \uD83D\uDC4B Je suis Tabaani AI, votre assistant de voyage.\n\n" +
+                "\u2022 Decouvrir des destinations\n" +
+                "\u2022 Reserver des hotels et restaurants\n" +
+                "\u2022 Obtenir des conseils de voyage\n" +
+                "\u2022 Codes promo disponibles\n\n" +
+                "Que souhaitez-vous explorer ?");
+
+        HBox quickActions = new HBox(6);
+        quickActions.setPadding(new Insets(8, 12, 4, 12));
+        quickActions.setAlignment(Pos.CENTER);
+        String[][] actions = {
+                {"\uD83C\uDF0D Destinations", "Quelles sont les meilleures destinations en Tunisie ?"},
+                {"\uD83C\uDFE8 Hotels", "Recommande-moi des hotels pour un sejour de luxe"},
+                {"\uD83D\uDCA1 Conseils", "Donne-moi des astuces pour voyager en Tunisie"}
+        };
+        for (String[] action : actions) {
+            Button qBtn = new Button(action[0]);
+            qBtn.setStyle("-fx-background-color: " + ThemeManager.accentHover() + "; -fx-text-fill: " + ThemeManager.accent() + "; " +
+                    "-fx-font-size: 9; -fx-padding: 5 10; -fx-background-radius: 12; -fx-cursor: hand; " +
+                    "-fx-border-color: " + ThemeManager.accentBorder() + "; -fx-border-radius: 12;");
+            qBtn.setOnAction(e -> sendChatMessage(action[1]));
+            quickActions.getChildren().add(qBtn);
+        }
+
+        HBox inputArea = new HBox(8);
+        inputArea.setPadding(new Insets(10, 12, 14, 12));
+        inputArea.setAlignment(Pos.CENTER);
+        inputArea.setStyle("-fx-border-color: " + ThemeManager.borderColor() + "; -fx-border-width: 1 0 0 0;");
+
+        TextField chatInput = new TextField();
+        chatInput.setPromptText("Ecrivez votre message...");
+        chatInput.setStyle("-fx-background-color: " + ThemeManager.inputBg() + "; -fx-text-fill: " + ThemeManager.textPrimary() + "; " +
+                "-fx-prompt-text-fill: " + ThemeManager.textSecondary() + "; -fx-padding: 10 14; -fx-background-radius: 20; " +
+                "-fx-border-color: " + ThemeManager.accentBorder() + "; -fx-border-radius: 20; -fx-font-size: 12;");
+        HBox.setHgrow(chatInput, Priority.ALWAYS);
+
+        Button sendBtn = new Button("\u27A4");
+        sendBtn.setStyle("-fx-background-color: " + ThemeManager.chatBtnGradient() + "; -fx-text-fill: white; " +
+                "-fx-font-size: 14; -fx-padding: 8 12; -fx-background-radius: 20; -fx-cursor: hand;");
+        sendBtn.setOnAction(e -> {
+            String msg = chatInput.getText().trim();
+            if (!msg.isEmpty()) { sendChatMessage(msg); chatInput.clear(); }
+        });
+        chatInput.setOnAction(e -> sendBtn.fire());
+        inputArea.getChildren().addAll(chatInput, sendBtn);
+
+        chatPanel.getChildren().addAll(header, msgScroll, quickActions, inputArea);
+        chatPanel.setOpacity(0);
+        chatPanel.setTranslateY(20);
+        rootPane.getChildren().add(chatPanel);
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(250), chatPanel);
+        fadeIn.setToValue(1);
+        TranslateTransition slideIn = new TranslateTransition(Duration.millis(250), chatPanel);
+        slideIn.setToY(0);
+        new ParallelTransition(fadeIn, slideIn).play();
+    }
+
+    private void addBotMessage(String text) {
+        HBox msgRow = new HBox(8);
+        msgRow.setAlignment(Pos.TOP_LEFT);
+        msgRow.setPadding(new Insets(2, 30, 2, 0));
+        StackPane avatar = new StackPane();
+        avatar.setMinSize(26, 26); avatar.setMaxSize(26, 26);
+        avatar.setStyle("-fx-background-color: " + ThemeManager.chatBtnGradient() + "; -fx-background-radius: 13;");
+        Label avIcon = new Label("\uD83E\uDD16");
+        avIcon.setStyle("-fx-font-size: 10;");
+        avatar.getChildren().add(avIcon);
+        Label msgLbl = new Label(text);
+        msgLbl.setWrapText(true); msgLbl.setMaxWidth(260);
+        msgLbl.setStyle("-fx-background-color: " + ThemeManager.accentHover() + "; -fx-text-fill: " + ThemeManager.textPrimary() + "; " +
+                "-fx-font-size: 11; -fx-padding: 10 14; -fx-background-radius: 4 14 14 14;");
+        msgRow.getChildren().addAll(avatar, msgLbl);
+        if (chatMessages != null) chatMessages.getChildren().add(msgRow);
+    }
+
+    private void addUserMessage(String text) {
+        HBox msgRow = new HBox(8);
+        msgRow.setAlignment(Pos.TOP_RIGHT);
+        msgRow.setPadding(new Insets(2, 0, 2, 30));
+        Label msgLbl = new Label(text);
+        msgLbl.setWrapText(true); msgLbl.setMaxWidth(260);
+        msgLbl.setStyle("-fx-background-color: " + ThemeManager.accentGradient() + "; -fx-text-fill: " + (ThemeManager.isDark() ? "#000" : "#fff") + "; " +
+                "-fx-font-size: 11; -fx-padding: 10 14; -fx-background-radius: 14 4 14 14; -fx-font-weight: bold;");
+        msgRow.getChildren().add(msgLbl);
+        if (chatMessages != null) chatMessages.getChildren().add(msgRow);
+    }
+
+    private void sendChatMessage(String message) {
+        addUserMessage(message);
+        HBox typingRow = new HBox(8);
+        typingRow.setAlignment(Pos.TOP_LEFT);
+        StackPane tAvatar = new StackPane();
+        tAvatar.setMinSize(26, 26); tAvatar.setMaxSize(26, 26);
+        tAvatar.setStyle("-fx-background-color: " + ThemeManager.chatBtnGradient() + "; -fx-background-radius: 13;");
+        Label tIcon = new Label("\uD83E\uDD16");
+        tIcon.setStyle("-fx-font-size: 10;");
+        tAvatar.getChildren().add(tIcon);
+        Label typingLbl = new Label("\u2022\u2022\u2022 En train de reflechir...");
+        typingLbl.setStyle("-fx-background-color: " + ThemeManager.accentHover() + "; -fx-text-fill: " + ThemeManager.textSecondary() + "; " +
+                "-fx-font-size: 10; -fx-padding: 10 14; -fx-background-radius: 4 14 14 14; -fx-font-style: italic;");
+        typingRow.getChildren().addAll(tAvatar, typingLbl);
+        if (chatMessages != null) chatMessages.getChildren().add(typingRow);
+
+        new Thread(() -> {
+            String response = chatbotService.chat(message);
+            javafx.application.Platform.runLater(() -> {
+                if (chatMessages != null) {
+                    chatMessages.getChildren().remove(typingRow);
+                    addBotMessage(response);
+                }
+            });
+        }).start();
     }
 }

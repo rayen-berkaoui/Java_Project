@@ -16,6 +16,7 @@ import javafx.scene.Node;
 import com.esprit.services.EmailService;
 import com.esprit.services.OTPService;
 import com.esprit.services.utilisateurServices;
+import com.esprit.utils.ThemeManager;
 
 public class ForgotPasswordController {
 
@@ -74,6 +75,13 @@ public class ForgotPasswordController {
                 stage.setY(event.getScreenY() - yOffset);
             });
         }
+
+        // Apply theme to FXML nodes
+        javafx.application.Platform.runLater(() -> {
+            if (emailField != null && emailField.getScene() != null && emailField.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) emailField.getScene().getRoot());
+            }
+        });
     }
 
     // ================================================
@@ -435,7 +443,8 @@ public class ForgotPasswordController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);

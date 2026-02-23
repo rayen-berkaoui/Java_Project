@@ -20,6 +20,7 @@ import com.esprit.entities.role;
 import com.esprit.entities.utilisateur;
 import com.esprit.services.roleServices;
 import com.esprit.services.utilisateurServices;
+import com.esprit.utils.ThemeManager;
 
 import java.util.List;
 import java.util.Optional;
@@ -114,6 +115,18 @@ public class AdminController {
         if (userSearchField != null) {
             userSearchField.setOnAction(e -> handleSearchUsers());
         }
+
+        // Apply theme to FXML nodes
+        javafx.application.Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) titleBar.getScene().getRoot());
+            }
+        });
+        ThemeManager.addThemeChangeListener(() -> javafx.application.Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) titleBar.getScene().getRoot());
+            }
+        }));
     }
 
     // ================= TABLE SETUP =================
@@ -401,6 +414,9 @@ public class AdminController {
         dp.setContent(content);
         dp.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+        if (ThemeManager.getCurrentTheme() == ThemeManager.Theme.LIGHT) {
+            dp.getStylesheets().add(getClass().getResource("/style-light.css").toExternalForm());
+        }
         dp.getStyleClass().add("dialog-pane");
 
         Optional<ButtonType> result = dialog.showAndWait();
@@ -719,7 +735,8 @@ public class AdminController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);
@@ -767,6 +784,9 @@ public class AdminController {
         dp.setContent(content);
         dp.getButtonTypes().add(ButtonType.OK);
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+        if (ThemeManager.getCurrentTheme() == ThemeManager.Theme.LIGHT) {
+            dp.getStylesheets().add(getClass().getResource("/style-light.css").toExternalForm());
+        }
         dp.getStyleClass().add("dialog-pane");
 
         alert.showAndWait();
@@ -794,6 +814,9 @@ public class AdminController {
         dp.setContent(content);
         dp.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+        if (ThemeManager.getCurrentTheme() == ThemeManager.Theme.LIGHT) {
+            dp.getStylesheets().add(getClass().getResource("/style-light.css").toExternalForm());
+        }
         dp.getStyleClass().add("dialog-pane");
 
         return alert.showAndWait();

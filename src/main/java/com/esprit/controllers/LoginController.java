@@ -17,6 +17,7 @@ import javafx.application.Platform;
 
 import com.esprit.entities.utilisateur;
 import com.esprit.services.utilisateurServices;
+import com.esprit.utils.ThemeManager;
 import com.esprit.services.FaceRecognitionService;
 
 import org.bytedeco.opencv.opencv_core.Mat;
@@ -82,6 +83,10 @@ public class LoginController {
         Platform.runLater(() -> {
             if (emailField != null && emailField.getScene() != null) {
                 emailField.getScene().getWindow().setOnHiding(e -> stopCameraCleanup());
+                // Apply theme to FXML nodes
+                if (emailField.getScene().getRoot() != null) {
+                    ThemeManager.applyThemeToFXML((Parent) emailField.getScene().getRoot());
+                }
             }
         });
     }
@@ -642,9 +647,8 @@ public class LoginController {
 
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
-            );
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
 
             // Prepare entrance state
             newRoot.setOpacity(0);

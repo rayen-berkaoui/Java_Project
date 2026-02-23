@@ -23,6 +23,7 @@ import com.esprit.entities.RolePermission;
 import com.esprit.entities.role;
 import com.esprit.entities.utilisateur;
 import com.esprit.services.*;
+import com.esprit.utils.ThemeManager;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -164,6 +165,18 @@ public class DashboardController {
 
         loadRolesCombo();
         loadUserFilters();
+
+        // Apply theme to FXML nodes
+        javafx.application.Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) titleBar.getScene().getRoot());
+            }
+        });
+        ThemeManager.addThemeChangeListener(() -> javafx.application.Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) titleBar.getScene().getRoot());
+            }
+        }));
     }
 
     public void setUserName(String userName) {
@@ -1266,7 +1279,8 @@ public class DashboardController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
             newRoot.setOpacity(0); newRoot.setScaleX(1.03); newRoot.setScaleY(1.03); newRoot.setTranslateY(8);
             stage.setScene(newScene);
             stage.setTitle(title);

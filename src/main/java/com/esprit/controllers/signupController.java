@@ -13,6 +13,7 @@ import javafx.scene.Node;
 import javafx.application.Platform;
 
 import com.esprit.services.utilisateurServices;
+import com.esprit.utils.ThemeManager;
 
 public class signupController {
 
@@ -100,6 +101,8 @@ public class signupController {
         Platform.runLater(() -> {
             try {
                 Parent root = signupButton.getScene().getRoot();
+                // Apply theme to FXML nodes
+                ThemeManager.applyThemeToFXML(root);
                 root.setOpacity(0);
                 root.setTranslateY(12);
                 FadeTransition fadeIn = new FadeTransition(Duration.millis(500), root);
@@ -284,7 +287,8 @@ public class signupController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);
