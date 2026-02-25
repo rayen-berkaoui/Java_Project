@@ -27,8 +27,8 @@ public class ActiviteServices implements ICrud<Activite> {
         String sql = "INSERT INTO activite (" +
                 "nomActivite, description, categorie, duree, niveau, prix, devise, " +
                 "date_debut, date_fin, nb_places, places_dispo, adresse_depart, age_min, " +
-                "equipement_inclus, conditions_annulation, statut" +
-                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                "equipement_inclus, conditions_annulation, statut, idEtablissement" +
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
             fillInsertOrUpdate(ps, a, false);
@@ -41,8 +41,8 @@ public class ActiviteServices implements ICrud<Activite> {
         String sql = "INSERT INTO activite (" +
                 "nomActivite, description, categorie, duree, niveau, prix, devise, " +
                 "date_debut, date_fin, nb_places, places_dispo, adresse_depart, age_min, " +
-                "equipement_inclus, conditions_annulation, statut" +
-                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+                "equipement_inclus, conditions_annulation, statut, idEtablissement" +
+                ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
         try (PreparedStatement ps = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             fillInsertOrUpdate(ps, a, false);
@@ -85,12 +85,12 @@ public class ActiviteServices implements ICrud<Activite> {
         String sql = "UPDATE activite SET " +
                 "nomActivite=?, description=?, categorie=?, duree=?, niveau=?, prix=?, devise=?, " +
                 "date_debut=?, date_fin=?, nb_places=?, places_dispo=?, adresse_depart=?, age_min=?, " +
-                "equipement_inclus=?, conditions_annulation=?, statut=? " +
+                "equipement_inclus=?, conditions_annulation=?, statut=?, idEtablissement=? " +
                 "WHERE idActivite=?";
 
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
             fillInsertOrUpdate(ps, a, true);
-            ps.setInt(17, a.getIdActivite());
+            ps.setInt(18, a.getIdActivite());
             ps.executeUpdate();
         }
     }
@@ -151,6 +151,10 @@ public class ActiviteServices implements ICrud<Activite> {
         else ps.setString(15, a.getConditionsAnnulation());
 
         ps.setString(16, normalizeEnum(a.getStatut(), "disponible"));
+
+        // FK : idEtablissement
+        if (a.getIdEtablissement() == null) ps.setNull(17, Types.INTEGER);
+        else ps.setInt(17, a.getIdEtablissement());
     }
 
     private Activite map(ResultSet rs) throws SQLException {
@@ -187,6 +191,9 @@ public class ActiviteServices implements ICrud<Activite> {
         a.setEquipementInclus(rs.getString("equipement_inclus"));
         a.setConditionsAnnulation(rs.getString("conditions_annulation"));
         a.setStatut(rs.getString("statut"));
+
+        int etabId = rs.getInt("idEtablissement");
+        a.setIdEtablissement(rs.wasNull() ? null : etabId);
 
         return a;
     }

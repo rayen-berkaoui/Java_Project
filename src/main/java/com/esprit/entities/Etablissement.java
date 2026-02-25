@@ -12,14 +12,12 @@ public class Etablissement {
     private String gammePrix;
 
     private String type;
-    private Double latitude;
-    private Double longitude;
 
     public Etablissement() {}
 
     public Etablissement(String nom, String description, String adresse, String ville,
                          String telephone, String email, String horaires, String gammePrix,
-                         String type, Double latitude, Double longitude) {
+                         String type) {
         this.nom = nom;
         this.description = description;
         this.adresse = adresse;
@@ -29,8 +27,6 @@ public class Etablissement {
         this.horaires = horaires;
         this.gammePrix = gammePrix;
         this.type = type;
-        this.latitude = latitude;
-        this.longitude = longitude;
     }
 
     public int getIdEtablissement() { return idEtablissement; }
@@ -62,10 +58,4 @@ public class Etablissement {
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
-
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double latitude) { this.latitude = latitude; }
-
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

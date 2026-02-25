@@ -4,9 +4,8 @@ import com.esprit.entities.Activite;
 import com.esprit.entities.ActiviteImage;
 import com.esprit.services.ActiviteImageServices;
 import com.esprit.services.ActiviteServices;
-// ✅ A AJOUTER : ton service établissement
-// import com.esprit.services.EtablissementServices;
-// import com.esprit.entities.Etablissement;
+import com.esprit.services.EtablissementServices;
+import com.esprit.entities.Etablissement;
 
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
@@ -20,12 +19,26 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.nio.file.*;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class AjouterActiviteController {
 
+    // ====== Regex patterns ======
+    private static final Pattern NAME_PATTERN =
+            Pattern.compile("^[A-Za-zÀ-ÖØ-öø-ÿ0-9\\s'\\-&.,()]+$");
+    private static final Pattern DIGITS_ONLY = Pattern.compile("^\\d+$");
+    private static final Pattern PRIX_PATTERN = Pattern.compile("^\\d+([.,]\\d{1,2})?$");
+    private static final Pattern ALPHA_ONLY =
+            Pattern.compile("^[A-Za-zÀ-ÖØ-öø-ÿ\\s'\\-]+$");
+
     // ====== FXML ======
+    @FXML private Label titleLabel;
+    @FXML private Label subtitleLabel;
     @FXML private ComboBox<EtablissementItem> etablissementBox;
     @FXML private Label etablissementError;
 
@@ -34,6 +47,28 @@ public class AjouterActiviteController {
     @FXML private ComboBox<String> niveauBox;
     @FXML private TextField dureeField;
     @FXML private TextArea descArea;
+
+    // Nouveaux champs
+    @FXML private ComboBox<String> statutBox;
+    @FXML private TextField ageMinField;
+    @FXML private Label ageMinError;
+    @FXML private TextField prixField;
+    @FXML private Label prixError;
+    @FXML private ComboBox<String> deviseBox;
+    @FXML private DatePicker dateDebutPicker;
+    @FXML private DatePicker dateFinPicker;
+    @FXML private TextField nbPlacesField;
+    @FXML private Label nbPlacesError;
+    @FXML private TextField placesDispoField;
+    @FXML private Label placesDispoError;
+    @FXML private TextField adresseDepartField;
+    @FXML private Label adresseDepartError;
+    @FXML private TextArea equipementArea;
+    @FXML private Label equipementError;
+    @FXML private TextArea conditionsArea;
+    @FXML private Label conditionsError;
+    @FXML private Label dateDebutError;
+    @FXML private Label dateFinError;
 
     @FXML private Label messageLabel;
     @FXML private Button saveBtn;
@@ -50,41 +85,71 @@ public class AjouterActiviteController {
     // ====== Services ======
     private final ActiviteServices service = new ActiviteServices();
     private final ActiviteImageServices imageService = new ActiviteImageServices();
-
-    // private final EtablissementServices etabService = new EtablissementServices();
+    private final EtablissementServices etabService = new EtablissementServices();
 
     private final List<File> selectedImageFiles = new ArrayList<>();
 
     @FXML
     public void initialize() {
-        // ✅ combos
+        // combos
         categorieBox.setItems(FXCollections.observableArrayList("Sport", "Culture", "Loisir", "Nature", "Autre"));
         niveauBox.setItems(FXCollections.observableArrayList("Débutant", "Intermédiaire", "Avancé"));
+        if (statutBox != null) statutBox.setItems(FXCollections.observableArrayList("disponible", "complete", "annulee"));
+        if (deviseBox != null) {
+            deviseBox.setItems(FXCollections.observableArrayList("TND", "EUR", "USD"));
+            deviseBox.setValue("TND");
+        }
 
-        // ✅ charger établissements (FK)
+        // charger établissements (FK)
         loadEtablissements();
 
-        // ✅ mode edit
-        if (ActiviteController.activiteToEdit != null) {
-            Activite a = ActiviteController.activiteToEdit;
+        // mode edit
+        if (AffichageActiviteController.activiteToEdit != null) {
+            Activite a = AffichageActiviteController.activiteToEdit;
+            if (titleLabel != null) titleLabel.setText("Modifier l'activité");
+            if (subtitleLabel != null) subtitleLabel.setText("Modifiez les informations de l'activité");
+            if (saveBtn != null) saveBtn.setText("Enregistrer les modifications");
             nomField.setText(safe(a.getNomActivite()));
             categorieBox.setValue(blankToNull(a.getCategorie()));
             niveauBox.setValue(blankToNull(a.getNiveau()));
             dureeField.setText(a.getDuree() == null ? "" : String.valueOf(a.getDuree()));
             descArea.setText(safe(a.getDescription()));
 
-            // ✅ IMPORTANT : sélectionner établissement si tu as idEtablissement dans Activite
-            // Exemple :
-            // selectEtablissementById(a.getIdEtablissement());
+            // Nouveaux champs en mode edit
+            if (statutBox != null && a.getStatut() != null) statutBox.setValue(a.getStatut());
+            if (ageMinField != null) ageMinField.setText(a.getAgeMin() == null ? "" : String.valueOf(a.getAgeMin()));
+            if (prixField != null) prixField.setText(a.getPrix() == null ? "" : a.getPrix().toPlainString());
+            if (deviseBox != null && a.getDevise() != null && !a.getDevise().isBlank()) deviseBox.setValue(a.getDevise());
+            if (dateDebutPicker != null && a.getDateDebut() != null) dateDebutPicker.setValue(a.getDateDebut().toLocalDateTime().toLocalDate());
+            if (dateFinPicker != null && a.getDateFin() != null) dateFinPicker.setValue(a.getDateFin().toLocalDateTime().toLocalDate());
+            if (nbPlacesField != null) nbPlacesField.setText(a.getNbPlaces() == null ? "" : String.valueOf(a.getNbPlaces()));
+            if (placesDispoField != null) placesDispoField.setText(a.getPlacesDispo() == null ? "" : String.valueOf(a.getPlacesDispo()));
+            if (adresseDepartField != null) adresseDepartField.setText(safe(a.getAdresseDepart()));
+            if (equipementArea != null) equipementArea.setText(safe(a.getEquipementInclus()));
+            if (conditionsArea != null) conditionsArea.setText(safe(a.getConditionsAnnulation()));
+
+            // Sélectionner l'établissement correspondant
+            if (a.getIdEtablissement() != null) {
+                for (EtablissementItem item : etablissementBox.getItems()) {
+                    if (item.getId() == a.getIdEtablissement()) {
+                        etablissementBox.setValue(item);
+                        break;
+                    }
+                }
+            }
         }
 
-        // ✅ validation live
+        // validation live
         nomField.textProperty().addListener((o, a, b) -> validateAll());
         categorieBox.valueProperty().addListener((o, a, b) -> validateAll());
         niveauBox.valueProperty().addListener((o, a, b) -> validateAll());
         dureeField.textProperty().addListener((o, a, b) -> validateAll());
         descArea.textProperty().addListener((o, a, b) -> validateAll());
         etablissementBox.valueProperty().addListener((o, a, b) -> validateAll());
+        if (prixField != null) prixField.textProperty().addListener((o, a, b) -> validateAll());
+        if (nbPlacesField != null) nbPlacesField.textProperty().addListener((o, a, b) -> validateAll());
+        if (placesDispoField != null) placesDispoField.textProperty().addListener((o, a, b) -> validateAll());
+        if (ageMinField != null) ageMinField.textProperty().addListener((o, a, b) -> validateAll());
 
         validateAll();
         rebuildImagesStrip();
@@ -107,19 +172,17 @@ public class AjouterActiviteController {
             }
         });
 
-        // ✅ TODO : remplace ça par ta vraie lecture DB
-        // Exemple attendu :
-        // List<Etablissement> list = etabService.getAll();
-        // List<EtablissementItem> items = list.stream()
-        //     .map(e -> new EtablissementItem(e.getIdEtablissement(), e.getNom()))
-        //     .toList();
-        // etablissementBox.setItems(FXCollections.observableArrayList(items));
-
-        // --- DEMO TEMPORAIRE (à supprimer quand tu branches DB) ---
-        etablissementBox.setItems(FXCollections.observableArrayList(
-                new EtablissementItem(1, "Etablissement A"),
-                new EtablissementItem(2, "Etablissement B")
-        ));
+        // Charger les établissements depuis la base de données
+        try {
+            List<Etablissement> list = etabService.afficher();
+            List<EtablissementItem> items = list.stream()
+                    .map(e -> new EtablissementItem(e.getIdEtablissement(), e.getNom()))
+                    .toList();
+            etablissementBox.setItems(FXCollections.observableArrayList(items));
+        } catch (Exception ex) {
+            System.err.println("Erreur chargement établissements: " + ex.getMessage());
+            etablissementBox.setItems(FXCollections.observableArrayList());
+        }
     }
 
     // private void selectEtablissementById(Integer id) {
@@ -229,7 +292,7 @@ public class AjouterActiviteController {
         if (!validateAll()) return;
 
         try {
-            // ✅ FK : idEtablissement
+            // FK : idEtablissement
             EtablissementItem etab = etablissementBox.getValue();
             int idEtablissement = etab.getId();
 
@@ -239,35 +302,74 @@ public class AjouterActiviteController {
             String desc = safe(descArea.getText()).trim();
             Integer duree = parseIntOrNull(dureeField.getText());
 
-            Activite a = (ActiviteController.activiteToEdit == null)
+            // Nouveaux champs
+            BigDecimal prix = parseBigDecimalOrNull(prixField);
+            String devise = (deviseBox != null && deviseBox.getValue() != null) ? deviseBox.getValue() : "TND";
+            String statut = (statutBox != null && statutBox.getValue() != null) ? statutBox.getValue() : "disponible";
+            Integer ageMin = parseIntOrNull(ageMinField != null ? ageMinField.getText() : null);
+            Integer nbPlaces = parseIntOrNull(nbPlacesField != null ? nbPlacesField.getText() : null);
+            Integer placesDispo = parseIntOrNull(placesDispoField != null ? placesDispoField.getText() : null);
+            String adresseDepart = adresseDepartField != null ? safe(adresseDepartField.getText()).trim() : "";
+            String equipement = equipementArea != null ? safe(equipementArea.getText()).trim() : "";
+            String conditions = conditionsArea != null ? safe(conditionsArea.getText()).trim() : "";
+
+            Timestamp dateDebut = null;
+            if (dateDebutPicker != null && dateDebutPicker.getValue() != null) {
+                dateDebut = Timestamp.valueOf(dateDebutPicker.getValue().atStartOfDay());
+            }
+            Timestamp dateFin = null;
+            if (dateFinPicker != null && dateFinPicker.getValue() != null) {
+                dateFin = Timestamp.valueOf(dateFinPicker.getValue().atStartOfDay());
+            }
+
+            Activite a = (AffichageActiviteController.activiteToEdit == null)
                     ? new Activite()
-                    : ActiviteController.activiteToEdit;
+                    : AffichageActiviteController.activiteToEdit;
 
             a.setNomActivite(nom);
             a.setCategorie(cat);
             a.setNiveau(niv);
             a.setDuree(duree);
             a.setDescription(desc);
-
-            // ✅ IMPORTANT : tu dois avoir ce champ dans Activite
-            // et dans ta table activite : idEtablissement (FK)
             a.setIdEtablissement(idEtablissement);
+            a.setPrix(prix);
+            a.setDevise(devise);
+            a.setStatut(statut);
+            a.setAgeMin(ageMin);
+            a.setNbPlaces(nbPlaces);
+            a.setPlacesDispo(placesDispo);
+            a.setAdresseDepart(adresseDepart.isBlank() ? null : adresseDepart);
+            a.setEquipementInclus(equipement.isBlank() ? null : equipement);
+            a.setConditionsAnnulation(conditions.isBlank() ? null : conditions);
+            a.setDateDebut(dateDebut);
+            a.setDateFin(dateFin);
 
-            if (a.getDevise() == null || a.getDevise().isBlank()) a.setDevise("TND");
-            if (a.getStatut() == null || a.getStatut().isBlank()) a.setStatut("disponible");
-
-            if (ActiviteController.activiteToEdit == null) {
+            if (AffichageActiviteController.activiteToEdit == null) {
                 int newId = service.ajouterEtRetournerId(a);
                 saveImagesToDB(newId);
-                setMessage("✅ Activité ajoutée.", true);
+
+                try {
+                    SuccessNotification.show(saveBtn, "Activité ajoutée avec succès !", () -> {
+                        NavigationUtils.goTo("/activite_affichage.fxml", event);
+                    });
+                } catch (Exception notifEx) {
+                    notifEx.printStackTrace();
+                    NavigationUtils.goTo("/activite_affichage.fxml", event);
+                }
             } else {
                 service.modifier(a);
                 if (!selectedImageFiles.isEmpty()) saveImagesToDB(a.getIdActivite());
-                ActiviteController.activiteToEdit = null;
-                setMessage("✅ Activité modifiée.", true);
-            }
+                AffichageActiviteController.activiteToEdit = null;
 
-            NavigationUtils.goTo("/activite_view.fxml", event);
+                try {
+                    SuccessNotification.show(saveBtn, "Activité modifiée avec succès !", () -> {
+                        NavigationUtils.goTo("/activite_affichage.fxml", event);
+                    });
+                } catch (Exception notifEx) {
+                    notifEx.printStackTrace();
+                    NavigationUtils.goTo("/activite_affichage.fxml", event);
+                }
+            }
 
         } catch (Exception e) {
             showError("Erreur: " + e.getMessage());
@@ -276,79 +378,251 @@ public class AjouterActiviteController {
 
     @FXML
     private void onCancel(ActionEvent event) {
-        ActiviteController.activiteToEdit = null;
-        NavigationUtils.goTo("/activite_view.fxml", event);
+        AffichageActiviteController.activiteToEdit = null;
+        NavigationUtils.goTo("/activite_affichage.fxml", event);
     }
 
     // ================= VALIDATION =================
 
     private boolean validateAll() {
         clearErrors();
-        StringBuilder errors = new StringBuilder();
+        boolean valid = true;
 
-        // ✅ etablissement obligatoire
+        // ──────── Établissement (obligatoire) ────────
         if (etablissementBox.getValue() == null) {
-            errors.append("• Établissement obligatoire.\n");
+            setError(etablissementError, "Choisis un établissement.");
             markError(etablissementBox);
-            if (etablissementError != null) etablissementError.setText("Choisis un établissement.");
+            valid = false;
         }
 
+        // ──────── Nom (obligatoire, 3-120 chars, pas de chiffres seuls) ────────
         String nom = safe(nomField.getText()).trim();
         if (nom.isBlank()) {
-            errors.append("• Nom obligatoire.\n");
+            setError(nomError, "Le nom est obligatoire.");
             markError(nomField);
-            if (nomError != null) nomError.setText("Nom obligatoire.");
+            valid = false;
+        } else if (nom.length() < 3) {
+            setError(nomError, "Le nom doit contenir au moins 3 caractères.");
+            markError(nomField);
+            valid = false;
         } else if (nom.length() > 120) {
-            errors.append("• Nom : max 120 caractères.\n");
+            setError(nomError, "Le nom ne doit pas dépasser 120 caractères.");
             markError(nomField);
-            if (nomError != null) nomError.setText("Max 120 caractères.");
+            valid = false;
+        } else if (!NAME_PATTERN.matcher(nom).matches()) {
+            setError(nomError, "Le nom contient des caractères non autorisés.");
+            markError(nomField);
+            valid = false;
+        } else if (nom.matches("^\\d+$")) {
+            setError(nomError, "Le nom ne peut pas être uniquement des chiffres.");
+            markError(nomField);
+            valid = false;
         }
 
+        // ──────── Catégorie (obligatoire) ────────
         String cat = categorieBox.getValue();
         if (cat == null || cat.isBlank()) {
-            errors.append("• Catégorie obligatoire.\n");
+            setError(categorieError, "La catégorie est obligatoire.");
             markError(categorieBox);
-            if (categorieError != null) categorieError.setText("Catégorie obligatoire.");
+            valid = false;
         }
 
+        // ──────── Niveau (obligatoire) ────────
         String niv = niveauBox.getValue();
         if (niv == null || niv.isBlank()) {
-            errors.append("• Niveau obligatoire.\n");
+            setError(niveauError, "Le niveau est obligatoire.");
             markError(niveauBox);
-            if (niveauError != null) niveauError.setText("Niveau obligatoire.");
+            valid = false;
         }
 
+        // ──────── Durée (optionnel, mais si rempli: entier > 0, max 9999) ────────
         String dTxt = safe(dureeField.getText()).trim();
         if (!dTxt.isEmpty()) {
-            Integer d = parseIntOrNull(dTxt);
-            if (d == null) {
-                errors.append("• Durée invalide (ex: 60).\n");
+            if (!DIGITS_ONLY.matcher(dTxt).matches()) {
+                setError(dureeError, "La durée doit contenir uniquement des chiffres.");
                 markError(dureeField);
-                if (dureeError != null) dureeError.setText("Durée invalide.");
-            } else if (d <= 0) {
-                errors.append("• Durée : doit être > 0.\n");
-                markError(dureeField);
-                if (dureeError != null) dureeError.setText("Doit être > 0.");
+                valid = false;
+            } else {
+                Integer d = parseIntOrNull(dTxt);
+                if (d == null || d <= 0) {
+                    setError(dureeError, "La durée doit être supérieure à 0.");
+                    markError(dureeField);
+                    valid = false;
+                } else if (d > 9999) {
+                    setError(dureeError, "La durée ne peut pas dépasser 9999 minutes.");
+                    markError(dureeField);
+                    valid = false;
+                }
             }
         }
 
-        String desc = safe(descArea.getText()).trim();
-        if (desc.length() > 5000) {
-            errors.append("• Description trop longue.\n");
-            markError(descArea);
-            if (descError != null) descError.setText("Trop long.");
+        // ──────── Âge minimum (optionnel, 0-120) ────────
+        if (ageMinField != null) {
+            String ageTxt = safe(ageMinField.getText()).trim();
+            if (!ageTxt.isEmpty()) {
+                if (!DIGITS_ONLY.matcher(ageTxt).matches()) {
+                    setError(ageMinError, "L'âge doit contenir uniquement des chiffres.");
+                    markError(ageMinField);
+                    valid = false;
+                } else {
+                    Integer age = parseIntOrNull(ageTxt);
+                    if (age == null || age < 0) {
+                        setError(ageMinError, "L'âge minimum doit être >= 0.");
+                        markError(ageMinField);
+                        valid = false;
+                    } else if (age > 120) {
+                        setError(ageMinError, "L'âge minimum ne peut pas dépasser 120 ans.");
+                        markError(ageMinField);
+                        valid = false;
+                    }
+                }
+            }
         }
 
-        boolean ok = errors.length() == 0;
+        // ──────── Description (optionnel, max 5000 chars, min 10 si rempli) ────────
+        String desc = safe(descArea.getText()).trim();
+        if (!desc.isEmpty()) {
+            if (desc.length() < 10) {
+                setError(descError, "La description doit contenir au moins 10 caractères.");
+                markError(descArea);
+                valid = false;
+            } else if (desc.length() > 5000) {
+                setError(descError, "La description ne doit pas dépasser 5000 caractères.");
+                markError(descArea);
+                valid = false;
+            }
+        }
 
-        if (saveBtn != null) saveBtn.setDisable(!ok);
+        // ──────── Prix (optionnel, >= 0, format decimal max 2 decimals) ────────
+        if (prixField != null) {
+            String pTxt = safe(prixField.getText()).trim();
+            if (!pTxt.isEmpty()) {
+                if (!PRIX_PATTERN.matcher(pTxt).matches()) {
+                    setError(prixError, "Format invalide (ex: 45 ou 45.50).");
+                    markError(prixField);
+                    valid = false;
+                } else {
+                    BigDecimal p = parseBigDecimalOrNull(prixField);
+                    if (p == null) {
+                        setError(prixError, "Prix invalide.");
+                        markError(prixField);
+                        valid = false;
+                    } else if (p.compareTo(BigDecimal.ZERO) < 0) {
+                        setError(prixError, "Le prix doit être >= 0.");
+                        markError(prixField);
+                        valid = false;
+                    } else if (p.compareTo(new BigDecimal("99999999.99")) > 0) {
+                        setError(prixError, "Le prix est trop élevé.");
+                        markError(prixField);
+                        valid = false;
+                    }
+                }
+            }
+        }
+
+        // ──────── Date début / Date fin (cohérence) ────────
+        LocalDate dateDebut = (dateDebutPicker != null) ? dateDebutPicker.getValue() : null;
+        LocalDate dateFin = (dateFinPicker != null) ? dateFinPicker.getValue() : null;
+
+        if (dateDebut != null && dateFin != null) {
+            if (dateFin.isBefore(dateDebut)) {
+                setError(dateFinError, "La date de fin doit être après la date de début.");
+                markError(dateFinPicker);
+                valid = false;
+            }
+            if (dateDebut.isEqual(dateFin)) {
+                setError(dateFinError, "La date de fin doit être différente de la date de début.");
+                markError(dateFinPicker);
+                valid = false;
+            }
+        }
+
+        // ──────── Nombre de places (optionnel, > 0, max 100000) ────────
+        Integer nbPlacesVal = null;
+        if (nbPlacesField != null) {
+            String nbTxt = safe(nbPlacesField.getText()).trim();
+            if (!nbTxt.isEmpty()) {
+                if (!DIGITS_ONLY.matcher(nbTxt).matches()) {
+                    setError(nbPlacesError, "Doit contenir uniquement des chiffres.");
+                    markError(nbPlacesField);
+                    valid = false;
+                } else {
+                    nbPlacesVal = parseIntOrNull(nbTxt);
+                    if (nbPlacesVal == null || nbPlacesVal <= 0) {
+                        setError(nbPlacesError, "Le nombre de places doit être > 0.");
+                        markError(nbPlacesField);
+                        valid = false;
+                    } else if (nbPlacesVal > 100000) {
+                        setError(nbPlacesError, "Le nombre de places ne peut pas dépasser 100 000.");
+                        markError(nbPlacesField);
+                        valid = false;
+                    }
+                }
+            }
+        }
+
+        // ──────── Places disponibles (optionnel, >= 0, <= nb_places) ────────
+        if (placesDispoField != null) {
+            String dpTxt = safe(placesDispoField.getText()).trim();
+            if (!dpTxt.isEmpty()) {
+                if (!DIGITS_ONLY.matcher(dpTxt).matches()) {
+                    setError(placesDispoError, "Doit contenir uniquement des chiffres.");
+                    markError(placesDispoField);
+                    valid = false;
+                } else {
+                    Integer dp = parseIntOrNull(dpTxt);
+                    if (dp == null || dp < 0) {
+                        setError(placesDispoError, "Les places disponibles doivent être >= 0.");
+                        markError(placesDispoField);
+                        valid = false;
+                    } else if (nbPlacesVal != null && dp > nbPlacesVal) {
+                        setError(placesDispoError, "Ne peut pas dépasser le nombre total de places (" + nbPlacesVal + ").");
+                        markError(placesDispoField);
+                        valid = false;
+                    }
+                }
+            }
+        }
+
+        // ──────── Adresse départ (optionnel, min 5 chars si rempli) ────────
+        if (adresseDepartField != null) {
+            String adr = safe(adresseDepartField.getText()).trim();
+            if (!adr.isEmpty() && adr.length() < 5) {
+                setError(adresseDepartError, "L'adresse doit contenir au moins 5 caractères.");
+                markError(adresseDepartField);
+                valid = false;
+            }
+        }
+
+        // ──────── Équipement inclus (optionnel, max 255 chars) ────────
+        if (equipementArea != null) {
+            String eq = safe(equipementArea.getText()).trim();
+            if (!eq.isEmpty() && eq.length() > 255) {
+                setError(equipementError, "L'équipement ne doit pas dépasser 255 caractères.");
+                markError(equipementArea);
+                valid = false;
+            }
+        }
+
+        // ──────── Conditions annulation (optionnel, max 255 chars) ────────
+        if (conditionsArea != null) {
+            String cond = safe(conditionsArea.getText()).trim();
+            if (!cond.isEmpty() && cond.length() > 255) {
+                setError(conditionsError, "Les conditions ne doivent pas dépasser 255 caractères.");
+                markError(conditionsArea);
+                valid = false;
+            }
+        }
+
+        // ──────── Résultat ────────
+        if (saveBtn != null) saveBtn.setDisable(!valid);
 
         if (messageLabel != null) {
-            if (ok) setMessage("", true);
-            else setMessage(errors.toString().trim(), false);
+            if (valid) setMessage("", true);
+            // else: errors are already shown per-field
         }
 
-        return ok;
+        return valid;
     }
 
     private void clearErrors() {
@@ -358,6 +632,15 @@ public class AjouterActiviteController {
         removeError(niveauBox);
         removeError(dureeField);
         removeError(descArea);
+        if (prixField != null) removeError(prixField);
+        if (nbPlacesField != null) removeError(nbPlacesField);
+        if (placesDispoField != null) removeError(placesDispoField);
+        if (ageMinField != null) removeError(ageMinField);
+        if (adresseDepartField != null) removeError(adresseDepartField);
+        if (equipementArea != null) removeError(equipementArea);
+        if (conditionsArea != null) removeError(conditionsArea);
+        if (dateDebutPicker != null) removeError(dateDebutPicker);
+        if (dateFinPicker != null) removeError(dateFinPicker);
 
         if (etablissementError != null) etablissementError.setText("");
         if (nomError != null) nomError.setText("");
@@ -365,6 +648,19 @@ public class AjouterActiviteController {
         if (niveauError != null) niveauError.setText("");
         if (dureeError != null) dureeError.setText("");
         if (descError != null) descError.setText("");
+        if (prixError != null) prixError.setText("");
+        if (nbPlacesError != null) nbPlacesError.setText("");
+        if (placesDispoError != null) placesDispoError.setText("");
+        if (ageMinError != null) ageMinError.setText("");
+        if (adresseDepartError != null) adresseDepartError.setText("");
+        if (equipementError != null) equipementError.setText("");
+        if (conditionsError != null) conditionsError.setText("");
+        if (dateDebutError != null) dateDebutError.setText("");
+        if (dateFinError != null) dateFinError.setText("");
+    }
+
+    private void setError(Label label, String msg) {
+        if (label != null) label.setText(msg);
     }
 
     private void markError(Control c) {
@@ -404,6 +700,17 @@ public class AjouterActiviteController {
     private String blankToNull(String s) {
         String v = safe(s).trim();
         return v.isBlank() ? null : v;
+    }
+
+    private BigDecimal parseBigDecimalOrNull(TextField field) {
+        if (field == null) return null;
+        String txt = safe(field.getText()).trim().replace(",", ".");
+        if (txt.isBlank()) return null;
+        try {
+            return new BigDecimal(txt);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private String safe(String s) { return s == null ? "" : s; }

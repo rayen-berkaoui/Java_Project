@@ -2,6 +2,7 @@ package com.esprit.controllers;
 
 import com.esprit.entities.Etablissement;
 import com.esprit.services.EtablissementServices;
+import com.esprit.services.PdfExportService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -27,8 +28,6 @@ public class EtablissementController {
     @FXML private ComboBox<String> gammePrixField;
 
     @FXML private ComboBox<String> typeField;
-    @FXML private TextField latitudeField;
-    @FXML private TextField longitudeField;
 
     @FXML private TextArea descriptionArea;
 
@@ -97,7 +96,20 @@ public class EtablissementController {
             @Override protected void updateItem(Etablissement e, boolean empty) {
                 super.updateItem(e, empty);
                 if (empty || e == null) { setText(null); setGraphic(null); return; }
-                setText(safe(e.getNom()) + " — " + safe(e.getVille()) + " — " + safe(e.getType()));
+
+                Label lbl = new Label(safe(e.getNom()) + " \u2014 " + safe(e.getVille()) + " \u2014 " + safe(e.getType()));
+                lbl.setMaxWidth(Double.MAX_VALUE);
+                javafx.scene.layout.HBox.setHgrow(lbl, javafx.scene.layout.Priority.ALWAYS);
+                lbl.setStyle("-fx-text-fill: #e0e0e6;");
+
+                Button pdfBtn = new Button("\uD83D\uDCC4");
+                pdfBtn.getStyleClass().add("btn-export-pdf-small");
+                pdfBtn.setOnAction(ev -> exportEtablissementPdf(e));
+
+                javafx.scene.layout.HBox row = new javafx.scene.layout.HBox(10, lbl, pdfBtn);
+                row.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                setText(null);
+                setGraphic(row);
             }
         });
 
@@ -240,6 +252,7 @@ public class EtablissementController {
         try {
             service.ajouter(e);
             setMessage("✅ Ajouté.", true);
+            SuccessNotification.show(messageLabel, "Établissement ajouté avec succès !");
             onRefresh();
             clearForm();
         } catch (SQLException ex) {
@@ -264,6 +277,7 @@ public class EtablissementController {
         try {
             service.modifier(e);
             setMessage("✅ Modifié.", true);
+            SuccessNotification.show(messageLabel, "Établissement modifié avec succès !");
             onRefresh();
         } catch (SQLException ex) {
             setMessage("❌ Erreur modification: " + ex.getMessage(), false);
@@ -286,6 +300,7 @@ public class EtablissementController {
         try {
             service.supprimer(selected.getIdEtablissement());
             setMessage("✅ Supprimé.", true);
+            SuccessNotification.show(messageLabel, "Établissement supprimé avec succès !");
             onRefresh();
             clearForm();
         } catch (SQLException ex) {
@@ -317,8 +332,6 @@ public class EtablissementController {
         gammePrixField.getSelectionModel().clearSelection();
 
         typeField.getSelectionModel().clearSelection();
-        latitudeField.clear();
-        longitudeField.clear();
 
         descriptionArea.clear();
 
@@ -337,8 +350,6 @@ public class EtablissementController {
         gammePrixField.setValue(blankToNull(e.getGammePrix()));
 
         typeField.setValue(blankToNull(e.getType()));
-        latitudeField.setText(e.getLatitude() == null ? "" : String.valueOf(e.getLatitude()));
-        longitudeField.setText(e.getLongitude() == null ? "" : String.valueOf(e.getLongitude()));
 
         descriptionArea.setText(safe(e.getDescription()));
     }
@@ -374,20 +385,6 @@ public class EtablissementController {
             return null;
         }
 
-        Double lat = parseDoubleOrNull(latitudeField.getText());
-        Double lon = parseDoubleOrNull(longitudeField.getText());
-
-        if (!safe(latitudeField.getText()).trim().isBlank() && lat == null) {
-            setMessage("❌ Latitude invalide.", false);
-            markError(latitudeField);
-            return null;
-        }
-        if (!safe(longitudeField.getText()).trim().isBlank() && lon == null) {
-            setMessage("❌ Longitude invalide.", false);
-            markError(longitudeField);
-            return null;
-        }
-
         Etablissement e = new Etablissement();
         e.setNom(nom);
         e.setAdresse(safe(adresseField.getText()).trim());
@@ -397,8 +394,6 @@ public class EtablissementController {
         e.setHoraires(safe(horairesField.getText()).trim());
         e.setGammePrix(gamme);
         e.setType(type);
-        e.setLatitude(lat);
-        e.setLongitude(lon);
         e.setDescription(safe(descriptionArea.getText()).trim());
 
         return e;
@@ -429,6 +424,65 @@ public class EtablissementController {
     private String blankToNull(String s) {
         String v = safe(s).trim();
         return v.isBlank() ? null : v;
+    }
+
+    @FXML
+    private void onExportAllPdf(ActionEvent event) {
+        if (sortedData == null || sortedData.isEmpty()) {
+            setMessage("\u26A0\uFE0F Aucun \u00e9tablissement \u00e0 exporter.", false);
+            return;
+        }
+
+        javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+        fc.setTitle("Exporter tous les \u00e9tablissements en PDF");
+        fc.setInitialFileName("catalogue_etablissements.pdf");
+        fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("PDF", "*.pdf"));
+
+        javafx.stage.Window window = etablissementList.getScene().getWindow();
+        java.io.File file = fc.showSaveDialog(window);
+        if (file == null) return;
+
+        try {
+            PdfExportService.exportAllEtablissements(new java.util.ArrayList<>(sortedData), file);
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setTitle("Export r\u00e9ussi");
+            ok.setHeaderText(null);
+            ok.setContentText("Catalogue PDF g\u00e9n\u00e9r\u00e9 avec succ\u00e8s !\n" + sortedData.size() + " \u00e9tablissement(s) export\u00e9(s).\n" + file.getAbsolutePath());
+            ok.showAndWait();
+            if (java.awt.Desktop.isDesktopSupported()) {
+                new Thread(() -> { try { java.awt.Desktop.getDesktop().open(file); } catch (Exception ignored) {} }).start();
+            }
+        } catch (Exception ex) {
+            setMessage("Erreur PDF : " + ex.getMessage(), false);
+            ex.printStackTrace();
+        }
+    }
+
+    // ===== PDF Export =====
+    private void exportEtablissementPdf(Etablissement e) {
+        javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+        fc.setTitle("Exporter en PDF");
+        fc.setInitialFileName(safe(e.getNom()).replaceAll("[^a-zA-Z0-9\\-_ ]", "") + "_fiche.pdf");
+        fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("PDF", "*.pdf"));
+
+        javafx.stage.Window window = etablissementList.getScene().getWindow();
+        java.io.File file = fc.showSaveDialog(window);
+        if (file == null) return;
+
+        try {
+            PdfExportService.exportEtablissement(e, file);
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setTitle("Export r\u00e9ussi");
+            ok.setHeaderText(null);
+            ok.setContentText("PDF g\u00e9n\u00e9r\u00e9 avec succ\u00e8s !\n" + file.getAbsolutePath());
+            ok.showAndWait();
+            if (java.awt.Desktop.isDesktopSupported()) {
+                new Thread(() -> { try { java.awt.Desktop.getDesktop().open(file); } catch (Exception ignored) {} }).start();
+            }
+        } catch (Exception ex) {
+            setMessage("Erreur PDF : " + ex.getMessage(), false);
+            ex.printStackTrace();
+        }
     }
 
     private String safe(String s) { return s == null ? "" : s; }

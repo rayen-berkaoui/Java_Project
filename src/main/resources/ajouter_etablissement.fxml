@@ -16,27 +16,38 @@
                     hbarPolicy="NEVER">
 
             <content>
-                <VBox prefWidth="750" spacing="14" styleClass="form-section">
+                <VBox alignment="TOP_CENTER">
                     <padding>
-                        <Insets top="18" right="22" bottom="22" left="22"/>
+                        <Insets top="24" right="28" bottom="28" left="28"/>
                     </padding>
 
-                    <!-- HEADER -->
-                    <HBox alignment="CENTER_LEFT" spacing="12">
-                        <Label fx:id="titleLabel"
-                               text="Ajouter un établissement"
-                               styleClass="page-title"/>
-                        <Pane HBox.hgrow="ALWAYS"/>
-                        <Button text="← Retour"
-                                onAction="#onAnnuler"
-                                styleClass="home-btn-small"/>
-                    </HBox>
+                    <VBox prefWidth="750" spacing="14" styleClass="form-section">
+                        <padding>
+                            <Insets top="22" right="26" bottom="26" left="26"/>
+                        </padding>
 
-                    <Region styleClass="accent-line-thin"/>
+                        <!-- HEADER -->
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label fx:id="titleLabel"
+                                   text="Ajouter un établissement"
+                                   styleClass="page-title"/>
+                            <Pane HBox.hgrow="ALWAYS"/>
+                            <Button text="← Retour"
+                                    onAction="#onAnnuler"
+                                    styleClass="home-btn-small"/>
+                        </HBox>
 
-                    <VBox spacing="10">
+                        <Region styleClass="accent-line-thin"/>
 
-                        <Label text="Informations générales" styleClass="section-title"/>
+                        <VBox spacing="10">
+
+                            <!-- Section: Informations générales -->
+                            <HBox alignment="CENTER_LEFT" spacing="8">
+                                <Region styleClass="gold-dot"/>
+                                <Label text="Informations générales" styleClass="section-title"/>
+                            </HBox>
+
+                            <Region styleClass="accent-line-full"/>
 
                         <GridPane hgap="14" vgap="14">
                             <columnConstraints>
@@ -95,6 +106,10 @@
                                            styleClass="form-input"
                                            maxWidth="Infinity"/>
                                 <Label fx:id="adresseError" styleClass="field-error-label"/>
+                                <Button text="&#x1f4cd; Voir sur Google Maps"
+                                        onAction="#onOpenGoogleMaps"
+                                        styleClass="btn-google-maps"
+                                        maxWidth="Infinity"/>
                             </VBox>
 
                             <!-- TELEPHONE -->
@@ -150,25 +165,6 @@
                                 <Label fx:id="horairesError" styleClass="field-error-label"/>
                             </VBox>
 
-                            <!-- COORDONNEES -->
-                            <VBox spacing="4" GridPane.rowIndex="4" GridPane.columnIndex="1">
-                                <Label text="Coordonnées GPS" styleClass="form-field-label"/>
-                                <HBox spacing="10">
-                                    <TextField fx:id="latitudeField"
-                                               promptText="Latitude"
-                                               styleClass="form-input"
-                                               maxWidth="Infinity"/>
-                                    <TextField fx:id="longitudeField"
-                                               promptText="Longitude"
-                                               styleClass="form-input"
-                                               maxWidth="Infinity"/>
-                                </HBox>
-                                <Label text="Astuce : clic droit sur Google Maps → copier les coordonnées"
-                                       styleClass="muted"/>
-                                <Label fx:id="latitudeError" styleClass="field-error-label"/>
-                                <Label fx:id="longitudeError" styleClass="field-error-label"/>
-                            </VBox>
-
                         </GridPane>
 
                         <!-- DESCRIPTION -->
@@ -182,14 +178,22 @@
                             <Label fx:id="descriptionError" styleClass="field-error-label"/>
                         </VBox>
 
-                        <!-- IMAGES -->
+                        <Region prefHeight="6"/>
+
+                        <!-- Section: Images -->
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Galerie d'images" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
                         <VBox spacing="10" styleClass="image-preview-card">
                             <padding>
-                                <Insets top="12" right="12" bottom="12" left="12"/>
+                                <Insets top="12" right="14" bottom="12" left="14"/>
                             </padding>
 
                             <HBox alignment="CENTER_LEFT" spacing="10">
-                                <Label text="Images (galerie)" styleClass="section-title"/>
                                 <Pane HBox.hgrow="ALWAYS"/>
                                 <Button text="Choisir image(s)"
                                         onAction="#onChooseImages"
@@ -210,8 +214,10 @@
                             </ScrollPane>
                         </VBox>
 
+                        <Region prefHeight="6"/>
+
                         <!-- ACTIONS -->
-                        <HBox spacing="12">
+                        <HBox spacing="12" styleClass="action-bar">
                             <Button fx:id="saveBtn"
                                     text="Enregistrer"
                                     onAction="#onEnregistrer"
@@ -224,6 +230,7 @@
                         </HBox>
 
                     </VBox>
+                </VBox>
                 </VBox>
             </content>
         </ScrollPane>

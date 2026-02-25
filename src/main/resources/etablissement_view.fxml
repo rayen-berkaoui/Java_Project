@@ -12,55 +12,75 @@
 
     <!-- TOP BAR -->
     <top>
-        <VBox styleClass="topbar" spacing="12">
+        <VBox styleClass="topbar" spacing="0">
             <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
+                <Insets top="20" right="28" bottom="18" left="28"/>
             </padding>
 
-            <HBox spacing="10" alignment="CENTER_LEFT">
-                <Label text="Gestion des établissements" styleClass="page-title"/>
-                <Pane HBox.hgrow="ALWAYS"/>
-
-                <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
-                <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
+            <HBox spacing="14" alignment="CENTER_LEFT">
+                <VBox spacing="2">
+                    <Label text="Gestion des établissements" styleClass="page-title"/>
+                    <Label text="Vue détaillée avec formulaire intégré" styleClass="page-subtitle"/>
+                </VBox>
+                <Pane HBox.hgrow="ALWAYS"/>                <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportAllPdf" styleClass="btn-export-pdf"/>                <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+                <Button text="↻ Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
             </HBox>
 
-            <HBox spacing="10" alignment="CENTER_LEFT">
-                <TextField fx:id="searchField"
-                           promptText="Rechercher (nom, ville, email, téléphone)..."
-                           HBox.hgrow="ALWAYS"/>
+            <Region prefHeight="12"/>
 
-                <ComboBox fx:id="filterVille" prefWidth="160" promptText="Ville" />
-                <ComboBox fx:id="filterGamme" prefWidth="140" promptText="Gamme" />
-                <ComboBox fx:id="filterType" prefWidth="140" promptText="Type" />
-                <ComboBox fx:id="sortBox" prefWidth="140" promptText="Trier" />
-            </HBox>
+            <!-- Search & Filter toolbar -->
+            <VBox styleClass="toolbar-container" spacing="0">
+                <padding>
+                    <Insets top="12" right="16" bottom="12" left="16"/>
+                </padding>
 
+                <HBox spacing="12" alignment="CENTER_LEFT">
+                    <HBox styleClass="search-container" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                        <padding>
+                            <Insets top="0" right="4" bottom="0" left="12"/>
+                        </padding>
+                        <Label text="🔍" styleClass="search-icon"/>
+                        <TextField fx:id="searchField"
+                                   promptText="Rechercher par nom, ville, email, téléphone..."
+                                   styleClass="search-field"
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <ComboBox fx:id="filterVille" prefWidth="140" promptText="Ville" styleClass="filter-combo"/>
+                    <ComboBox fx:id="filterGamme" prefWidth="130" promptText="Gamme" styleClass="filter-combo"/>
+                    <ComboBox fx:id="filterType" prefWidth="130" promptText="Type" styleClass="filter-combo"/>
+                    <ComboBox fx:id="sortBox" prefWidth="130" promptText="Trier" styleClass="filter-combo"/>
+                </HBox>
+            </VBox>
+
+            <Region prefHeight="12"/>
             <Region styleClass="accent-line-thin"/>
         </VBox>
     </top>
 
     <!-- LEFT FILTER PANEL -->
     <left>
-        <VBox spacing="12" prefWidth="250" styleClass="sidepanel">
+        <VBox spacing="14" prefWidth="250" styleClass="sidepanel">
             <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
+                <Insets top="20" right="18" bottom="20" left="18"/>
             </padding>
 
-            <Label text="Filtres" styleClass="h2"/>
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <Region styleClass="gold-dot"/>
+                <Label text="Filtres" styleClass="h2"/>
+            </HBox>
             <Separator/>
 
-            <Label text="Ville" styleClass="label"/>
-            <ComboBox fx:id="filterVilleSide" promptText="Tous"/>
+            <Label text="Ville" styleClass="form-field-label"/>
+            <ComboBox fx:id="filterVilleSide" promptText="Tous" styleClass="filter-combo" maxWidth="Infinity"/>
 
-            <Label text="Gamme de prix" styleClass="label"/>
-            <ComboBox fx:id="filterGammeSide" promptText="Tous"/>
+            <Label text="Gamme de prix" styleClass="form-field-label"/>
+            <ComboBox fx:id="filterGammeSide" promptText="Tous" styleClass="filter-combo" maxWidth="Infinity"/>
 
-            <Label text="Type" styleClass="label"/>
-            <ComboBox fx:id="filterTypeSide" promptText="Tous"/>
+            <Label text="Type" styleClass="form-field-label"/>
+            <ComboBox fx:id="filterTypeSide" promptText="Tous" styleClass="filter-combo" maxWidth="Infinity"/>
 
             <Separator/>
-            <Label text="Astuce" styleClass="muted"/>
+            <Label text="Astuce" styleClass="section-title"/>
             <Label text="Utilise la barre de recherche pour filtrer rapidement."
                    wrapText="true" styleClass="muted"/>
         </VBox>
@@ -68,43 +88,46 @@
 
     <!-- CENTER LIST -->
     <center>
-        <VBox spacing="10">
+        <VBox spacing="12">
             <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
+                <Insets top="20" right="18" bottom="20" left="18"/>
             </padding>
 
-            <Label text="Liste des établissements" styleClass="h1"/>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Region styleClass="gold-dot"/>
+                <Label text="Liste des établissements" styleClass="h1"/>
+            </HBox>
             <ListView fx:id="etablissementList" VBox.vgrow="ALWAYS" styleClass="cards-list"/>
         </VBox>
     </center>
 
     <!-- RIGHT FORM -->
     <right>
-        <VBox spacing="10" prefWidth="380" styleClass="formpanel">
+        <VBox spacing="12" prefWidth="380" styleClass="formpanel">
             <padding>
-                <Insets top="16" right="16" bottom="16" left="16"/>
+                <Insets top="20" right="18" bottom="20" left="18"/>
             </padding>
 
-            <Label text="Formulaire" styleClass="h2"/>
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <Region styleClass="gold-dot"/>
+                <Label text="Formulaire" styleClass="h2"/>
+            </HBox>
             <Label fx:id="selectionInfoLabel" text="Aucune sélection" styleClass="muted"/>
             <Label fx:id="messageLabel" text="" wrapText="true"/>
 
             <Separator/>
 
-            <TextField fx:id="nomField" promptText="Nom *"/>
-            <TextField fx:id="adresseField" promptText="Adresse"/>
-            <TextField fx:id="villeField" promptText="Ville *"/>
-            <TextField fx:id="telephoneField" promptText="Téléphone"/>
-            <TextField fx:id="emailField" promptText="Email"/>
-            <TextField fx:id="horairesField" promptText="Horaires"/>
-            <ComboBox fx:id="gammePrixField" promptText="Gamme (€ / €€ / €€€)"/>
+            <TextField fx:id="nomField" promptText="Nom *" styleClass="form-input"/>
+            <TextField fx:id="adresseField" promptText="Adresse" styleClass="form-input"/>
+            <TextField fx:id="villeField" promptText="Ville *" styleClass="form-input"/>
+            <TextField fx:id="telephoneField" promptText="Téléphone" styleClass="form-input"/>
+            <TextField fx:id="emailField" promptText="Email" styleClass="form-input"/>
+            <TextField fx:id="horairesField" promptText="Horaires" styleClass="form-input"/>
+            <ComboBox fx:id="gammePrixField" promptText="Gamme (€ / €€ / €€€)" styleClass="form-combo" maxWidth="Infinity"/>
 
-            <!-- ✅ nouveaux champs DB -->
-            <ComboBox fx:id="typeField" promptText="Type (hotel/restaurant/...)"/>
-            <TextField fx:id="latitudeField" promptText="Latitude (optionnel)"/>
-            <TextField fx:id="longitudeField" promptText="Longitude (optionnel)"/>
+            <ComboBox fx:id="typeField" promptText="Type (hotel/restaurant/...)" styleClass="form-combo" maxWidth="Infinity"/>
 
-            <TextArea fx:id="descriptionArea" promptText="Description (max 200)" prefRowCount="4"/>
+            <TextArea fx:id="descriptionArea" promptText="Description (max 200)" prefRowCount="4" styleClass="form-textarea"/>
 
             <HBox spacing="10">
                 <Button text="Ajouter" onAction="#onAjouter" styleClass="btn-primary" HBox.hgrow="ALWAYS"/>

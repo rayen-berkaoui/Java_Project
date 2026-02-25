@@ -10,52 +10,82 @@
             stylesheets="@style.css"
             styleClass="app-root">
 
+    <!-- ================= TOP BAR ================= -->
     <top>
-        <VBox styleClass="topbar" spacing="12">
+        <VBox styleClass="topbar" spacing="0">
             <padding>
-                <Insets top="18" right="22" bottom="16" left="22"/>
+                <Insets top="20" right="28" bottom="18" left="28"/>
             </padding>
 
-            <HBox alignment="CENTER_LEFT" spacing="12">
-                <Label text="Gestion des activités" styleClass="page-title"/>
-                <Pane HBox.hgrow="ALWAYS"/>
-
-                <Button text="← Home"
-                        onAction="#goHome"
-                        styleClass="home-btn-small"/>
+            <!-- Row 1: Title + Home -->
+            <HBox alignment="CENTER_LEFT" spacing="14">
+                <VBox spacing="2">
+                    <Label text="Gestion des activités" styleClass="page-title"/>
+                    <Label text="Explorez et organisez toutes vos activités" styleClass="page-subtitle"/>
+                </VBox>
+                <Pane HBox.hgrow="ALWAYS"/>                <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportAllPdf" styleClass="btn-export-pdf"/>                <Button text="← Home" onAction="#goHome" styleClass="home-btn-small"/>
             </HBox>
 
-            <HBox spacing="12" alignment="CENTER_LEFT">
-                <TextField fx:id="searchField"
-                           promptText="Rechercher (nom, catégorie, niveau)..."
-                           styleClass="search-field"
-                           HBox.hgrow="ALWAYS"/>
+            <Region prefHeight="14"/>
 
-                <ComboBox fx:id="filterCategorie" prefWidth="170" promptText="Catégorie" styleClass="filter-combo"/>
-                <ComboBox fx:id="filterNiveau" prefWidth="170" promptText="Niveau" styleClass="filter-combo"/>
-                <ComboBox fx:id="sortBox" prefWidth="170" promptText="Trier" styleClass="filter-combo"/>
+            <!-- Row 2: Search & Filters Toolbar -->
+            <VBox styleClass="toolbar-container" spacing="0">
+                <padding>
+                    <Insets top="14" right="18" bottom="14" left="18"/>
+                </padding>
 
-                <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
-            </HBox>
+                <!-- Search row -->
+                <HBox spacing="12" alignment="CENTER_LEFT">
+                    <HBox styleClass="search-container" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                        <padding>
+                            <Insets top="0" right="4" bottom="0" left="12"/>
+                        </padding>
+                        <Label text="🔍" styleClass="search-icon"/>
+                        <TextField fx:id="searchField"
+                                   promptText="Rechercher par nom, catégorie, niveau..."
+                                   styleClass="search-field"
+                                   HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <Button text="↻ Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
+                </HBox>
 
+                <Region prefHeight="12"/>
+
+                <!-- Filters row -->
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <Label text="FILTRES" styleClass="filter-group-label"/>
+                    <Region styleClass="toolbar-divider" prefHeight="24"/>
+                    <ComboBox fx:id="filterCategorie" prefWidth="160" promptText="Catégorie" styleClass="filter-combo"/>
+                    <ComboBox fx:id="filterNiveau" prefWidth="160" promptText="Niveau" styleClass="filter-combo"/>
+                    <Region styleClass="toolbar-divider" prefHeight="24"/>
+                    <Label text="TRI" styleClass="filter-group-label"/>
+                    <ComboBox fx:id="sortBox" prefWidth="160" promptText="Trier par..." styleClass="filter-combo"/>
+                </HBox>
+            </VBox>
+
+            <Region prefHeight="14"/>
             <Region styleClass="accent-line-thin"/>
         </VBox>
     </top>
 
+    <!-- ================= CENTER ================= -->
     <center>
         <StackPane styleClass="page-body">
             <padding>
-                <Insets top="18" right="22" bottom="22" left="22"/>
+                <Insets top="20" right="28" bottom="28" left="28"/>
             </padding>
 
-            <VBox spacing="16" styleClass="content-root">
+            <VBox spacing="18" styleClass="content-root">
 
-                <HBox alignment="CENTER_LEFT" spacing="12" styleClass="section-bar">
-                    <Label text="Galerie Premium" styleClass="section-title"/>
+                <!-- Section header bar -->
+                <HBox alignment="CENTER_LEFT" spacing="14" styleClass="section-header-bar">
+                    <Region styleClass="gold-dot"/>
+                    <Label text="Galerie des activités" styleClass="section-title"/>
                     <Pane HBox.hgrow="ALWAYS"/>
                     <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
                 </HBox>
 
+                <!-- Cards grid -->
                 <ScrollPane fitToWidth="true"
                             hbarPolicy="NEVER"
                             vbarPolicy="AS_NEEDED"
@@ -63,7 +93,7 @@
                     <content>
                         <VBox styleClass="grid-wrapper">
                             <padding>
-                                <Insets top="8" right="0" bottom="0" left="0"/>
+                                <Insets top="8" right="0" bottom="8" left="0"/>
                             </padding>
 
                             <TilePane fx:id="cardsPane"

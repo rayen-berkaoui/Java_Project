@@ -3,6 +3,7 @@ package com.esprit.controllers;
 import com.esprit.entities.Activite;
 import com.esprit.services.ActiviteImageServices;
 import com.esprit.services.ActiviteServices;
+import com.esprit.services.PdfExportService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -226,7 +227,11 @@ public class ActiviteController {
             }
         });
 
-        HBox actions = new HBox(10, edit, del);
+        Button pdf = new Button("\uD83D\uDCC4");
+        pdf.getStyleClass().addAll("icon-btn", "icon-pdf");
+        pdf.setOnAction(ev -> exportActivitePdf(a));
+
+        HBox actions = new HBox(10, edit, del, pdf);
         actions.getStyleClass().add("card-actions");
 
         VBox card = new VBox(imageWrap, content, actions);
@@ -272,6 +277,33 @@ public class ActiviteController {
         return new Image("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/iZk9NwAAAABJRU5ErkJggg==");
     }
 
+    // ===== PDF Export =====
+    private void exportActivitePdf(Activite a) {
+        javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+        fc.setTitle("Exporter en PDF");
+        fc.setInitialFileName(safe(a.getNomActivite()).replaceAll("[^a-zA-Z0-9\\-_ ]", "") + "_fiche.pdf");
+        fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("PDF", "*.pdf"));
+
+        javafx.stage.Window window = cardsPane.getScene().getWindow();
+        java.io.File file = fc.showSaveDialog(window);
+        if (file == null) return;
+
+        try {
+            PdfExportService.exportActivite(a, file);
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setTitle("Export r\u00e9ussi");
+            ok.setHeaderText(null);
+            ok.setContentText("PDF g\u00e9n\u00e9r\u00e9 avec succ\u00e8s !\n" + file.getAbsolutePath());
+            ok.showAndWait();
+            if (java.awt.Desktop.isDesktopSupported()) {
+                new Thread(() -> { try { java.awt.Desktop.getDesktop().open(file); } catch (Exception ignored) {} }).start();
+            }
+        } catch (Exception ex) {
+            showError("Erreur lors de la g\u00e9n\u00e9ration du PDF : " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
     private boolean confirm(String title, String content) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle(title);
@@ -291,6 +323,38 @@ public class ActiviteController {
     @FXML
     private void goHome(ActionEvent event) {
         NavigationUtils.goTo("/home.fxml", event);
+    }
+
+    @FXML
+    private void onExportAllPdf(ActionEvent event) {
+        if (sortedData == null || sortedData.isEmpty()) {
+            showError("Aucune activit\u00e9 \u00e0 exporter.");
+            return;
+        }
+
+        javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+        fc.setTitle("Exporter toutes les activit\u00e9s en PDF");
+        fc.setInitialFileName("catalogue_activites.pdf");
+        fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("PDF", "*.pdf"));
+
+        javafx.stage.Window window = cardsPane.getScene().getWindow();
+        java.io.File file = fc.showSaveDialog(window);
+        if (file == null) return;
+
+        try {
+            PdfExportService.exportAllActivites(new java.util.ArrayList<>(sortedData), file);
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setTitle("Export r\u00e9ussi");
+            ok.setHeaderText(null);
+            ok.setContentText("Catalogue PDF g\u00e9n\u00e9r\u00e9 avec succ\u00e8s !\n" + sortedData.size() + " activit\u00e9(s) export\u00e9es.\n" + file.getAbsolutePath());
+            ok.showAndWait();
+            if (java.awt.Desktop.isDesktopSupported()) {
+                new Thread(() -> { try { java.awt.Desktop.getDesktop().open(file); } catch (Exception ignored) {} }).start();
+            }
+        } catch (Exception ex) {
+            showError("Erreur lors de la g\u00e9n\u00e9ration du PDF : " + ex.getMessage());
+            ex.printStackTrace();
+        }
     }
 
     private String safe(String s) { return s == null ? "" : s; }

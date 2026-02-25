@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.esprit.controllers.TableauEtablissementController"
+           stylesheets="@style.css"
+           fx:id="rootStack">
+<BorderPane styleClass="app-root">
+
+    <top>
+        <VBox spacing="0">
+            <!-- NAV BAR -->
+            <HBox styleClass="nav-bar" alignment="CENTER_LEFT" spacing="0">
+                <Label text="&#x1f525; Premium Dashboard" styleClass="nav-logo"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <HBox styleClass="nav-tabs">
+                    <Button text="&#x1f3e0; Accueil" onAction="#goHome" styleClass="nav-tab"/>
+                    <Button text="&#x1f4ca; Tableau &#xc9;tab." styleClass="nav-tab-active"/>
+                    <Button text="&#x1f5bc; Galerie &#xc9;tab." onAction="#goGalerie" styleClass="nav-tab"/>
+                    <Button text="&#x1f3af; Galerie Activ." onAction="#goActivites" styleClass="nav-tab"/>
+                    <Button text="&#x1f4ca; Tableau Activ." onAction="#goTableauActivites" styleClass="nav-tab"/>
+                </HBox>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportAllPdf" styleClass="btn-export-pdf"/>
+                <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+            </HBox>
+
+            <!-- COMPACT SEARCH -->
+            <HBox spacing="12" alignment="CENTER_LEFT" styleClass="toolbar-container">
+                <padding>
+                    <Insets top="10" right="18" bottom="10" left="18"/>
+                </padding>
+                <HBox styleClass="search-container" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                    <padding>
+                        <Insets top="0" right="4" bottom="0" left="12"/>
+                    </padding>
+                    <Label text="&#x1f50d;" styleClass="search-icon"/>
+                    <TextField fx:id="searchField"
+                               promptText="Rechercher par nom, ville, email..."
+                               styleClass="search-field"
+                               HBox.hgrow="ALWAYS"/>
+                </HBox>
+                <ComboBox fx:id="filterVille" prefWidth="140" promptText="Ville" styleClass="filter-combo"/>
+                <ComboBox fx:id="filterType" prefWidth="130" promptText="Type" styleClass="filter-combo"/>
+                <Button text="&#x21bb;" onAction="#onRefresh" styleClass="btn-secondary"/>
+            </HBox>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER" styleClass="content-scroll">
+        <VBox styleClass="page-body">
+            <padding>
+                <Insets top="24" right="28" bottom="28" left="28"/>
+            </padding>
+
+            <!-- ════════ STATISTICS SECTION ════════ -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="&#x1f4ca;" style="-fx-font-size: 24px;"/>
+                <Label text="Statistiques par Type" styleClass="h1"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button fx:id="btnToggleChart" text="&#x1f504; Changer de vue" onAction="#onToggleChart" styleClass="btn-secondary"/>
+                <Button fx:id="btnToggleStats" text="&#x25b2; Masquer" onAction="#onToggleStats" styleClass="btn-secondary"/>
+            </HBox>
+
+            <Region prefHeight="12"/>
+
+            <!-- Stats summary cards row -->
+            <HBox fx:id="statsCardsRow" spacing="14" alignment="CENTER">
+                <padding><Insets top="0" right="0" bottom="10" left="0"/></padding>
+            </HBox>
+
+            <!-- Charts container (toggle between pie/bar) -->
+            <StackPane fx:id="chartsContainer" styleClass="stats-chart-container" minHeight="340" prefHeight="340">
+                <PieChart fx:id="pieChart" title="R&#xe9;partition par Type" legendVisible="true"
+                          labelsVisible="true" styleClass="stats-pie-chart"/>
+                <BarChart fx:id="barChart" title="Nombre par Type" legendVisible="false"
+                          styleClass="stats-bar-chart" visible="false">
+                    <xAxis><CategoryAxis label="Type" fx:id="barXAxis"/></xAxis>
+                    <yAxis><NumberAxis label="Nombre" fx:id="barYAxis"/></yAxis>
+                </BarChart>
+            </StackPane>
+
+            <Region prefHeight="24"/>
+
+            <!-- ════════ TABLE SECTION ════════ -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="&#x1f4cb;" style="-fx-font-size: 24px;"/>
+                <Label text="Tableau Premium" styleClass="h1"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Label fx:id="countLabel" styleClass="stats-count-label"/>
+            </HBox>
+
+            <Region prefHeight="18"/>
+
+            <!-- Premium Table Container -->
+            <VBox styleClass="premium-table-container">
+
+                <!-- Table Header -->
+                <HBox styleClass="table-header-row" alignment="CENTER_LEFT" spacing="0">
+                    <Label text="NOM" styleClass="table-header-label" prefWidth="240" minWidth="240"/>
+                    <Label text="VILLE" styleClass="table-header-label" prefWidth="130" minWidth="130"/>
+                    <Label text="TYPE" styleClass="table-header-label" prefWidth="120" minWidth="120"/>
+                    <Label text="GAMME" styleClass="table-header-label" prefWidth="90" minWidth="90"/>
+                    <Label text="T&#xc9;L&#xc9;PHONE" styleClass="table-header-label" prefWidth="140" minWidth="140"/>
+                    <Label text="ACTIONS" styleClass="table-header-label" prefWidth="140" minWidth="140"/>
+                </HBox>
+
+                <!-- Table Body -->
+                <VBox fx:id="tableBody"/>
+
+            </VBox>
+
+        </VBox>
+        </ScrollPane>
+    </center>
+
+</BorderPane>
+</StackPane>

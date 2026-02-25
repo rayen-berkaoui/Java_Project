@@ -1,5 +1,9 @@
 package com.esprit.controllers;
 
+import com.esprit.entities.Etablissement;
+import com.esprit.entities.EtablissementImage;
+import com.esprit.services.EtablissementImageServices;
+import com.esprit.services.EtablissementServices;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -14,6 +18,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -38,9 +43,6 @@ public class AjouterEtablissementController {
     @FXML private ComboBox<String> horairesTemplateBox;
     @FXML private TextField horairesField;
 
-    @FXML private TextField latitudeField;
-    @FXML private TextField longitudeField;
-
     @FXML private TextArea descriptionArea;
 
     @FXML private HBox imagesStrip;
@@ -56,8 +58,6 @@ public class AjouterEtablissementController {
     @FXML private Label emailError;
     @FXML private Label gammeError;
     @FXML private Label horairesError;
-    @FXML private Label latitudeError;
-    @FXML private Label longitudeError;
     @FXML private Label descriptionError;
 
     // ====== Data ======
@@ -66,6 +66,10 @@ public class AjouterEtablissementController {
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern NAME_PATTERN =
+            Pattern.compile("^[A-Za-zÀ-ÖØ-öø-ÿ0-9\\s'\\-&.,()]+$");
+    private static final Pattern DIGITS_ONLY = Pattern.compile("^\\d+$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\d{8}$");
 
     @FXML
     public void initialize() {
@@ -73,7 +77,50 @@ public class AjouterEtablissementController {
         setupCombos();
         setupListeners();
         clearErrors();
-        refreshGallery(); // pour être sûr que c’est propre au démarrage
+        refreshGallery();
+
+        // ===== MODE EDIT =====
+        if (AffichageEtablissementController.etablissementToEdit != null) {
+            Etablissement e = AffichageEtablissementController.etablissementToEdit;
+            titleLabel.setText("Modifier l'établissement");
+            saveBtn.setText("Enregistrer les modifications");
+
+            nomField.setText(safe(e.getNom()));
+            typeField.setValue(mapDbTypeToUi(e.getType()));
+            adresseField.setText(safe(e.getAdresse()));
+
+            // Trouver le gouvernorat correspondant à la ville
+            String villeValue = safe(e.getVille());
+            for (var entry : villesParGouvernorat.entrySet()) {
+                if (entry.getValue().stream().anyMatch(v -> v.equalsIgnoreCase(villeValue))) {
+                    gouvernoratBox.setValue(entry.getKey());
+                    villeBox.setValue(villeValue);
+                    break;
+                }
+            }
+            if (gouvernoratBox.getValue() == null && !villeValue.isBlank()) {
+                villeBox.setValue(villeValue);
+            }
+
+            // Téléphone : séparer indicatif si présent
+            String tel = safe(e.getTelephone());
+            if (tel.startsWith("+")) {
+                int space = tel.indexOf(' ');
+                if (space > 0) {
+                    phoneCodeBox.setValue(tel.substring(0, space));
+                    telephoneField.setText(tel.substring(space + 1));
+                } else {
+                    telephoneField.setText(tel);
+                }
+            } else {
+                telephoneField.setText(tel);
+            }
+
+            emailField.setText(safe(e.getEmail()));
+            gammePrixStarsBox.setValue(safe(e.getGammePrix()));
+            horairesField.setText(safe(e.getHoraires()));
+            descriptionArea.setText(safe(e.getDescription()));
+        }
     }
 
     // ----------------- Setup -----------------
@@ -97,13 +144,85 @@ public class AjouterEtablissementController {
                 "24h/24"
         ));
 
-        villesParGouvernorat.put("Tunis", Arrays.asList("Tunis", "La Marsa", "Carthage", "Le Bardo"));
-        villesParGouvernorat.put("Ariana", Arrays.asList("Ariana", "Raoued", "Sidi Thabet"));
-        villesParGouvernorat.put("Ben Arous", Arrays.asList("Ben Arous", "Ezzahra", "Rades", "Mourouj"));
-        villesParGouvernorat.put("Manouba", Arrays.asList("Manouba", "Denden", "Oued Ellil"));
-        villesParGouvernorat.put("Nabeul", Arrays.asList("Nabeul", "Hammamet", "Korba", "Menzel Temime"));
-        villesParGouvernorat.put("Sousse", Arrays.asList("Sousse", "Hammam Sousse", "Kalaa Kebira"));
-        villesParGouvernorat.put("Sfax", Arrays.asList("Sfax", "Sakiet Ezzit", "Sakiet Eddaier"));
+        // ===== Gouvernorats Tunisie (24) + villes principales =====
+        villesParGouvernorat.put("Tunis", Arrays.asList(
+                "Tunis", "La Marsa", "Carthage", "Le Bardo", "Le Kram", "Berges du Lac"
+        ));
+        villesParGouvernorat.put("Ariana", Arrays.asList(
+                "Ariana", "Raoued", "Sidi Thabet", "Soukra"
+        ));
+        villesParGouvernorat.put("Ben Arous", Arrays.asList(
+                "Ben Arous", "Ezzahra", "Rades", "Mourouj", "Hammam Lif", "Hammam Chatt", "Mégrine"
+        ));
+        villesParGouvernorat.put("Manouba", Arrays.asList(
+                "Manouba", "Denden", "Oued Ellil", "Douar Hicher", "Tebourba"
+        ));
+
+        villesParGouvernorat.put("Nabeul", Arrays.asList(
+                "Nabeul", "Hammamet", "Korba", "Menzel Temime", "Kelibia", "Dar Chaabane", "Takelsa", "Beni Khiar"
+        ));
+        villesParGouvernorat.put("Zaghouan", Arrays.asList(
+                "Zaghouan", "Zriba", "El Fahs", "Nadhour", "Bir Mcherga"
+        ));
+
+        villesParGouvernorat.put("Bizerte", Arrays.asList(
+                "Bizerte", "Menzel Bourguiba", "Mateur", "Ras Jebel", "Menzel Jemil"
+        ));
+        villesParGouvernorat.put("Béja", Arrays.asList(
+                "Béja", "Testour", "Medjez El Bab", "Teboursouk"
+        ));
+        villesParGouvernorat.put("Jendouba", Arrays.asList(
+                "Jendouba", "Tabarka", "Ain Draham", "Bou Salem"
+        ));
+        villesParGouvernorat.put("Le Kef", Arrays.asList(
+                "Le Kef", "Tajerouine", "Dahmani", "Sakiet Sidi Youssef"
+        ));
+        villesParGouvernorat.put("Siliana", Arrays.asList(
+                "Siliana", "Gaafour", "Makthar", "Rouhia"
+        ));
+
+        villesParGouvernorat.put("Sousse", Arrays.asList(
+                "Sousse", "Hammam Sousse", "Kalaa Kebira", "Kalaa Sghira", "Enfidha"
+        ));
+        villesParGouvernorat.put("Monastir", Arrays.asList(
+                "Monastir", "Sahline", "Ksar Hellal", "Moknine", "Jammel"
+        ));
+        villesParGouvernorat.put("Mahdia", Arrays.asList(
+                "Mahdia", "Chebba", "El Jem", "Ksour Essef"
+        ));
+        villesParGouvernorat.put("Sfax", Arrays.asList(
+                "Sfax", "Sakiet Ezzit", "Sakiet Eddaier", "Agareb", "Thyna", "Mahres"
+        ));
+
+        villesParGouvernorat.put("Kairouan", Arrays.asList(
+                "Kairouan", "Oueslatia", "Sbikha", "Haffouz"
+        ));
+        villesParGouvernorat.put("Kasserine", Arrays.asList(
+                "Kasserine", "Sbeitla", "Foussana", "Feriana"
+        ));
+        villesParGouvernorat.put("Sidi Bouzid", Arrays.asList(
+                "Sidi Bouzid", "Regueb", "Menzel Bouzaiane", "Meknassy"
+        ));
+
+        villesParGouvernorat.put("Gabès", Arrays.asList(
+                "Gabès", "Ghannouch", "Mareth", "Metouia"
+        ));
+        villesParGouvernorat.put("Médenine", Arrays.asList(
+                "Médenine", "Djerba Houmt Souk", "Djerba Midoun", "Ben Gardane", "Zarzis"
+        ));
+        villesParGouvernorat.put("Tataouine", Arrays.asList(
+                "Tataouine", "Remada", "Ghomrassen"
+        ));
+
+        villesParGouvernorat.put("Gafsa", Arrays.asList(
+                "Gafsa", "Metlaoui", "Redeyef", "Mdhilla", "El Ksar"
+        ));
+        villesParGouvernorat.put("Tozeur", Arrays.asList(
+                "Tozeur", "Nefta", "Degueche"
+        ));
+        villesParGouvernorat.put("Kebili", Arrays.asList(
+                "Kebili", "Douz", "Souk Lahad"
+        ));
     }
 
     private void setupCombos() {
@@ -129,6 +248,7 @@ public class AjouterEtablissementController {
             if (newV != null && villesParGouvernorat.containsKey(newV)) {
                 villeBox.setItems(FXCollections.observableArrayList(villesParGouvernorat.get(newV)));
             }
+            liveValidate();
         });
 
         // Template horaires -> remplir le champ
@@ -144,6 +264,22 @@ public class AjouterEtablissementController {
                 descriptionArea.setText(newV.substring(0, 200));
             }
         });
+
+        // Live validation listeners
+        nomField.textProperty().addListener((o, a, b) -> liveValidate());
+        typeField.valueProperty().addListener((o, a, b) -> liveValidate());
+        villeBox.valueProperty().addListener((o, a, b) -> liveValidate());
+        adresseField.textProperty().addListener((o, a, b) -> liveValidate());
+        telephoneField.textProperty().addListener((o, a, b) -> liveValidate());
+        emailField.textProperty().addListener((o, a, b) -> liveValidate());
+        gammePrixStarsBox.valueProperty().addListener((o, a, b) -> liveValidate());
+        horairesField.textProperty().addListener((o, a, b) -> liveValidate());
+        descriptionArea.textProperty().addListener((o, a, b) -> liveValidate());
+    }
+
+    private void liveValidate() {
+        // Run validation without blocking the save — just shows errors in real time
+        validateForm();
     }
 
     // Placeholder pour ComboBox (même editable)
@@ -199,122 +335,295 @@ public class AjouterEtablissementController {
         if (!validateForm()) return;
 
         String nom = text(nomField);
-        String type = safeComboValue(typeField);
-        String gouvernorat = safeComboValue(gouvernoratBox);
+        String uiType = safeComboValue(typeField);
+        String type = mapUiTypeToDb(uiType);
         String ville = safeComboValue(villeBox);
         String adresse = text(adresseField);
 
         String phoneCode = safeComboValue(phoneCodeBox);
         String tel = text(telephoneField);
+        String fullTel = tel;
+        if (!phoneCode.isBlank()) {
+            fullTel = phoneCode.trim() + (tel.isBlank() ? "" : " " + tel.trim());
+        }
 
         String email = text(emailField);
         String gamme = gammePrixStarsBox.getValue() == null ? "" : gammePrixStarsBox.getValue();
 
         String horaires = text(horairesField);
 
-        String lat = text(latitudeField);
-        String lon = text(longitudeField);
-
         String desc = text(descriptionArea);
 
-        // TODO : ici tu appelles ton service DAO
-        // etablissementService.insert(new Etablissement(...), selectedImages);
+        Etablissement e;
+        boolean isEdit = AffichageEtablissementController.etablissementToEdit != null;
 
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Succès");
-        alert.setHeaderText("Établissement enregistré");
-        alert.setContentText(
-                "Nom: " + nom + "\n" +
-                        "Type: " + type + "\n" +
-                        "Lieu: " + gouvernorat + " / " + ville + "\n" +
-                        "Téléphone: " + (phoneCode.isBlank() ? "" : phoneCode + " ") + tel + "\n" +
-                        "Images: " + selectedImages.size()
-        );
-        alert.showAndWait();
+        if (isEdit) {
+            e = AffichageEtablissementController.etablissementToEdit;
+        } else {
+            e = new Etablissement();
+        }
+        e.setNom(nom);
+        e.setType(type);
+        e.setAdresse(adresse);
+        e.setVille(ville);
+        e.setTelephone(fullTel);
+        e.setEmail(email);
+        e.setHoraires(horaires);
+        e.setGammePrix(gamme);
+        e.setDescription(desc);
 
-        resetForm();
+        EtablissementServices etabService = new EtablissementServices();
+        EtablissementImageServices imageService = new EtablissementImageServices();
+
+        try {
+            if (isEdit) {
+                // UPDATE
+                etabService.modifier(e);
+                if (!selectedImages.isEmpty()) {
+                    int ordre = 1;
+                    for (File f : selectedImages) {
+                        if (f == null) continue;
+                        String path = f.getAbsolutePath();
+                        if (path == null || path.isBlank()) continue;
+                        EtablissementImage img = new EtablissementImage(e.getIdEtablissement(), path, ordre++);
+                        imageService.ajouterImage(img);
+                    }
+                }
+                AffichageEtablissementController.etablissementToEdit = null;
+
+                try {
+                    SuccessNotification.show(saveBtn, "Établissement modifié avec succès !", () -> {
+                        NavigationUtils.goTo("/etablissement_affichage.fxml", event);
+                    });
+                } catch (Exception notifEx) {
+                    notifEx.printStackTrace();
+                    NavigationUtils.goTo("/etablissement_affichage.fxml", event);
+                }
+            } else {
+                // INSERT
+                int id = etabService.ajouterEtRetournerId(e);
+
+                if (id > 0 && !selectedImages.isEmpty()) {
+                    int ordre = 1;
+                    for (File f : selectedImages) {
+                        if (f == null) continue;
+                        String path = f.getAbsolutePath();
+                        if (path == null || path.isBlank()) continue;
+                        EtablissementImage img = new EtablissementImage(id, path, ordre++);
+                        imageService.ajouterImage(img);
+                    }
+                }
+
+                // Notification animée puis navigation vers la liste
+                try {
+                    SuccessNotification.show(saveBtn, "Établissement ajouté avec succès !", () -> {
+                        NavigationUtils.goTo("/etablissement_affichage.fxml", event);
+                    });
+                } catch (Exception notifEx) {
+                    notifEx.printStackTrace();
+                    NavigationUtils.goTo("/etablissement_affichage.fxml", event);
+                }
+            }
+
+        } catch (SQLException ex) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur");
+            alert.setHeaderText("Erreur lors de l'enregistrement");
+            alert.setContentText(ex.getMessage());
+            alert.showAndWait();
+        }
+    }
+
+    @FXML
+    private void onOpenGoogleMaps(ActionEvent event) {
+        // Build query from address + ville
+        String adresse = text(adresseField);
+        String ville = safeComboValue(villeBox);
+
+        String query = "";
+
+        // Prefer address text so Google Maps resolves the actual place name
+        StringBuilder sb = new StringBuilder();
+        if (!adresse.isBlank()) sb.append(adresse);
+        if (!ville.isBlank()) {
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(ville);
+        }
+        query = sb.toString();
+
+        if (query.isBlank()) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Localisation manquante");
+            alert.setHeaderText(null);
+            alert.setContentText("Veuillez saisir une adresse avant d'ouvrir Google Maps.");
+            alert.showAndWait();
+            return;
+        }
+
+        try {
+            String encoded = java.net.URLEncoder.encode(query, "UTF-8");
+            String url = "https://www.google.com/maps/search/?api=1&query=" + encoded;
+            java.awt.Desktop.getDesktop().browse(new java.net.URI(url));
+        } catch (Exception ex) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Erreur");
+            alert.setHeaderText(null);
+            alert.setContentText("Impossible d'ouvrir Google Maps : " + ex.getMessage());
+            alert.showAndWait();
+        }
     }
 
     @FXML
     private void onAnnuler(ActionEvent event) {
-        Stage stage = getStageFromEvent(event);
-        if (stage != null) stage.close();
+        AffichageEtablissementController.etablissementToEdit = null;
+        NavigationUtils.goTo("/etablissement_affichage.fxml", event);
     }
 
     // ----------------- Validation -----------------
     private boolean validateForm() {
+        clearErrors();
         boolean valid = true;
 
+        // ──────── Nom (obligatoire, 3-100 chars, pas uniquement des chiffres) ────────
         String nom = text(nomField);
         if (nom.isBlank()) {
             setError(nomError, "Le nom est obligatoire.");
+            markError(nomField);
             valid = false;
-        } else if (nom.length() < 2) {
-            setError(nomError, "Le nom doit contenir au moins 2 caractères.");
+        } else if (nom.length() < 3) {
+            setError(nomError, "Le nom doit contenir au moins 3 caractères.");
+            markError(nomField);
+            valid = false;
+        } else if (nom.length() > 100) {
+            setError(nomError, "Le nom ne doit pas dépasser 100 caractères.");
+            markError(nomField);
+            valid = false;
+        } else if (!NAME_PATTERN.matcher(nom).matches()) {
+            setError(nomError, "Le nom contient des caractères non autorisés.");
+            markError(nomField);
+            valid = false;
+        } else if (DIGITS_ONLY.matcher(nom).matches()) {
+            setError(nomError, "Le nom ne peut pas être uniquement des chiffres.");
+            markError(nomField);
             valid = false;
         }
 
-        // type optionnel (si tu veux obligatoire, décommente)
-        // String type = safeComboValue(typeField);
-        // if (type.isBlank()) {
-        //     setError(typeError, "Choisis un type.");
-        //     valid = false;
-        // }
+        // ──────── Type (obligatoire) ────────
+        String uiType = safeComboValue(typeField);
+        if (uiType.isBlank()) {
+            setError(typeError, "Choisis un type.");
+            markError(typeField);
+            valid = false;
+        }
 
+        // ──────── Gouvernorat (obligatoire) ────────
         String gouv = safeComboValue(gouvernoratBox);
         if (gouv.isBlank()) {
             setError(gouvernoratError, "Choisis un gouvernorat.");
+            markError(gouvernoratBox);
             valid = false;
         }
 
+        // ──────── Ville (obligatoire, cohérence avec gouvernorat) ────────
         String ville = safeComboValue(villeBox);
         if (ville.isBlank()) {
             setError(villeError, "Choisis une ville.");
+            markError(villeBox);
             valid = false;
-        }
-
-        // (Optionnel mais conseillé) : vérifier ville appartient au gouvernorat choisi
-        if (!gouv.isBlank() && !ville.isBlank() && villesParGouvernorat.containsKey(gouv)) {
+        } else if (!gouv.isBlank() && villesParGouvernorat.containsKey(gouv)) {
             if (!villesParGouvernorat.get(gouv).contains(ville)) {
                 setError(villeError, "Cette ville n'appartient pas à " + gouv + ".");
+                markError(villeBox);
                 valid = false;
             }
         }
 
-        String email = text(emailField);
-        if (!email.isBlank() && !EMAIL_PATTERN.matcher(email).matches()) {
-            setError(emailError, "Email invalide. Exemple: nom@gmail.com");
+        // ──────── Adresse (obligatoire, 5-255 chars) ────────
+        String adresse = text(adresseField);
+        if (adresse.isBlank()) {
+            setError(adresseError, "L'adresse est obligatoire.");
+            markError(adresseField);
+            valid = false;
+        } else if (adresse.length() < 5) {
+            setError(adresseError, "L'adresse doit contenir au moins 5 caractères.");
+            markError(adresseField);
+            valid = false;
+        } else if (adresse.length() > 255) {
+            setError(adresseError, "L'adresse ne doit pas dépasser 255 caractères.");
+            markError(adresseField);
             valid = false;
         }
 
+        // ──────── Téléphone (obligatoire, 8 chiffres) ────────
         String tel = text(telephoneField);
-        if (!tel.isBlank()) {
-            if (!tel.matches("\\d+")) {
-                setError(telephoneError, "Le téléphone doit contenir uniquement des chiffres.");
-                valid = false;
-            } else if (tel.length() < 6 || tel.length() > 15) {
-                setError(telephoneError, "Longueur téléphone invalide (6 à 15 chiffres).");
-                valid = false;
-            }
+        if (tel.isBlank()) {
+            setError(telephoneError, "Le téléphone est obligatoire.");
+            markError(telephoneField);
+            valid = false;
+        } else if (!DIGITS_ONLY.matcher(tel).matches()) {
+            setError(telephoneError, "Le téléphone doit contenir uniquement des chiffres.");
+            markError(telephoneField);
+            valid = false;
+        } else if (!PHONE_PATTERN.matcher(tel).matches()) {
+            setError(telephoneError, "Le téléphone doit contenir exactement 8 chiffres.");
+            markError(telephoneField);
+            valid = false;
         }
 
+        // ──────── Email (obligatoire, format valide, max 100 chars) ────────
+        String email = text(emailField);
+        if (email.isBlank()) {
+            setError(emailError, "L'email est obligatoire.");
+            markError(emailField);
+            valid = false;
+        } else if (email.length() > 100) {
+            setError(emailError, "L'email ne doit pas dépasser 100 caractères.");
+            markError(emailField);
+            valid = false;
+        } else if (!EMAIL_PATTERN.matcher(email).matches()) {
+            setError(emailError, "Email invalide. Exemple: nom@gmail.com");
+            markError(emailField);
+            valid = false;
+        }
+
+        // ──────── Gamme de prix (obligatoire) ────────
+        String gamme = gammePrixStarsBox.getValue() == null ? "" : gammePrixStarsBox.getValue().trim();
+        if (gamme.isBlank()) {
+            setError(gammeError, "Choisis une gamme de prix.");
+            markError(gammePrixStarsBox);
+            valid = false;
+        }
+
+        // ──────── Horaires (obligatoire, max 100 chars) ────────
+        String horaires = text(horairesField);
+        if (horaires.isBlank()) {
+            setError(horairesError, "Les horaires sont obligatoires.");
+            markError(horairesField);
+            valid = false;
+        } else if (horaires.length() > 100) {
+            setError(horairesError, "Les horaires ne doivent pas dépasser 100 caractères.");
+            markError(horairesField);
+            valid = false;
+        }
+
+        // ──────── Description (obligatoire, 10-200 chars) ────────
         String desc = text(descriptionArea);
-        if (desc.length() > 200) {
+        if (desc.isBlank()) {
+            setError(descriptionError, "La description est obligatoire.");
+            markError(descriptionArea);
+            valid = false;
+        } else if (desc.length() < 10) {
+            setError(descriptionError, "La description doit contenir au moins 10 caractères.");
+            markError(descriptionArea);
+            valid = false;
+        } else if (desc.length() > 200) {
             setError(descriptionError, "Maximum 200 caractères.");
+            markError(descriptionArea);
             valid = false;
         }
 
-        String lat = text(latitudeField);
-        if (!lat.isBlank() && !isDouble(lat)) {
-            setError(latitudeError, "Latitude invalide (ex: 36.8).");
-            valid = false;
-        }
-
-        String lon = text(longitudeField);
-        if (!lon.isBlank() && !isDouble(lon)) {
-            setError(longitudeError, "Longitude invalide (ex: 10.2).");
-            valid = false;
-        }
+        // Disable save button if invalid
+        if (saveBtn != null) saveBtn.setDisable(!valid);
 
         return valid;
     }
@@ -359,12 +668,33 @@ public class AjouterEtablissementController {
 
     // ----------------- Helpers -----------------
     private void clearErrors() {
+        // Clear error labels
         List<Label> labels = Arrays.asList(
                 nomError, typeError, gouvernoratError, villeError, adresseError,
                 telephoneError, emailError, gammeError, horairesError,
-                latitudeError, longitudeError, descriptionError
+                descriptionError
         );
         for (Label l : labels) if (l != null) l.setText("");
+
+        // Remove CSS error highlight from all inputs
+        removeError(nomField);
+        removeError(typeField);
+        removeError(gouvernoratBox);
+        removeError(villeBox);
+        removeError(adresseField);
+        removeError(telephoneField);
+        removeError(emailField);
+        removeError(gammePrixStarsBox);
+        removeError(horairesField);
+        removeError(descriptionArea);
+    }
+
+    private void markError(Control c) {
+        if (c != null && !c.getStyleClass().contains("input-error")) c.getStyleClass().add("input-error");
+    }
+
+    private void removeError(Control c) {
+        if (c != null) c.getStyleClass().remove("input-error");
     }
 
     private void setError(Label label, String msg) {
@@ -374,6 +704,8 @@ public class AjouterEtablissementController {
     private String text(TextInputControl t) {
         return t == null || t.getText() == null ? "" : t.getText().trim();
     }
+
+    private String safe(String s) { return s == null ? "" : s; }
 
     private String safeComboValue(ComboBox<String> combo) {
         if (combo == null) return "";
@@ -385,6 +717,38 @@ public class AjouterEtablissementController {
             return ed == null ? "" : ed.trim();
         }
         return "";
+    }
+
+    private String mapDbTypeToUi(String dbType) {
+        if (dbType == null) return null;
+        return switch (dbType.trim().toLowerCase(Locale.ROOT)) {
+            case "hotel" -> "Hôtel";
+            case "restaurant" -> "Restaurant";
+            case "cafe" -> "Café";
+            case "museum" -> "Musée";
+            case "bar" -> "Bar";
+            case "loisir" -> "Loisir";
+            default -> "Autre";
+        };
+    }
+
+    /**
+     * Convertit le type affiché dans le formulaire (avec accents / mots français)
+     * vers la valeur attendue en base (ENUM: hotel, restaurant, cafe, museum, bar, autre).
+     */
+    private String mapUiTypeToDb(String uiType) {
+        if (uiType == null) return null;
+        String t = uiType.trim().toLowerCase(Locale.ROOT);
+
+        return switch (t) {
+            case "hôtel", "hotel" -> "hotel";
+            case "restaurant" -> "restaurant";
+            case "café", "cafe" -> "cafe";
+            case "musée", "musee" -> "museum";
+            case "bar" -> "bar";
+            case "loisir", "autre" -> "autre";
+            default -> "autre";
+        };
     }
 
     private Stage getStageFromEvent(ActionEvent event) {
@@ -413,9 +777,6 @@ public class AjouterEtablissementController {
 
         horairesTemplateBox.getSelectionModel().clearSelection();
         horairesField.clear();
-
-        latitudeField.clear();
-        longitudeField.clear();
 
         descriptionArea.clear();
 

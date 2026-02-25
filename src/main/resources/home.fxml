@@ -4,51 +4,89 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.esprit.controllers.HomeController"
-            stylesheets="@style.css"
-            styleClass="app-root">
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.esprit.controllers.HomeController"
+           stylesheets="@style.css"
+           fx:id="rootStack">
 
-    <!-- TOP BAR -->
+<BorderPane styleClass="app-root">
+
     <top>
-        <VBox styleClass="topbar" spacing="10">
-            <padding>
-                <Insets top="18" right="22" bottom="16" left="22"/>
-            </padding>
-
-            <HBox alignment="CENTER_LEFT" spacing="12">
-                <Label text="Premium Dashboard" styleClass="page-title"/>
+        <VBox spacing="0">
+            <!-- NAV BAR -->
+            <HBox styleClass="nav-bar" alignment="CENTER_LEFT" spacing="0">
+                <Label text="&#x1f525; Premium Dashboard" styleClass="nav-logo"/>
                 <Pane HBox.hgrow="ALWAYS"/>
-                <Label text="Bienvenue 👋" styleClass="topbar-subtitle"/>
+                <HBox styleClass="nav-tabs">
+                    <Button text="&#x1f3e0; Accueil" styleClass="nav-tab-active"/>
+                    <Button text="&#x1f4ca; Tableau &#xc9;tab." onAction="#goTableau" styleClass="nav-tab"/>
+                    <Button text="&#x1f5bc; Galerie &#xc9;tab." onAction="#goEtablissements" styleClass="nav-tab"/>
+                    <Button text="&#x1f3af; Galerie Activ." onAction="#goActivites" styleClass="nav-tab"/>
+                    <Button text="&#x1f4ca; Tableau Activ." onAction="#goTableauActivites" styleClass="nav-tab"/>
+                </HBox>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button text="+ Nouveau" onAction="#goEtablissements" styleClass="btn-primary pill"/>
             </HBox>
-
-            <Region styleClass="accent-line-thin"/>
         </VBox>
     </top>
 
-    <!-- CENTER -->
     <center>
         <StackPane styleClass="page-body">
             <padding>
-                <Insets top="18" right="22" bottom="22" left="22"/>
+                <Insets top="40" right="28" bottom="28" left="28"/>
             </padding>
 
-            <VBox alignment="CENTER" spacing="18" styleClass="home-card">
-                <Label text="Choisissez un module" styleClass="home-title"/>
-                <Label text="Accédez rapidement à la gestion des activités ou des établissements."
-                       wrapText="true"
-                       styleClass="home-subtitle"/>
+            <VBox alignment="CENTER" spacing="32" styleClass="home-card">
 
-                <HBox spacing="30" alignment="CENTER">
+                <!-- Title section -->
+                <VBox alignment="CENTER" spacing="6">
+                    <Label text="Bienvenue &#x1f44b;" styleClass="home-welcome-label"/>
+                    <Region prefHeight="6"/>
+                    <Label text="Premium Dashboard" styleClass="home-title"/>
+                    <Region styleClass="accent-line-full" prefWidth="200" maxWidth="200"/>
+                    <Label text="Choisissez un module pour commencer"
+                           wrapText="true" styleClass="home-subtitle"/>
+                </VBox>
 
-                    <Button text="🏃  Gestion des Activités"
-                            onAction="#goActivites"
-                            styleClass="btn-yellow"/>
+                <!-- Module cards -->
+                <HBox spacing="24" alignment="CENTER">
 
-                    <Button text="🏢  Gestion des Établissements"
-                            onAction="#goEtablissements"
-                            styleClass="btn-yellow"/>
+                    <!-- Galerie &#xc9;tablissements -->
+                    <VBox alignment="CENTER" spacing="8" styleClass="module-card">
+                        <Label text="&#x1f5bc;" styleClass="module-icon"/>
+                        <Label text="Galerie &#xc9;tab." styleClass="module-title"/>
+                        <Label text="Parcourez vos &#xe9;tablissements en mode galerie avec images"
+                               wrapText="true" styleClass="module-desc"/>
+                        <Button text="Acc&#xe9;der" onAction="#goEtablissements" styleClass="btn-yellow"/>
+                    </VBox>
+
+                    <!-- Tableau Premium -->
+                    <VBox alignment="CENTER" spacing="8" styleClass="module-card">
+                        <Label text="&#x1f4ca;" styleClass="module-icon"/>
+                        <Label text="Tableau Premium" styleClass="module-title"/>
+                        <Label text="Vue tableau professionnelle avec badges et actions rapides"
+                               wrapText="true" styleClass="module-desc"/>
+                        <Button text="Acc&#xe9;der" onAction="#goTableau" styleClass="btn-yellow"/>
+                    </VBox>
+
+                    <!-- Galerie Activit&#xe9;s -->
+                    <VBox alignment="CENTER" spacing="8" styleClass="module-card">
+                        <Label text="&#x1f3af;" styleClass="module-icon"/>
+                        <Label text="Galerie Activ." styleClass="module-title"/>
+                        <Label text="Parcourez vos activit&#xe9;s en mode galerie avec images"
+                               wrapText="true" styleClass="module-desc"/>
+                        <Button text="Acc&#xe9;der" onAction="#goActivites" styleClass="btn-yellow"/>
+                    </VBox>
+
+                    <!-- Tableau Activit&#xe9;s -->
+                    <VBox alignment="CENTER" spacing="8" styleClass="module-card">
+                        <Label text="&#x1f4ca;" styleClass="module-icon"/>
+                        <Label text="Tableau Activ." styleClass="module-title"/>
+                        <Label text="Vue tableau des activit&#xe9;s avec filtres et actions rapides"
+                               wrapText="true" styleClass="module-desc"/>
+                        <Button text="Acc&#xe9;der" onAction="#goTableauActivites" styleClass="btn-yellow"/>
+                    </VBox>
 
                 </HBox>
 
@@ -58,3 +96,4 @@
     </center>
 
 </BorderPane>
+</StackPane>

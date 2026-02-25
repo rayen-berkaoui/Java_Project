@@ -4,78 +4,128 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.esprit.controllers.ActiviteController"
-            stylesheets="@style.css"
-            styleClass="app-root">
+<StackPane fx:id="rootStack" xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.esprit.controllers.AffichageActiviteController"
+           stylesheets="@style.css">
+<BorderPane fx:id="rootPane" styleClass="app-root">
 
+    <!-- NAV BAR -->
     <top>
-        <VBox styleClass="topbar" spacing="12">
+        <HBox styleClass="nav-bar" alignment="CENTER_LEFT" spacing="0">
+            <Label text="&#x1f525; Premium Dashboard" styleClass="nav-logo"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <HBox styleClass="nav-tabs">
+                <Button text="&#x1f3e0; Accueil" onAction="#goHome" styleClass="nav-tab"/>
+                <Button text="&#x1f4ca; Tableau &#xc9;tab." onAction="#goTableau" styleClass="nav-tab"/>
+                <Button text="&#x1f5bc; Galerie &#xc9;tab." onAction="#goEtablissements" styleClass="nav-tab"/>
+                <Button text="&#x1f3af; Galerie Activ." styleClass="nav-tab-active"/>
+                <Button text="&#x1f4ca; Tableau Activ." onAction="#goTableauActivites" styleClass="nav-tab"/>
+            </HBox>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <ComboBox fx:id="langSelector" styleClass="lang-selector" promptText="Langue"/>
+            <Region prefWidth="12"/>
+            <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+        </HBox>
+    </top>
+
+    <!-- LEFT SIDEBAR -->
+    <left>
+        <HBox spacing="0">
+            <VBox fx:id="sidebarContent" spacing="16" styleClass="filter-sidebar">
+                <padding>
+                    <Insets top="22" right="18" bottom="22" left="18"/>
+                </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <Region styleClass="gold-dot"/>
+                <Label text="Filtres &#x26; Tri" styleClass="sidebar-title"/>
+            </HBox>
+
+            <Separator styleClass="sidebar-separator"/>
+
+            <VBox spacing="6">
+                <Label text="RECHERCHE" styleClass="sidebar-section-label"/>
+                <TextField fx:id="searchField"
+                           promptText="&#x1f50d; Nom, cat&#xe9;gorie..."
+                           styleClass="sidebar-search"/>
+            </VBox>
+
+            <Separator styleClass="sidebar-separator"/>
+
+            <VBox spacing="6">
+                <Label text="CAT&#xc9;GORIE" styleClass="sidebar-section-label"/>
+                <ComboBox fx:id="filterCategorie" promptText="Toutes" styleClass="sidebar-combo" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox spacing="6">
+                <Label text="NIVEAU" styleClass="sidebar-section-label"/>
+                <ComboBox fx:id="filterNiveau" promptText="Tous" styleClass="sidebar-combo" maxWidth="Infinity"/>
+            </VBox>
+
+            <Separator styleClass="sidebar-separator"/>
+
+            <VBox spacing="6">
+                <Label text="TRIER PAR" styleClass="sidebar-section-label"/>
+                <ComboBox fx:id="sortBox" promptText="Aucun" styleClass="sidebar-combo" maxWidth="Infinity"/>
+            </VBox>
+
+            <Pane VBox.vgrow="ALWAYS"/>
+
+            <Button text="&#x21bb; Rafra&#xee;chir" onAction="#onRefresh" styleClass="sidebar-btn" maxWidth="Infinity"/>
+            </VBox>
+            <Button fx:id="sidebarToggle" text="&#x276E;" onAction="#onToggleSidebar" styleClass="sidebar-toggle-btn"/>
+        </HBox>
+    </left>
+
+    <!-- CENTER CONTENT -->
+    <center>
+        <VBox styleClass="page-body">
             <padding>
-                <Insets top="18" right="22" bottom="16" left="22"/>
+                <Insets top="24" right="28" bottom="28" left="28"/>
             </padding>
 
             <HBox alignment="CENTER_LEFT" spacing="12">
-                <Label text="Gestion des activités" styleClass="page-title"/>
-                <Pane HBox.hgrow="ALWAYS"/>
-                <Button text="← Home" onAction="#goHome" styleClass="home-btn-small"/>
+                <Label text="&#x1f3af;" style="-fx-font-size: 24px;"/>
+                <Label text="Galerie Activit&#xe9;s" styleClass="h1"/>
             </HBox>
 
-            <HBox spacing="12" alignment="CENTER_LEFT">
-                <TextField fx:id="searchField"
-                           promptText="Rechercher (nom, catégorie, niveau)..."
-                           styleClass="search-field"
-                           HBox.hgrow="ALWAYS"/>
+            <Region prefHeight="18"/>
 
-                <ComboBox fx:id="filterCategorie" prefWidth="170" promptText="Catégorie" styleClass="filter-combo"/>
-                <ComboBox fx:id="filterNiveau" prefWidth="170" promptText="Niveau" styleClass="filter-combo"/>
-                <ComboBox fx:id="sortBox" prefWidth="170" promptText="Trier" styleClass="filter-combo"/>
+            <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="NEVER"
+                        styleClass="content-scroll" VBox.vgrow="ALWAYS">
+                <content>
+                    <VBox alignment="CENTER" spacing="0" style="-fx-padding: 0;">
 
-                <Button text="Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
-            </HBox>
-
-            <Region styleClass="accent-line-thin"/>
-        </VBox>
-    </top>
-
-    <center>
-        <StackPane styleClass="page-body">
-            <padding>
-                <Insets top="18" right="22" bottom="22" left="22"/>
-            </padding>
-
-            <VBox spacing="16" styleClass="content-root">
-
-                <HBox alignment="CENTER_LEFT" spacing="12" styleClass="section-bar">
-                    <Label text="Galerie Premium" styleClass="section-title"/>
-                    <Pane HBox.hgrow="ALWAYS"/>
-                    <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
-                </HBox>
-
-                <ScrollPane fitToWidth="true"
-                            hbarPolicy="NEVER"
-                            vbarPolicy="AS_NEEDED"
-                            styleClass="content-scroll">
-                    <content>
-                        <VBox styleClass="grid-wrapper">
+                        <!-- Carousel row: arrow + cards + arrow -->
+                        <HBox alignment="CENTER" spacing="18" VBox.vgrow="ALWAYS">
                             <padding>
-                                <Insets top="8" right="0" bottom="0" left="0"/>
+                                <Insets top="0" right="0" bottom="0" left="0"/>
                             </padding>
 
-                            <TilePane fx:id="cardsPane"
-                                      prefColumns="3"
-                                      prefTileWidth="360"
-                                      prefTileHeight="330"
-                                      hgap="22" vgap="22"
-                                      tileAlignment="TOP_LEFT"
-                                      styleClass="cards-grid"/>
-                        </VBox>
-                    </content>
-                </ScrollPane>
+                            <Button fx:id="prevBtn" text="&#x276E;"
+                                    onAction="#onPrev"
+                                    styleClass="carousel-arrow"
+                                    minWidth="48" minHeight="48"/>
 
-            </VBox>
-        </StackPane>
+                            <HBox fx:id="cardsRow" spacing="45" alignment="CENTER"
+                                  HBox.hgrow="ALWAYS" style="-fx-padding: 8 0;"/>
+
+                            <Button fx:id="nextBtn" text="&#x276F;"
+                                    onAction="#onNext"
+                                    styleClass="carousel-arrow"
+                                    minWidth="48" minHeight="48"/>
+                        </HBox>
+
+                        <!-- Dots / Page indicator -->
+                        <HBox fx:id="dotsBox" alignment="CENTER" spacing="10"
+                              style="-fx-padding: 18 0 8 0;"/>
+
+                    </VBox>
+                </content>
+            </ScrollPane>
+        </VBox>
     </center>
 
 </BorderPane>
+</StackPane>
