@@ -177,6 +177,7 @@ public class utilisateurServices implements ICrud<utilisateur> {
                 u.setNumTel(rs.getInt("num_tel"));
                 u.setProfilePicture(rs.getString("profile_picture"));
                 u.setFaceEncoding(rs.getString("face_encoding"));
+                try { u.setThemePreference(rs.getString("theme_preference")); } catch (SQLException ignored) {}
 
                 Date date = rs.getDate("date_creation");
                 if (date != null) {
@@ -597,6 +598,7 @@ public class utilisateurServices implements ICrud<utilisateur> {
         u.setNumTel(rs.getInt("num_tel"));
         u.setProfilePicture(rs.getString("profile_picture"));
         u.setFaceEncoding(rs.getString("face_encoding"));
+        try { u.setThemePreference(rs.getString("theme_preference")); } catch (SQLException ignored) {}
         Date date = rs.getDate("date_creation");
         if (date != null) u.setDateCreation(date.toLocalDate());
         return u;
@@ -689,5 +691,37 @@ public class utilisateurServices implements ICrud<utilisateur> {
 
         System.out.println("❌ No face match found. Best score: " + String.format("%.4f", bestScore));
         return null;
+    }
+
+    // =====================================================
+    // ✅ THEME PREFERENCE (per-user persistence)
+    // =====================================================
+    public String getThemePreference(int userId) {
+        String sql = "SELECT theme_preference FROM utilisateur WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                String pref = rs.getString("theme_preference");
+                return pref != null ? pref : "SYSTEM";
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "SYSTEM";
+    }
+
+    public boolean saveThemePreference(int userId, String themePreference) {
+        String sql = "UPDATE utilisateur SET theme_preference = ? WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, themePreference);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

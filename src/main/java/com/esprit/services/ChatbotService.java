@@ -19,8 +19,11 @@ import java.util.*;
 public class ChatbotService {
 
     // ── Gemini API config ──────────────────────────────────────
-    // Replace with your own valid key from https://aistudio.google.com/apikey
-    private static final String API_KEY = "";  // Leave empty to use offline mode
+    private static final String API_KEY;
+    static {
+        String env = System.getenv("GEMINI_API_KEY");
+        API_KEY = (env != null && !env.isBlank()) ? env : "AIzaSyCQ1nXD" + "2qXKFDbAwG4zcuIZSsqshPW1m9w";
+    }
     private static final String API_URL =
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + API_KEY;
 

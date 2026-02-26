@@ -23,6 +23,9 @@ public class StripePaymentService {
         ? System.getenv("STRIPE_SECRET_KEY")
         : "sk_test_YOUR_STRIPE_KEY_HERE";
 
+    // TEST MODE: charge 0 DT (no real money withdrawn) — set to false for production
+    private static final boolean TEST_MODE_ZERO_CHARGE = true;
+
     static {
         Stripe.apiKey = STRIPE_SECRET_KEY;
     }
@@ -67,7 +70,15 @@ public class StripePaymentService {
         try {
             // Convert DT to millimes (Stripe uses smallest currency unit)
             // 1 DT = 1000 millimes
-            long amountInMillimes = Math.round(amountInDT * 1000);
+            // In TEST mode, charge minimum amount (Stripe requires >= 1)
+            long amountInMillimes;
+            if (TEST_MODE_ZERO_CHARGE) {
+                // Stripe minimum for TND is 1 millime — effectively 0.001 DT (free for testing)
+                amountInMillimes = 1;
+                System.out.println("[STRIPE TEST MODE] Charging minimum amount (1 millime / 0.001 DT) instead of " + amountInDT + " DT");
+            } else {
+                amountInMillimes = Math.round(amountInDT * 1000);
+            }
 
             // Step 1: Create a PaymentMethod with card details
             PaymentMethodCreateParams pmParams = PaymentMethodCreateParams.builder()

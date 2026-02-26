@@ -1362,16 +1362,21 @@ public class ReservationController {
     // THEME TOGGLE BUTTON
     // ================================================================
     private void addThemeToggleButton() {
-        Button themeBtn = new Button(ThemeManager.themeIcon());
+        Button themeBtn = new Button(ThemeManager.themeIcon() + " " + ThemeManager.modeLabel());
         themeBtn.setStyle(ThemeManager.themeToggleBtnStyle());
-        themeBtn.setOnMouseEntered(e -> themeBtn.setStyle(ThemeManager.themeToggleBtnStyle().replace("0.1;", "0.2;")));
+        themeBtn.setOnMouseEntered(e -> themeBtn.setStyle(ThemeManager.themeToggleBtnStyle().replace("0.1;", "0.2;").replace("0.08;", "0.15;")));
         themeBtn.setOnMouseExited(e -> themeBtn.setStyle(ThemeManager.themeToggleBtnStyle()));
         themeBtn.setOnAction(e -> {
             ThemeManager.toggleTheme();
-            themeBtn.setText(ThemeManager.themeIcon());
+            themeBtn.setText(ThemeManager.themeIcon() + " " + ThemeManager.modeLabel());
             themeBtn.setStyle(ThemeManager.themeToggleBtnStyle());
+            if (currentUser != null) {
+                new Thread(() -> userService.saveThemePreference(
+                    currentUser.getId(), ThemeManager.getCurrentMode().name()
+                )).start();
+            }
         });
-        Tooltip tooltip = new Tooltip("Changer le theme");
+        Tooltip tooltip = new Tooltip("Theme: Sombre / Clair / Systeme");
         tooltip.setStyle("-fx-font-size: 11;");
         themeBtn.setTooltip(tooltip);
 

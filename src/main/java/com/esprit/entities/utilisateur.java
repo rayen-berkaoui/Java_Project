@@ -20,6 +20,7 @@ public class utilisateur {
     private String profilePicture;   // base64 encoded image
     private String faceEncoding;      // stored face encoding for face recognition
     private int loyaltyPoints;        // loyalty points earned from card payments
+    private String themePreference;    // DARK, LIGHT, or SYSTEM (follows device theme)
 
     // =========================
     // Constructeur vide
@@ -171,6 +172,14 @@ public class utilisateur {
 
     public void setLoyaltyPoints(int loyaltyPoints) {
         this.loyaltyPoints = loyaltyPoints;
+    }
+
+    public String getThemePreference() {
+        return themePreference;
+    }
+
+    public void setThemePreference(String themePreference) {
+        this.themePreference = themePreference;
     }
 
     // =========================

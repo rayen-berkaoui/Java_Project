@@ -537,6 +537,13 @@ public class LoginController {
     // =========================
     private void redirectToDashboard(utilisateur user) {
         stopCameraCleanup();
+
+        // Apply user's saved theme preference
+        String themePref = user.getThemePreference();
+        if (themePref != null && !themePref.isEmpty()) {
+            ThemeManager.setModeFromString(themePref);
+        }
+
         try {
             boolean isAdmin = utilisateurService.isAdmin(user.getRoleId());
 
