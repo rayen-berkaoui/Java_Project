@@ -88,6 +88,7 @@ public class PanierController {
             });
             addThemeToggleButton();
             addChatbotButton();
+            addAIFeatureButtons();
 
             // Apply theme to FXML nodes
             javafx.application.Platform.runLater(() -> {
@@ -250,6 +251,54 @@ public class PanierController {
         );
         details.getChildren().addAll(row1, row2);
 
+        // Room display for hotels
+        boolean isHotelItem = p.getTypeService() != null && (p.getTypeService().toLowerCase().contains("hotel") || p.getTypeService().toLowerCase().contains("voyage") || p.getTypeService().toLowerCase().contains("hebergement"));
+        if (isHotelItem && p.getNbChambres() > 0) {
+            HBox roomRow = new HBox(16);
+            roomRow.getChildren().addAll(
+                buildDetailChip("\uD83D\uDECF", p.getNbChambres() + " chambre(s)"),
+                buildDetailChip("\uD83C\uDFE8", getDurationNights(p) + " nuit(s)")
+            );
+            details.getChildren().add(roomRow);
+        }
+
+        // FEATURE #14: Dynamic Pricing Indicator
+        if (!isRestoItem) {
+            HBox pricingRow = new HBox(8);
+            pricingRow.setAlignment(Pos.CENTER_LEFT);
+            String pricingLevel = getDynamicPricingLevel(p);
+            Label pricingBadge = new Label(pricingLevel);
+            pricingBadge.setStyle(getPricingBadgeStyle(pricingLevel));
+            pricingRow.getChildren().add(pricingBadge);
+            details.getChildren().add(pricingRow);
+        }
+
+        // FEATURE #7: Weather widget for destination
+        try {
+            String city = guessCity(p);
+            if (city != null && !city.isEmpty()) {
+                com.esprit.services.WeatherService weatherSvc = new com.esprit.services.WeatherService();
+                com.esprit.services.WeatherService.WeatherInfo weather = weatherSvc.getWeather(city);
+                if (weather != null) {
+                    HBox weatherRow = new HBox(8);
+                    weatherRow.setAlignment(Pos.CENTER_LEFT);
+                    weatherRow.setStyle("-fx-background-color: rgba(100,181,246,0.06); -fx-padding: 6 10; -fx-background-radius: 6;");
+                    Label weatherLbl = new Label(weather.getEmoji() + " " + city + ": " + String.format("%.0f", weather.temp) + "\u00B0C - " + weather.description);
+                    weatherLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 9;");
+                    weatherRow.getChildren().add(weatherLbl);
+                    details.getChildren().add(weatherRow);
+                }
+            }
+        } catch (Exception ignored) { /* weather is optional */ }
+
+        // FEATURE #8: Currency converter button
+        if (!isRestoItem && p.getPrixEstime() > 0) {
+            Button currencyBtn = new Button("\uD83D\uDCB1 Convertir devise");
+            currencyBtn.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-text-fill: #FFD700; -fx-padding: 4 10; -fx-background-radius: 6; -fx-font-size: 9; -fx-cursor: hand;");
+            currencyBtn.setOnAction(e -> showCurrencyConverterDialog(p.getPrixEstime()));
+            details.getChildren().add(currencyBtn);
+        }
+
         // Discount info if promo applied (only for items with price)
         if (!isRestoItem && appliedPromo != null && discountPercent > 0) {
             double discounted = p.getPrixEstime() * (1 - discountPercent / 100.0);
@@ -322,7 +371,19 @@ public class PanierController {
 
         innovativeButtons.getChildren().addAll(duplicateBtn, shareBtn, compareBtn);
 
-        card.getChildren().addAll(header, details, statutRow, buttons, innovativeButtons);
+        // FEATURE #16: Split Payment / Group Booking (per-person price display)
+        if (!isRestoItem && p.getNbPersonnes() > 1 && p.getPrixEstime() > 0) {
+            HBox splitRow = new HBox(8);
+            splitRow.setAlignment(Pos.CENTER);
+            splitRow.setStyle("-fx-background-color: rgba(178,102,255,0.04); -fx-padding: 6; -fx-background-radius: 6;");
+            double perPerson = p.getPrixEstime() / p.getNbPersonnes();
+            Label splitLbl = new Label("\uD83D\uDC65 Split: " + String.format("%.2f DT", perPerson) + "/personne");
+            splitLbl.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 9; -fx-font-weight: bold;");
+            splitRow.getChildren().add(splitLbl);
+            card.getChildren().addAll(header, details, statutRow, buttons, innovativeButtons, splitRow);
+        } else {
+            card.getChildren().addAll(header, details, statutRow, buttons, innovativeButtons);
+        }
         return card;
     }
 
@@ -1188,7 +1249,15 @@ public class PanierController {
         closeBtn.setOnAction(e -> {
             FadeTransition fadeOut = new FadeTransition(Duration.millis(300), overlay);
             fadeOut.setToValue(0);
-            fadeOut.setOnFinished(ev -> rootPane.getChildren().remove(overlay));
+            fadeOut.setOnFinished(ev -> {
+                rootPane.getChildren().remove(overlay);
+                // FEATURE #15: Gamified Loyalty Wheel after payment
+                if (pointsEarned > 0) {
+                    showLoyaltyWheelAnimation(pointsEarned);
+                }
+                // FEATURE #3: AI Personalized Recommendations after payment
+                javafx.application.Platform.runLater(() -> showAIRecommendationsDialog(p));
+            });
             fadeOut.play();
         });
     }
@@ -1901,5 +1970,495 @@ public class PanierController {
                 }
             });
         }).start();
+    }
+
+    // ================================================================
+    // FEATURE #7: Weather helper
+    // ================================================================
+    private String guessCity(Panier p) {
+        String name = p.getNomEtablissement();
+        if (name == null) name = p.getTypeService();
+        if (name == null) return "Tunis";
+        String lower = name.toLowerCase();
+        if (lower.contains("tunis")) return "Tunis";
+        if (lower.contains("sousse")) return "Sousse";
+        if (lower.contains("sfax")) return "Sfax";
+        if (lower.contains("djerba") || lower.contains("jerba")) return "Djerba";
+        if (lower.contains("hammamet")) return "Hammamet";
+        if (lower.contains("monastir")) return "Monastir";
+        if (lower.contains("bizerte")) return "Bizerte";
+        if (lower.contains("tozeur")) return "Tozeur";
+        if (lower.contains("kairouan")) return "Kairouan";
+        if (lower.contains("tabarka")) return "Tabarka";
+        // Try to get from etablissement
+        try {
+            Etablissement etab = etabService.getById(p.getIdEtablissement());
+            if (etab != null && etab.getVille() != null) return etab.getVille();
+        } catch (Exception ignored) { /* fallback */ }
+        return "Tunis";
+    }
+
+    // ================================================================
+    // FEATURE #8: Currency Converter Dialog
+    // ================================================================
+    private void showCurrencyConverterDialog(double amountDT) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Convertisseur de devises");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(12);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(400);
+
+        Label title = new Label("\uD83D\uDCB1 Conversion de " + String.format("%.2f DT", amountDT));
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+        content.getChildren().add(title);
+
+        java.util.Map<String, Double> rates = com.esprit.services.CurrencyService.getRates();
+        java.util.Map<String, String> names = com.esprit.services.CurrencyService.getCurrencyNames();
+        for (java.util.Map.Entry<String, Double> entry : rates.entrySet()) {
+            String code = entry.getKey();
+            double converted = com.esprit.services.CurrencyService.convert(amountDT, code);
+            String symbol = com.esprit.services.CurrencyService.getCurrencySymbol(code);
+            String cname = names.getOrDefault(code, code);
+
+            HBox row = new HBox(12);
+            row.setAlignment(Pos.CENTER_LEFT);
+            row.setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-padding: 10; -fx-background-radius: 8;");
+            Label flagLbl = new Label(getCurrencyFlag(code));
+            flagLbl.setStyle("-fx-font-size: 16;");
+            VBox infoBox = new VBox(2);
+            HBox.setHgrow(infoBox, Priority.ALWAYS);
+            Label codeLbl = new Label(code + " - " + cname);
+            codeLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+            infoBox.getChildren().add(codeLbl);
+            Label valueLbl = new Label(symbol + " " + String.format("%.2f", converted));
+            valueLbl.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;");
+            row.getChildren().addAll(flagLbl, infoBox, valueLbl);
+            content.getChildren().add(row);
+        }
+
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+        dialog.showAndWait();
+    }
+
+    private String getCurrencyFlag(String code) {
+        switch (code) {
+            case "EUR": return "\uD83C\uDDEA\uD83C\uDDFA";
+            case "USD": return "\uD83C\uDDFA\uD83C\uDDF8";
+            case "GBP": return "\uD83C\uDDEC\uD83C\uDDE7";
+            case "MAD": return "\uD83C\uDDF2\uD83C\uDDE6";
+            case "SAR": return "\uD83C\uDDF8\uD83C\uDDE6";
+            case "AED": return "\uD83C\uDDE6\uD83C\uDDEA";
+            case "CAD": return "\uD83C\uDDE8\uD83C\uDDE6";
+            case "CHF": return "\uD83C\uDDE8\uD83C\uDDED";
+            case "TRY": return "\uD83C\uDDF9\uD83C\uDDF7";
+            case "DZD": return "\uD83C\uDDE9\uD83C\uDDFF";
+            default: return "\uD83D\uDCB0";
+        }
+    }
+
+    // ================================================================
+    // FEATURE #14: Dynamic Pricing Level
+    // ================================================================
+    private String getDynamicPricingLevel(Panier p) {
+        if (p.getDateDebut() == null) return "\uD83D\uDFE2 Prix Normal";
+        java.time.DayOfWeek day = p.getDateDebut().getDayOfWeek();
+        int month = p.getDateDebut().getMonthValue();
+        // High season: June-August, December
+        boolean highSeason = month >= 6 && month <= 8 || month == 12;
+        // Weekend premium
+        boolean weekend = day == java.time.DayOfWeek.FRIDAY || day == java.time.DayOfWeek.SATURDAY;
+        if (highSeason && weekend) return "\uD83D\uDD34 Haute Saison + Weekend";
+        if (highSeason) return "\uD83D\uDFE0 Haute Saison";
+        if (weekend) return "\uD83D\uDFE1 Weekend";
+        return "\uD83D\uDFE2 Prix Normal";
+    }
+
+    private String getPricingBadgeStyle(String level) {
+        if (level.contains("Haute Saison + Weekend"))
+            return "-fx-background-color: rgba(255,82,82,0.1); -fx-text-fill: #FF5252; -fx-padding: 3 10; -fx-background-radius: 6; -fx-font-size: 9; -fx-font-weight: bold;";
+        if (level.contains("Haute Saison"))
+            return "-fx-background-color: rgba(255,167,38,0.1); -fx-text-fill: #FFA726; -fx-padding: 3 10; -fx-background-radius: 6; -fx-font-size: 9; -fx-font-weight: bold;";
+        if (level.contains("Weekend"))
+            return "-fx-background-color: rgba(255,215,0,0.1); -fx-text-fill: #FFD700; -fx-padding: 3 10; -fx-background-radius: 6; -fx-font-size: 9; -fx-font-weight: bold;";
+        return "-fx-background-color: rgba(81,207,102,0.1); -fx-text-fill: #51CF66; -fx-padding: 3 10; -fx-background-radius: 6; -fx-font-size: 9; -fx-font-weight: bold;";
+    }
+
+    // Hotel nights helper
+    private long getDurationNights(Panier p) {
+        if (p.getDateDebut() != null && p.getDateFin() != null) {
+            return Math.max(1, java.time.temporal.ChronoUnit.DAYS.between(p.getDateDebut().toLocalDate(), p.getDateFin().toLocalDate()));
+        }
+        return 1;
+    }
+
+    // ================================================================
+    // FEATURE #1: AI Smart Trip Planner
+    // ================================================================
+    private void showAITripPlannerDialog() {
+        if (panierItems == null || panierItems.isEmpty()) {
+            showMessage("\u2139 Ajoutez des articles au panier d'abord.");
+            return;
+        }
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("AI Smart Trip Planner");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(550);
+
+        Label title = new Label("\uD83E\uDDE0 AI Smart Trip Planner");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+
+        Label subtitle = new Label("Notre IA va analyser votre panier et creer un itineraire optimise!");
+        subtitle.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+        subtitle.setWrapText(true);
+
+        Label resultLabel = new Label("\u23F3 Generation en cours...");
+        resultLabel.setStyle("-fx-text-fill: #aaa; -fx-font-size: 12;");
+        resultLabel.setWrapText(true);
+
+        ScrollPane scroll = new ScrollPane(resultLabel);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(350);
+
+        content.getChildren().addAll(title, subtitle, scroll);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+        // Build cart context
+        StringBuilder cartCtx = new StringBuilder();
+        cartCtx.append("Voici les articles de mon panier de voyage en Tunisie:\n");
+        for (Panier p : panierItems) {
+            cartCtx.append("- ").append(p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService());
+            cartCtx.append(" (").append(p.getTypeService()).append(")");
+            if (p.getDateDebut() != null) cartCtx.append(" du ").append(p.getDateDebut().format(DTF));
+            if (p.getDateFin() != null) cartCtx.append(" au ").append(p.getDateFin().format(DTF));
+            cartCtx.append(", ").append(p.getNbPersonnes()).append(" personnes");
+            if (p.getNbChambres() > 1) cartCtx.append(", ").append(p.getNbChambres()).append(" chambres");
+            cartCtx.append(", ").append(String.format("%.2f DT", p.getPrixEstime()));
+            cartCtx.append("\n");
+        }
+        cartCtx.append("\nCree un itineraire jour par jour optimise avec les meilleures activites, restaurants et conseils pratiques. Reponds en francais.");
+
+        new Thread(() -> {
+            String response = chatbotService.chat(cartCtx.toString());
+            javafx.application.Platform.runLater(() -> {
+                resultLabel.setText(response);
+                resultLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+            });
+        }).start();
+
+        dialog.showAndWait();
+    }
+
+    // ================================================================
+    // FEATURE #2: AI Budget Optimizer
+    // ================================================================
+    private void showAIBudgetOptimizerDialog() {
+        if (panierItems == null || panierItems.isEmpty()) {
+            showMessage("\u2139 Ajoutez des articles au panier d'abord.");
+            return;
+        }
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("AI Budget Optimizer");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(550);
+
+        Label title = new Label("\uD83D\uDCB0 AI Budget Optimizer");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+
+        Label resultLabel = new Label("\u23F3 Analyse budgetaire en cours...");
+        resultLabel.setStyle("-fx-text-fill: #aaa; -fx-font-size: 12;");
+        resultLabel.setWrapText(true);
+
+        ScrollPane scroll = new ScrollPane(resultLabel);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(350);
+
+        content.getChildren().addAll(title, scroll);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+        double totalBudget = panierItems.stream().mapToDouble(Panier::getPrixEstime).sum();
+        StringBuilder ctx = new StringBuilder();
+        ctx.append("Analyse mon budget de voyage en Tunisie. Budget total actuel: ").append(String.format("%.2f DT", totalBudget)).append("\nArticles:\n");
+        for (Panier p : panierItems) {
+            ctx.append("- ").append(p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService());
+            ctx.append(": ").append(String.format("%.2f DT", p.getPrixEstime()));
+            ctx.append(" (").append(p.getNbPersonnes()).append(" pers.)");
+            if (p.getNbChambres() > 1) ctx.append(" ").append(p.getNbChambres()).append(" chambres");
+            ctx.append("\n");
+        }
+        ctx.append("\nSuggere des economies, alternatives moins cheres, et des astuces pour optimiser ce budget. Donne un score qualite/prix. Reponds en francais.");
+
+        new Thread(() -> {
+            String response = chatbotService.chat(ctx.toString());
+            javafx.application.Platform.runLater(() -> {
+                resultLabel.setText(response);
+                resultLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+            });
+        }).start();
+
+        dialog.showAndWait();
+    }
+
+    // ================================================================
+    // FEATURE #3: AI Personalized Recommendations (called after payment)
+    // ================================================================
+    private void showAIRecommendationsDialog(Panier paidItem) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Recommendations pour vous");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(500);
+
+        Label title = new Label("\u2728 Recommendations personnalisees");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+
+        Label resultLabel = new Label("\u23F3 Notre IA cherche les meilleures recommandations...");
+        resultLabel.setStyle("-fx-text-fill: #aaa; -fx-font-size: 12;");
+        resultLabel.setWrapText(true);
+
+        ScrollPane scroll = new ScrollPane(resultLabel);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(300);
+
+        content.getChildren().addAll(title, scroll);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+        String ctx = "Je viens de reserver: " + (paidItem.getNomEtablissement() != null ? paidItem.getNomEtablissement() : paidItem.getTypeService())
+                + " (" + paidItem.getTypeService() + ") pour " + paidItem.getNbPersonnes() + " personnes. "
+                + "Recommande-moi 5 activites, restaurants ou lieux a visiter a proximite en Tunisie. Reponds en francais avec emojis.";
+
+        new Thread(() -> {
+            String response = chatbotService.chat(ctx);
+            javafx.application.Platform.runLater(() -> {
+                resultLabel.setText(response);
+                resultLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+            });
+        }).start();
+
+        dialog.showAndWait();
+    }
+
+    // ================================================================
+    // FEATURE #13: Smart Notification Center
+    // ================================================================
+    private void showNotificationCenter() {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Centre de Notifications");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(450);
+
+        Label title = new Label("\uD83D\uDD14 Notifications");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+        content.getChildren().add(title);
+
+        // Generate smart notifications based on cart state
+        if (panierItems != null) {
+            long enAttente = panierItems.stream().filter(p -> "en_attente".equals(p.getStatutItem())).count();
+            if (enAttente > 0) {
+                addNotification(content, "\u23F3", "Vous avez " + enAttente + " article(s) en attente de paiement", "#FFA726", "Maintenant");
+            }
+
+            // Check for items expiring soon (within 3 days)
+            for (Panier p : panierItems) {
+                if (p.getDateDebut() != null && p.getDateDebut().toLocalDate().isBefore(LocalDate.now().plusDays(3))) {
+                    addNotification(content, "\u26A0", "Reservation proche: " + (p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService()), "#FF6B6B", "Urgent");
+                }
+            }
+
+            // Promo hint
+            if (appliedPromo == null) {
+                addNotification(content, "\uD83C\uDF81", "Codes promo disponibles! Essayez SMART10 ou TRAVEL20", "#51CF66", "Astuce");
+            }
+
+            // Loyalty points
+            if (currentUser != null) {
+                int points = currentUser.getLoyaltyPoints();
+                if (points >= 100) {
+                    addNotification(content, "\u2B50", "Vous avez " + points + " points de fidelite! Echangez-les contre des reductions", "#B266FF", "Points");
+                }
+            }
+
+            // Weather alert for upcoming trips
+            for (Panier p : panierItems) {
+                if (p.getDateDebut() != null && p.getDateDebut().toLocalDate().isBefore(LocalDate.now().plusDays(7))) {
+                    String city = guessCity(p);
+                    com.esprit.services.WeatherService weatherSvc = new com.esprit.services.WeatherService();
+                    String alert = weatherSvc.getWeatherAlert(city);
+                    if (alert != null && !alert.isEmpty()) {
+                        addNotification(content, "\u26C8", alert, "#64B5F6", "Meteo");
+                    }
+                }
+            }
+        }
+
+        if (content.getChildren().size() == 1) {
+            addNotification(content, "\u2705", "Aucune notification pour le moment", "#51CF66", "Info");
+        }
+
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+        dialog.showAndWait();
+    }
+
+    private void addNotification(VBox container, String icon, String message, String color, String badge) {
+        HBox row = new HBox(12);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-padding: 12; -fx-background-radius: 10;");
+
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle("-fx-font-size: 18;");
+
+        VBox textBox = new VBox(2);
+        HBox.setHgrow(textBox, Priority.ALWAYS);
+        Label msgLbl = new Label(message);
+        msgLbl.setStyle("-fx-text-fill: white; -fx-font-size: 11;");
+        msgLbl.setWrapText(true);
+        textBox.getChildren().add(msgLbl);
+
+        Label badgeLbl = new Label(badge);
+        badgeLbl.setStyle("-fx-background-color: " + color + "22; -fx-text-fill: " + color + "; -fx-padding: 3 8; -fx-background-radius: 6; -fx-font-size: 9; -fx-font-weight: bold;");
+
+        row.getChildren().addAll(iconLbl, textBox, badgeLbl);
+        container.getChildren().add(row);
+    }
+
+    // ================================================================
+    // FEATURE #15: Gamified Loyalty Wheel (called after payment)
+    // ================================================================
+    private void showLoyaltyWheelAnimation(int pointsEarned) {
+        if (titleBar == null || titleBar.getScene() == null) return;
+        StackPane rootPane = (StackPane) titleBar.getScene().getRoot();
+
+        VBox wheelPanel = new VBox(16);
+        wheelPanel.setAlignment(Pos.CENTER);
+        wheelPanel.setMaxWidth(400);
+        wheelPanel.setMaxHeight(400);
+        wheelPanel.setStyle("-fx-background-color: rgba(20,20,20,0.97); -fx-padding: 30; -fx-background-radius: 20; " +
+                "-fx-border-color: rgba(255,215,0,0.3); -fx-border-radius: 20; -fx-border-width: 2;");
+        StackPane.setAlignment(wheelPanel, Pos.CENTER);
+
+        Label trophyIcon = new Label("\uD83C\uDFC6");
+        trophyIcon.setStyle("-fx-font-size: 50;");
+
+        Label congratsLbl = new Label("Points de Fidelite Gagnes!");
+        congratsLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+
+        Label pointsLbl = new Label("+" + pointsEarned);
+        pointsLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 48; -fx-font-weight: bold;");
+
+        int totalPoints = currentUser != null ? currentUser.getLoyaltyPoints() : 0;
+        Label totalLbl = new Label("Total: " + totalPoints + " points");
+        totalLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 14;");
+
+        // Next reward info
+        String nextReward = "";
+        if (totalPoints < 100) nextReward = (100 - totalPoints) + " pts pour debloquer -5% !";
+        else if (totalPoints < 200) nextReward = (200 - totalPoints) + " pts pour debloquer -10% !";
+        else if (totalPoints < 500) nextReward = (500 - totalPoints) + " pts pour debloquer -20% !";
+        else nextReward = "\uD83C\uDF1F Niveau VIP atteint! -20% disponible!";
+
+        Label nextLbl = new Label(nextReward);
+        nextLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 11;");
+
+        Button closeBtn = new Button("Super!");
+        closeBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 10 30; -fx-background-radius: 8;");
+        closeBtn.setOnAction(e -> rootPane.getChildren().remove(wheelPanel));
+
+        wheelPanel.getChildren().addAll(trophyIcon, congratsLbl, pointsLbl, totalLbl, nextLbl, closeBtn);
+
+        // Entrance animation
+        wheelPanel.setOpacity(0);
+        wheelPanel.setScaleX(0.5);
+        wheelPanel.setScaleY(0.5);
+        rootPane.getChildren().add(wheelPanel);
+
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(400), wheelPanel);
+        scaleIn.setToX(1);
+        scaleIn.setToY(1);
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(400), wheelPanel);
+        fadeIn.setToValue(1);
+        new ParallelTransition(scaleIn, fadeIn).play();
+
+        // Auto-close after 5 seconds
+        PauseTransition autoClose = new PauseTransition(Duration.seconds(5));
+        autoClose.setOnFinished(e -> {
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(300), wheelPanel);
+            fadeOut.setToValue(0);
+            fadeOut.setOnFinished(ev -> rootPane.getChildren().remove(wheelPanel));
+            fadeOut.play();
+        });
+        autoClose.play();
+    }
+
+    // ================================================================
+    // AI FEATURE BUTTONS IN HEADER (added to initialize)
+    // ================================================================
+    private void addAIFeatureButtons() {
+        if (titleBar == null) return;
+
+        // Notification bell
+        Button notifBtn = new Button("\uD83D\uDD14");
+        notifBtn.setStyle("-fx-background-color: rgba(255,167,38,0.12); -fx-text-fill: #FFA726; -fx-font-size: 14; -fx-padding: 6 10; -fx-background-radius: 8; -fx-cursor: hand;");
+        notifBtn.setOnAction(e -> showNotificationCenter());
+        notifBtn.setTooltip(new Tooltip("Centre de notifications"));
+
+        // AI Trip Planner
+        Button tripBtn = new Button("\uD83E\uDDE0");
+        tripBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-font-size: 14; -fx-padding: 6 10; -fx-background-radius: 8; -fx-cursor: hand;");
+        tripBtn.setOnAction(e -> showAITripPlannerDialog());
+        tripBtn.setTooltip(new Tooltip("AI Trip Planner"));
+
+        // AI Budget Optimizer
+        Button budgetBtn = new Button("\uD83D\uDCB0");
+        budgetBtn.setStyle("-fx-background-color: rgba(178,102,255,0.12); -fx-text-fill: #B266FF; -fx-font-size: 14; -fx-padding: 6 10; -fx-background-radius: 8; -fx-cursor: hand;");
+        budgetBtn.setOnAction(e -> showAIBudgetOptimizerDialog());
+        budgetBtn.setTooltip(new Tooltip("AI Budget Optimizer"));
+
+        // Add before the minimize/close buttons
+        int insertIndex = Math.max(0, titleBar.getChildren().size() - 3);
+        titleBar.getChildren().addAll(insertIndex, java.util.Arrays.asList(notifBtn, tripBtn, budgetBtn));
+    }
+
+    private void showMessage(String msg) {
+        if (messageLabel != null) {
+            messageLabel.setText(msg);
+            PauseTransition pause = new PauseTransition(Duration.seconds(3));
+            pause.setOnFinished(e -> messageLabel.setText(""));
+            pause.play();
+        }
     }
 }

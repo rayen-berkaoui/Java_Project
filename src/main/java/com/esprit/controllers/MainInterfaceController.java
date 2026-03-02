@@ -436,7 +436,7 @@ public class MainInterfaceController {
 
         // Date debut
         VBox dateDebutBox = new VBox(4);
-        Label dateDebutLbl = new Label(isHotel ? "\uD83D\uDCC5 Date d'arrivee" : (isRestaurant ? "\uD83D\uDCC5 Date de reservation" : "\uD83D\uDCC5 Date de debut"));
+        Label dateDebutLbl = new Label(isHotel ? "\uD83D\uDCC5 Date d'arrivee (Check-in 14h00)" : (isRestaurant ? "\uD83D\uDCC5 Date de reservation" : "\uD83D\uDCC5 Date de debut"));
         dateDebutLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
         DatePicker dateDebut = new DatePicker(LocalDate.now().plusDays(1));
         dateDebut.setMaxWidth(Double.MAX_VALUE);
@@ -464,16 +464,32 @@ public class MainInterfaceController {
             formSection.getChildren().add(timeBox);
         }
 
-        // Duration / Date fin for hotels
+        // ROOMS + Duration for hotels (REAL-WORLD BOOKING LOGIC)
+        Spinner<Integer> roomsSpinner = new Spinner<>(1, 10, 1);
         Spinner<Integer> daysSpinner = new Spinner<>(1, 30, 3);
         DatePicker dateFin = new DatePicker(LocalDate.now().plusDays(4));
+        
         if (isHotel) {
+            // Number of rooms (like Booking.com)
+            VBox roomsBox = new VBox(4);
+            Label roomsLbl = new Label("\uD83D\uDECF Nombre de chambres");
+            roomsLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+            roomsSpinner.setMaxWidth(Double.MAX_VALUE);
+            roomsSpinner.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-font-size: 12;");
+            Label roomTip = new Label("\uD83D\uDCA1 Max 3 adultes ou 2 adultes + 2 enfants par chambre");
+            roomTip.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 9;");
+            roomsBox.getChildren().addAll(roomsLbl, roomsSpinner, roomTip);
+            formSection.getChildren().add(roomsBox);
+
+            // Number of nights
             VBox daysBox = new VBox(4);
             Label daysLbl = new Label("\uD83C\uDFE8 Nombre de nuits");
             daysLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
             daysSpinner.setMaxWidth(Double.MAX_VALUE);
             daysSpinner.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-font-size: 12;");
-            daysBox.getChildren().addAll(daysLbl, daysSpinner);
+            Label checkInfo = new Label("\u2139 Check-in: 14h00 | Check-out: 11h00");
+            checkInfo.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 9;");
+            daysBox.getChildren().addAll(daysLbl, daysSpinner, checkInfo);
             formSection.getChildren().add(daysBox);
         } else if (!isRestaurant) {
             // Generic: Date fin
@@ -486,7 +502,7 @@ public class MainInterfaceController {
             formSection.getChildren().add(dateFinBox);
         }
 
-        // Guests section
+        // Guests section with room-based validation
         VBox guestsSection = new VBox(10);
         guestsSection.setStyle("-fx-background-color: rgba(255,215,0,0.03); -fx-padding: 14; -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 10; -fx-border-width: 1;");
         Label guestsTitle = new Label("\uD83D\uDC65 Voyageurs");
@@ -495,9 +511,10 @@ public class MainInterfaceController {
 
         Spinner<Integer> adultesSpinner = new Spinner<>(1, 20, 2);
         Spinner<Integer> enfantsSpinner = new Spinner<>(0, 15, 0);
+        Label capacityWarning = new Label("");
+        capacityWarning.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 9;");
 
         if (isHotel || isLieu) {
-            // Hotel/Voyage: show adults + children separately
             HBox guestsRow = new HBox(16);
             guestsRow.setAlignment(Pos.CENTER_LEFT);
             VBox adultBox = new VBox(4);
@@ -517,15 +534,52 @@ public class MainInterfaceController {
             childBox.getChildren().addAll(childLbl, enfantsSpinner);
 
             guestsRow.getChildren().addAll(adultBox, childBox);
-            guestsSection.getChildren().add(guestsRow);
+            guestsSection.getChildren().addAll(guestsRow, capacityWarning);
+
+            // Real-world room capacity validation (like Booking.com)
+            if (isHotel) {
+                Runnable validateCapacity = () -> {
+                    int rooms = roomsSpinner.getValue();
+                    int adults = adultesSpinner.getValue();
+                    int children = enfantsSpinner.getValue();
+                    int maxAdults = rooms * 3;  // Max 3 adults per room
+                    int maxTotal = rooms * 4;   // Max 4 people per room (2 adults + 2 children typical)
+                    
+                    if (adults > maxAdults) {
+                        capacityWarning.setText("\u26A0 Maximum " + maxAdults + " adultes pour " + rooms + " chambre(s). Ajoutez des chambres!");
+                        capacityWarning.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 9;");
+                    } else if (adults + children > maxTotal) {
+                        capacityWarning.setText("\u26A0 Maximum " + maxTotal + " personnes pour " + rooms + " chambre(s). Ajoutez des chambres!");
+                        capacityWarning.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 9;");
+                    } else {
+                        int suggested = (int) Math.ceil((double) adults / 2);
+                        if (children > 0) suggested = Math.max(suggested, (int) Math.ceil((double) (adults + children) / 4.0));
+                        if (rooms < suggested) {
+                            capacityWarning.setText("\uD83D\uDCA1 Nous recommandons " + suggested + " chambre(s) pour votre groupe");
+                            capacityWarning.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 9;");
+                        } else {
+                            capacityWarning.setText("\u2705 " + rooms + " chambre(s) pour " + adults + " adulte(s)" + (children > 0 ? " + " + children + " enfant(s)" : ""));
+                            capacityWarning.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 9;");
+                        }
+                    }
+                };
+                roomsSpinner.valueProperty().addListener((o, ov, nv) -> validateCapacity.run());
+                adultesSpinner.valueProperty().addListener((o, ov, nv) -> validateCapacity.run());
+                enfantsSpinner.valueProperty().addListener((o, ov, nv) -> validateCapacity.run());
+                validateCapacity.run();
+            }
         } else {
-            // Restaurant/cafe: just party size
+            // Restaurant/cafe: party size with table logic
             VBox partySizeBox = new VBox(4);
-            Label partySizeLbl = new Label("\uD83D\uDC65 Nombre de personnes");
+            Label partySizeLbl = new Label("\uD83D\uDC65 Nombre de personnes (max 12 par table)");
             partySizeLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
             adultesSpinner.setMaxWidth(Double.MAX_VALUE);
-            adultesSpinner.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-font-size: 12;");
-            partySizeBox.getChildren().addAll(partySizeLbl, adultesSpinner);
+            Spinner<Integer> restoSpinner = new Spinner<>(1, 12, 2);
+            restoSpinner.setMaxWidth(Double.MAX_VALUE);
+            restoSpinner.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-font-size: 12;");
+            // Copy value to adultesSpinner for later use
+            restoSpinner.valueProperty().addListener((o, ov, nv) -> adultesSpinner.getValueFactory().setValue(nv));
+            partySizeBox.getChildren().addAll(partySizeLbl, restoSpinner);
             guestsSection.getChildren().add(partySizeBox);
         }
 
@@ -557,7 +611,7 @@ public class MainInterfaceController {
             priceSection.getChildren().addAll(priceTitleLbl, priceBreakdown, totalPriceLbl);
         }
 
-        // Price update runnable
+        // Price update runnable - Real-world pricing like Booking.com
         Runnable updatePrice = () -> {
             if (isRestaurant) return; // No price calculation for restaurants/cafes
             int adults = adultesSpinner.getValue();
@@ -567,16 +621,19 @@ public class MainInterfaceController {
 
             if (isHotel) {
                 int nights = daysSpinner.getValue();
-                double adultCost = adults * basePrice * nights;
-                double childCost = children * (basePrice * 0.5) * nights;
-                price = adultCost + childCost;
-                breakdown.append(adults + " adulte(s) x " + nights + " nuit(s) x " + String.format("%.2f", basePrice) + " = " + String.format("%.2f", adultCost));
+                int rooms = roomsSpinner.getValue();
+                // Real-world hotel pricing: price per room per night (like Booking.com)
+                double roomCost = rooms * basePrice * nights;
+                // Children under 12 stay free in most hotels (real-world logic)
+                // But we add a small supplement for extra beds
+                double childSupplement = children > 0 ? children * (basePrice * 0.15) * nights : 0;
+                price = roomCost + childSupplement;
+                breakdown.append("\uD83C\uDFE8 " + rooms + " chambre(s) x " + nights + " nuit(s) x " + String.format("%.2f", basePrice) + " DT = " + String.format("%.2f", roomCost) + " DT");
+                breakdown.append("\n\uD83D\uDC64 " + adults + " adulte(s) inclus");
                 if (children > 0) {
-                    breakdown.append("\n" + children + " enfant(s) x " + nights + " nuit(s) x " + String.format("%.2f", basePrice * 0.5) + " = " + String.format("%.2f", childCost));
+                    breakdown.append("\n\uD83D\uDC76 " + children + " enfant(s) - supplement lit: " + String.format("%.2f", childSupplement) + " DT");
                 }
-            } else if (isRestaurant) {
-                price = adults * basePrice;
-                breakdown.append(adults + " personne(s) x " + String.format("%.2f", basePrice) + " DT");
+                breakdown.append("\n\u2139 Check-in: 14h00 | Check-out: 11h00");
             } else if (isLieu) {
                 double adultCost = adults * basePrice;
                 double childCost = children * (basePrice * 0.5);
@@ -602,6 +659,7 @@ public class MainInterfaceController {
         adultesSpinner.valueProperty().addListener((o, ov, nv) -> updatePrice.run());
         enfantsSpinner.valueProperty().addListener((o, ov, nv) -> updatePrice.run());
         daysSpinner.valueProperty().addListener((o, ov, nv) -> updatePrice.run());
+        roomsSpinner.valueProperty().addListener((o, ov, nv) -> updatePrice.run());
         dateDebut.valueProperty().addListener((o, ov, nv) -> updatePrice.run());
         dateFin.valueProperty().addListener((o, ov, nv) -> updatePrice.run());
         updatePrice.run();
@@ -632,6 +690,21 @@ public class MainInterfaceController {
             int adults = adultesSpinner.getValue();
             int children = enfantsSpinner.getValue();
             int totalPeople = adults + children;
+
+            // Room capacity validation for hotels (real-world Booking.com logic)
+            if (isHotel) {
+                int rooms = roomsSpinner.getValue();
+                int maxAdults = rooms * 3;
+                int maxTotal = rooms * 4;
+                if (adults > maxAdults) {
+                    errorLbl.setText("\u274C Maximum " + maxAdults + " adultes pour " + rooms + " chambre(s). Ajoutez des chambres!");
+                    event.consume(); return;
+                }
+                if (totalPeople > maxTotal) {
+                    errorLbl.setText("\u274C Maximum " + maxTotal + " personnes pour " + rooms + " chambre(s). Ajoutez des chambres!");
+                    event.consume(); return;
+                }
+            }
 
             LocalDateTime start;
             LocalDateTime end;
@@ -678,6 +751,7 @@ public class MainInterfaceController {
             p.setPrixEstime(finalPrice);
             p.setNbAdultes(adults);
             p.setNbEnfants(children);
+            p.setNbChambres(isHotel ? roomsSpinner.getValue() : 1);
 
             if (isRestaurant) {
                 // Restaurants/cafes: auto-confirm with "Especes" - no advance payment needed

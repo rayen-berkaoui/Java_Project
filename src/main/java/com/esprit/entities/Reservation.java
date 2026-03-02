@@ -17,6 +17,8 @@ public class Reservation {
     private String nomEtablissement;
     private int nbPersonnes;
     private int idClient;
+    private int rating;
+    private String reviewComment;
 
     public Reservation() {}
 
@@ -63,6 +65,12 @@ public class Reservation {
 
     public int getIdClient() { return idClient; }
     public void setIdClient(int idClient) { this.idClient = idClient; }
+
+    public int getRating() { return rating; }
+    public void setRating(int rating) { this.rating = rating; }
+
+    public String getReviewComment() { return reviewComment; }
+    public void setReviewComment(String reviewComment) { this.reviewComment = reviewComment; }
 
     @Override
     public String toString() {

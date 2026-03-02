@@ -76,6 +76,7 @@ public class ReservationController {
             });
             addThemeToggleButton();
             addChatbotButton();
+            addFeatureButtons();
 
             // Apply theme to FXML nodes
             javafx.application.Platform.runLater(() -> {
@@ -305,7 +306,45 @@ public class ReservationController {
 
         innovativeButtons.getChildren().addAll(shareBtn, countdownBtn, ratingBtn);
 
-        card.getChildren().addAll(header, codeBadge, progressTracker, details, buttons, innovativeButtons);
+        // FEATURE ROW 2: AI + Calendar + Re-book
+        HBox featureButtons = new HBox(6);
+        featureButtons.setAlignment(Pos.CENTER);
+
+        // FEATURE #11: Calendar Export
+        Button calendarBtn = new Button("\uD83D\uDCC5 Calendrier");
+        calendarBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
+        calendarBtn.setOnAction(e -> exportToCalendar(r));
+
+        // FEATURE #6: AI Review Generator
+        Button aiReviewBtn = new Button("\uD83E\uDD16 AI Avis");
+        aiReviewBtn.setStyle("-fx-background-color: rgba(178,102,255,0.12); -fx-text-fill: #B266FF; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
+        aiReviewBtn.setOnAction(e -> showAIReviewGenerator(r));
+
+        // FEATURE #18: Re-book / Book Again
+        Button rebookBtn = new Button("\uD83D\uDD01 Re-book");
+        rebookBtn.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
+        rebookBtn.setOnAction(e -> rebookReservation(r));
+
+        featureButtons.getChildren().addAll(calendarBtn, aiReviewBtn, rebookBtn);
+
+        // Show rating stars if already rated
+        HBox ratingDisplay = new HBox(4);
+        ratingDisplay.setAlignment(Pos.CENTER);
+        if (r.getRating() > 0) {
+            StringBuilder stars = new StringBuilder();
+            for (int s = 0; s < 5; s++) stars.append(s < r.getRating() ? "\u2605" : "\u2606");
+            Label ratingStars = new Label(stars.toString());
+            ratingStars.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14;");
+            ratingDisplay.getChildren().add(ratingStars);
+            if (r.getReviewComment() != null && !r.getReviewComment().isEmpty()) {
+                Label reviewSnippet = new Label("\"" + (r.getReviewComment().length() > 30 ? r.getReviewComment().substring(0, 30) + "..." : r.getReviewComment()) + "\"");
+                reviewSnippet.setStyle("-fx-text-fill: #888; -fx-font-size: 9; -fx-font-style: italic;");
+                ratingDisplay.getChildren().add(reviewSnippet);
+            }
+        }
+
+        card.getChildren().addAll(header, codeBadge, progressTracker, details, buttons, innovativeButtons, featureButtons);
+        if (r.getRating() > 0) card.getChildren().add(ratingDisplay);
         return card;
     }
 
@@ -1197,6 +1236,12 @@ public class ReservationController {
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isPresent() && result.get() == submitType) {
             if (selectedRating[0] > 0) {
+                // Save rating to database
+                String comment = commentArea.getText() != null ? commentArea.getText().trim() : "";
+                reservationService.saveRating(r.getIdReservation(), selectedRating[0], comment);
+                r.setRating(selectedRating[0]);
+                r.setReviewComment(comment);
+
                 // Award loyalty points for leaving a review
                 if (currentUser != null) {
                     int bonusPoints = selectedRating[0] * 5;
@@ -1206,6 +1251,7 @@ public class ReservationController {
                 } else {
                     showMessage("\u2B50 Merci pour votre evaluation: " + selectedRating[0] + "/5 etoiles !", true);
                 }
+                loadData(); // Refresh to show rating on card
             } else {
                 showMessage("\u274C Veuillez selectionner au moins une etoile.", false);
             }
@@ -1599,5 +1645,360 @@ public class ReservationController {
                 }
             });
         }).start();
+    }
+
+    // ================================================================
+    // FEATURE #11: Calendar Export (ICS)
+    // ================================================================
+    private void exportToCalendar(Reservation r) {
+        try {
+            String name = r.getNomEtablissement() != null ? r.getNomEtablissement() : "Reservation TABAANI";
+            String location = name;
+            String desc = "Reservation " + (r.getTypeService() != null ? r.getTypeService() : "") + " - Code: " + r.getCodeConfirmation()
+                    + " - " + r.getNbPersonnes() + " personnes - " + String.format("%.2f DT", r.getMontantTotal());
+
+            java.time.LocalDateTime start = r.getDatePaiement() != null ? r.getDatePaiement() : java.time.LocalDateTime.now();
+            java.time.LocalDateTime end = start.plusHours(2);
+
+            String icsContent = com.esprit.services.CalendarService.generateICS(name, location, desc, start, end, r.getCodeConfirmation());
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Exporter vers le calendrier");
+            fileChooser.setInitialFileName("reservation_" + r.getCodeConfirmation() + ".ics");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("iCalendar", "*.ics"));
+            Stage stage = (Stage) titleBar.getScene().getWindow();
+            File file = fileChooser.showSaveDialog(stage);
+
+            if (file != null) {
+                com.esprit.services.CalendarService.saveICSFile(file, icsContent);
+                showMessage("\uD83D\uDCC5 Exporte! Ouvrez le fichier .ics pour ajouter a votre calendrier.", true);
+            }
+        } catch (Exception e) {
+            showMessage("\u274C Erreur lors de l'export: " + e.getMessage(), false);
+        }
+    }
+
+    // ================================================================
+    // FEATURE #6: AI-Enhanced Review Generator
+    // ================================================================
+    private void showAIReviewGenerator(Reservation r) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("AI Review Generator");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(500);
+
+        Label title = new Label("\uD83E\uDD16 Generateur d'Avis Intelligent");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+
+        Label subtitle = new Label("Notre IA va generer un avis base sur votre experience");
+        subtitle.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+
+        // Tone selector
+        HBox toneRow = new HBox(8);
+        toneRow.setAlignment(Pos.CENTER);
+        Label toneLbl = new Label("Ton:");
+        toneLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
+        ComboBox<String> toneCombo = new ComboBox<>();
+        toneCombo.getItems().addAll("Positif \uD83D\uDE0A", "Neutre \uD83D\uDE10", "Critique constructive \uD83E\uDD14", "Enthousiaste \uD83E\uDD29");
+        toneCombo.setValue("Positif \uD83D\uDE0A");
+        toneCombo.setStyle("-fx-background-color: rgba(255,255,255,0.08);");
+        toneRow.getChildren().addAll(toneLbl, toneCombo);
+
+        TextArea reviewArea = new TextArea();
+        reviewArea.setPrefRowCount(6);
+        reviewArea.setWrapText(true);
+        reviewArea.setStyle("-fx-background-color: rgba(255,255,255,0.06); -fx-text-fill: white; -fx-font-size: 12; -fx-background-radius: 10;");
+        reviewArea.setPromptText("L'avis genere apparaitra ici...");
+
+        Button generateBtn = new Button("\u2728 Generer un Avis");
+        generateBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 8;");
+
+        generateBtn.setOnAction(e -> {
+            reviewArea.setText("\u23F3 Generation en cours...");
+            String tone = toneCombo.getValue().split(" ")[0];
+            String ctx = "Genere un avis " + tone + " en francais pour: " + (r.getNomEtablissement() != null ? r.getNomEtablissement() : "service")
+                    + " (" + r.getTypeService() + "), " + r.getNbPersonnes() + " personnes, " + String.format("%.2f DT", r.getMontantTotal())
+                    + ". L'avis doit etre realiste, 3-5 phrases, avec des details specifiques.";
+            new Thread(() -> {
+                String response = chatbotService.chat(ctx);
+                javafx.application.Platform.runLater(() -> reviewArea.setText(response));
+            }).start();
+        });
+
+        Button copyBtn = new Button("\uD83D\uDCCB Copier");
+        copyBtn.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-text-fill: #64B5F6; -fx-padding: 8 16; -fx-background-radius: 8;");
+        copyBtn.setOnAction(e -> {
+            javafx.scene.input.Clipboard.getSystemClipboard().setContent(
+                java.util.Collections.singletonMap(javafx.scene.input.DataFormat.PLAIN_TEXT, reviewArea.getText()));
+            showMessage("\uD83D\uDCCB Avis copie!", true);
+        });
+
+        HBox actionRow = new HBox(8);
+        actionRow.setAlignment(Pos.CENTER);
+        actionRow.getChildren().addAll(generateBtn, copyBtn);
+
+        content.getChildren().addAll(title, subtitle, toneRow, reviewArea, actionRow);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+        dialog.showAndWait();
+    }
+
+    // ================================================================
+    // FEATURE #18: Re-book / Book Again
+    // ================================================================
+    private void rebookReservation(Reservation r) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Re-book");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(450);
+
+        Label title = new Label("\uD83D\uDD01 Re-book: " + (r.getNomEtablissement() != null ? r.getNomEtablissement() : "Reservation"));
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+
+        Label desc = new Label("Reservez a nouveau avec les memes parametres ou modifiez les dates.");
+        desc.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+        desc.setWrapText(true);
+
+        // Info from original booking
+        VBox infoBox = new VBox(6);
+        infoBox.setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-padding: 12; -fx-background-radius: 8;");
+        Label svcLbl = new Label(getServiceIcon(r.getTypeService()) + " " + r.getTypeService());
+        svcLbl.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+        Label pplLbl = new Label("\uD83D\uDC65 " + r.getNbPersonnes() + " personnes");
+        pplLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
+        Label priceLbl = new Label("\uD83D\uDCB0 " + String.format("%.2f DT", r.getMontantTotal()));
+        priceLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12;");
+        infoBox.getChildren().addAll(svcLbl, pplLbl, priceLbl);
+
+        content.getChildren().addAll(title, desc, infoBox);
+        dp.setContent(content);
+
+        ButtonType rebookType = new ButtonType("\uD83D\uDD01 Re-book maintenant", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
+        dp.getButtonTypes().addAll(rebookType, cancelType);
+
+        Button rebookBtn = (Button) dp.lookupButton(rebookType);
+        rebookBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 8;");
+
+        Optional<ButtonType> result = dialog.showAndWait();
+        if (result.isPresent() && result.get() == rebookType) {
+            // Navigate back to main interface where user can book again
+            handleBackToMain();
+            showMessage("\uD83D\uDD01 Redirige vers les reservations. Cherchez: " + (r.getNomEtablissement() != null ? r.getNomEtablissement() : r.getTypeService()), true);
+        }
+    }
+
+    // ================================================================
+    // FEATURE #4: AI Spending Insights
+    // ================================================================
+    private void showAISpendingInsights() {
+        if (reservations == null || reservations.isEmpty()) {
+            showMessage("\u2139 Aucune reservation pour analyser.", false);
+            return;
+        }
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("AI Spending Insights");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(550);
+
+        Label title = new Label("\uD83D\uDCCA AI Spending Insights");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+
+        // Quick stats
+        double totalSpent = reservations.stream().mapToDouble(Reservation::getMontantTotal).sum();
+        double avgSpent = totalSpent / reservations.size();
+        long cardPayments = reservations.stream().filter(rv -> "Carte Bancaire".equalsIgnoreCase(rv.getModePaiement())).count();
+
+        HBox statsRow = new HBox(12);
+        statsRow.setAlignment(Pos.CENTER);
+        statsRow.getChildren().addAll(
+            buildMiniStat("\uD83D\uDCB0", String.format("%.0f DT", totalSpent), "Total"),
+            buildMiniStat("\uD83D\uDCCA", String.format("%.0f DT", avgSpent), "Moyenne"),
+            buildMiniStat("\uD83D\uDCB3", cardPayments + "/" + reservations.size(), "Par carte"),
+            buildMiniStat("\u2B50", String.valueOf(reservations.stream().filter(rv -> rv.getRating() > 0).count()), "Evalues")
+        );
+
+        Label resultLabel = new Label("\u23F3 Analyse IA en cours...");
+        resultLabel.setStyle("-fx-text-fill: #aaa; -fx-font-size: 12;");
+        resultLabel.setWrapText(true);
+
+        ScrollPane scroll = new ScrollPane(resultLabel);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(300);
+
+        content.getChildren().addAll(title, statsRow, scroll);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+        StringBuilder ctx = new StringBuilder();
+        ctx.append("Analyse mes depenses de voyage en Tunisie:\n");
+        for (Reservation rv : reservations) {
+            ctx.append("- ").append(rv.getNomEtablissement() != null ? rv.getNomEtablissement() : rv.getTypeService());
+            ctx.append(": ").append(String.format("%.2f DT", rv.getMontantTotal()));
+            ctx.append(" (").append(rv.getModePaiement()).append(")");
+            if (rv.getRating() > 0) ctx.append(" Note: ").append(rv.getRating()).append("/5");
+            ctx.append("\n");
+        }
+        ctx.append("Total: ").append(String.format("%.2f DT", totalSpent)).append("\n");
+        ctx.append("Donne des insights detailles: tendances de depenses, recommandations d'economies, score de voyage, et suggestions pour le prochain voyage. Reponds en francais.");
+
+        new Thread(() -> {
+            String response = chatbotService.chat(ctx.toString());
+            javafx.application.Platform.runLater(() -> {
+                resultLabel.setText(response);
+                resultLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+            });
+        }).start();
+
+        dialog.showAndWait();
+    }
+
+    private VBox buildMiniStat(String icon, String value, String label) {
+        VBox box = new VBox(4);
+        box.setAlignment(Pos.CENTER);
+        box.setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-padding: 12; -fx-background-radius: 10;");
+        box.setMinWidth(90);
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle("-fx-font-size: 16;");
+        Label valueLbl = new Label(value);
+        valueLbl.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;");
+        Label labelLbl = new Label(label);
+        labelLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 9;");
+        box.getChildren().addAll(iconLbl, valueLbl, labelLbl);
+        return box;
+    }
+
+    // ================================================================
+    // FEATURE #17: Reservation Analytics Dashboard (in-card mini display)
+    // ================================================================
+    private void showAnalyticsDashboard() {
+        if (reservations == null || reservations.isEmpty()) {
+            showMessage("\u2139 Aucune reservation pour les analytics.", false);
+            return;
+        }
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Analytics Dashboard");
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(550);
+
+        Label title = new Label("\uD83D\uDCCA Analytics Dashboard");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+
+        // Build simple bar chart using labels/regions
+        double totalSpent = reservations.stream().mapToDouble(Reservation::getMontantTotal).sum();
+        double maxAmount = reservations.stream().mapToDouble(Reservation::getMontantTotal).max().orElse(1);
+
+        VBox chartBox = new VBox(4);
+        chartBox.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 14; -fx-background-radius: 10;");
+        Label chartTitle = new Label("\uD83D\uDCB0 Depenses par reservation");
+        chartTitle.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;");
+        chartBox.getChildren().add(chartTitle);
+
+        for (Reservation rv : reservations) {
+            HBox bar = new HBox(8);
+            bar.setAlignment(Pos.CENTER_LEFT);
+            String barName = rv.getNomEtablissement() != null ? rv.getNomEtablissement() : "N/A";
+            if (barName.length() > 15) barName = barName.substring(0, 15) + "..";
+            Label nameLbl = new Label(barName);
+            nameLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 9;");
+            nameLbl.setMinWidth(100);
+
+            double pct = maxAmount > 0 ? rv.getMontantTotal() / maxAmount : 0;
+            Region barFill = new Region();
+            barFill.setPrefHeight(14);
+            barFill.setMinWidth(10);
+            barFill.setPrefWidth(pct * 250);
+            barFill.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-background-radius: 4;");
+
+            Label amtLbl = new Label(String.format("%.0f DT", rv.getMontantTotal()));
+            amtLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 9; -fx-font-weight: bold;");
+
+            bar.getChildren().addAll(nameLbl, barFill, amtLbl);
+            chartBox.getChildren().add(bar);
+        }
+
+        // Payment method breakdown
+        VBox methodBox = new VBox(6);
+        methodBox.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 14; -fx-background-radius: 10;");
+        Label methodTitle = new Label("\uD83D\uDCB3 Methodes de paiement");
+        methodTitle.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 12; -fx-font-weight: bold;");
+        methodBox.getChildren().add(methodTitle);
+
+        java.util.Map<String, Long> methodCounts = reservations.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                    rv -> rv.getModePaiement() != null ? rv.getModePaiement() : "Inconnu",
+                    java.util.stream.Collectors.counting()));
+        for (java.util.Map.Entry<String, Long> entry : methodCounts.entrySet()) {
+            HBox methodRow = new HBox(8);
+            methodRow.setAlignment(Pos.CENTER_LEFT);
+            Label methodNameLbl = new Label((entry.getKey().contains("Carte") ? "\uD83D\uDCB3" : "\uD83D\uDCB5") + " " + entry.getKey());
+            methodNameLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 11;");
+            Region methodSpacer = new Region();
+            HBox.setHgrow(methodSpacer, Priority.ALWAYS);
+            Label countLbl = new Label(entry.getValue() + " reservation(s)");
+            countLbl.setStyle("-fx-text-fill: white; -fx-font-size: 11; -fx-font-weight: bold;");
+            methodRow.getChildren().addAll(methodNameLbl, methodSpacer, countLbl);
+            methodBox.getChildren().add(methodRow);
+        }
+
+        // Total
+        HBox totalRow = new HBox();
+        totalRow.setStyle("-fx-background-color: rgba(255,215,0,0.06); -fx-padding: 12; -fx-background-radius: 8;");
+        totalRow.setAlignment(Pos.CENTER);
+        Label totalLbl = new Label("\uD83D\uDCB0 Total depense: " + String.format("%.2f DT", totalSpent) + " | " + reservations.size() + " reservation(s)");
+        totalLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;");
+        totalRow.getChildren().add(totalLbl);
+
+        content.getChildren().addAll(title, chartBox, methodBox, totalRow);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+        dialog.showAndWait();
+    }
+
+    // ================================================================
+    // AI & ANALYTICS BUTTONS IN HEADER
+    // ================================================================
+    private void addFeatureButtons() {
+        if (titleBar == null) return;
+
+        // AI Spending Insights
+        Button insightsBtn = new Button("\uD83D\uDCCA");
+        insightsBtn.setStyle("-fx-background-color: rgba(178,102,255,0.12); -fx-text-fill: #B266FF; -fx-font-size: 14; -fx-padding: 6 10; -fx-background-radius: 8; -fx-cursor: hand;");
+        insightsBtn.setOnAction(e -> showAISpendingInsights());
+        insightsBtn.setTooltip(new Tooltip("AI Spending Insights"));
+
+        // Analytics Dashboard
+        Button analyticsBtn = new Button("\uD83D\uDCC8");
+        analyticsBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-font-size: 14; -fx-padding: 6 10; -fx-background-radius: 8; -fx-cursor: hand;");
+        analyticsBtn.setOnAction(e -> showAnalyticsDashboard());
+        analyticsBtn.setTooltip(new Tooltip("Analytics Dashboard"));
+
+        int insertIndex = Math.max(0, titleBar.getChildren().size() - 3);
+        titleBar.getChildren().addAll(insertIndex, java.util.Arrays.asList(insightsBtn, analyticsBtn));
     }
 }

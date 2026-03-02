@@ -156,6 +156,23 @@ public class ReservationService {
     }
 
     // =====================================================
+    // SAVE RATING AND REVIEW
+    // =====================================================
+    public boolean saveRating(int idReservation, int rating, String comment) {
+        String sql = "UPDATE reservation SET rating = ?, review_comment = ? WHERE id_reservation = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, rating);
+            ps.setString(2, comment);
+            ps.setInt(3, idReservation);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // =====================================================
     // GENERATE CONFIRMATION CODE
     // =====================================================
     private String generateConfirmationCode() {
@@ -182,6 +199,8 @@ public class ReservationService {
             r.setTypeService(rs.getString("type_service"));
             r.setNbPersonnes(rs.getInt("nb_personnes"));
         } catch (SQLException ignored) {}
+        try { r.setRating(rs.getInt("rating")); } catch (SQLException ignored) {}
+        try { r.setReviewComment(rs.getString("review_comment")); } catch (SQLException ignored) {}
 
         return r;
     }

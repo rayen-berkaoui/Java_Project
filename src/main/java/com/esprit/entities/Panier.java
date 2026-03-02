@@ -15,6 +15,7 @@ public class Panier {
     private String statutItem;        // en_attente, annulé
     private int nbAdultes;            // number of adults
     private int nbEnfants;            // number of children
+    private int nbChambres;           // number of rooms (hotels only)
 
     // Joined fields (for display)
     private String nomClient;
@@ -74,6 +75,9 @@ public class Panier {
 
     public int getNbEnfants() { return nbEnfants; }
     public void setNbEnfants(int nbEnfants) { this.nbEnfants = nbEnfants; }
+
+    public int getNbChambres() { return nbChambres; }
+    public void setNbChambres(int nbChambres) { this.nbChambres = nbChambres; }
 
     @Override
     public String toString() {
