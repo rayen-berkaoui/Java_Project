@@ -306,11 +306,11 @@ public class ReservationController {
         HBox mainButtons = new HBox(6);
         mainButtons.setAlignment(Pos.CENTER);
 
-        // Upgrade button: Cash -> Flouci
+        // Upgrade button: Cash -> Konnect
         boolean isCash = "Especes".equalsIgnoreCase(r.getModePaiement());
         boolean isPaid = r.getStatutPaiement() != null && (r.getStatutPaiement().toLowerCase().contains("pay"));
         if (isCash && isPaid && !isRestoRes) {
-            Button upgradeBtn = new Button("\uD83D\uDCF1 Passer en Flouci");
+            Button upgradeBtn = new Button("\uD83D\uDCB3 Passer en Konnect");
             upgradeBtn.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-text-fill: #64B5F6; -fx-padding: 7 12; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
             upgradeBtn.setOnAction(e -> showUpgradeToCardDialog(r));
             mainButtons.getChildren().add(upgradeBtn);
@@ -516,16 +516,16 @@ public class ReservationController {
     }
 
     // ================================================================
-    // UPGRADE CASH -> FLOUCI (IN-APP WEBVIEW)
+    // UPGRADE CASH -> KONNECT (IN-APP WEBVIEW)
     // ================================================================
     private void showUpgradeToCardDialog(Reservation r) {
         Stage paymentStage = new Stage();
-        paymentStage.setTitle("Passer en Paiement Flouci");
+        paymentStage.setTitle("Passer en Paiement Konnect");
         paymentStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
 
         int pointsToEarn = (int)(r.getMontantTotal() * 10);
         final String[] paymentIdHolder = {null};
-        com.esprit.services.FlouciPaymentService flouciSvc = new com.esprit.services.FlouciPaymentService();
+        com.esprit.services.KonnectPaymentService konnectSvc = new com.esprit.services.KonnectPaymentService();
 
         // Root
         BorderPane root = new BorderPane();
@@ -537,9 +537,9 @@ public class ReservationController {
         topBar.setPadding(new Insets(10, 16, 10, 16));
         topBar.setStyle("-fx-background-color: #111; -fx-background-radius: 16 16 0 0;");
 
-        Label flouciIcon = new Label("\uD83D\uDCF1");
+        Label flouciIcon = new Label("\uD83D\uDCB3");
         flouciIcon.setStyle("-fx-font-size: 18;");
-        Label topTitle = new Label("Especes \u2192 Flouci");
+        Label topTitle = new Label("Especes \u2192 Konnect");
         topTitle.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;");
         Label amountTag = new Label(String.format("%.2f DT", r.getMontantTotal()));
         amountTag.setStyle("-fx-background-color: rgba(255,215,0,0.15); -fx-text-fill: #FFD700; -fx-padding: 4 12; -fx-background-radius: 20; -fx-font-size: 12; -fx-font-weight: bold;");
@@ -567,7 +567,7 @@ public class ReservationController {
 
         Label mainIcon = new Label("\uD83D\uDCB3");
         mainIcon.setStyle("-fx-font-size: 48;");
-        Label payTitle = new Label("Passer de Especes a Flouci");
+        Label payTitle = new Label("Passer de Especes a Konnect");
         payTitle.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
         Label paySubtitle = new Label(r.getCodeConfirmation() + " — Le paiement se fait directement dans l'application.");
         paySubtitle.setStyle("-fx-text-fill: #888; -fx-font-size: 11; -fx-text-alignment: center;");
@@ -578,13 +578,13 @@ public class ReservationController {
         infoBox.setStyle("-fx-background-color: rgba(255,215,0,0.04); -fx-padding: 12; -fx-background-radius: 10;");
         Label infoPts = new Label("\u2B50 Gagnez " + pointsToEarn + " points de fidelite");
         infoPts.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 11;");
-        Label infoSec = new Label("\uD83D\uDD12 Paiement securise via Flouci");
+        Label infoSec = new Label("\uD83D\uDD12 Paiement securise via Konnect");
         infoSec.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
         Label infoWarn = new Label("\u26A0 Cette action est irreversible");
         infoWarn.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 10;");
         infoBox.getChildren().addAll(infoPts, infoSec, infoWarn);
 
-        Button payBtn = new Button("\uD83D\uDCF1 Payer via Flouci - " + String.format("%.2f DT", r.getMontantTotal()));
+        Button payBtn = new Button("\uD83D\uDCB3 Payer via Konnect - " + String.format("%.2f DT", r.getMontantTotal()));
         payBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 14 40; -fx-background-radius: 12; -fx-font-size: 14; -fx-cursor: hand;");
         payBtn.setMaxWidth(Double.MAX_VALUE);
 
@@ -619,26 +619,26 @@ public class ReservationController {
         // URL change listener — detect success/failure
         webEngine.locationProperty().addListener((obs, oldUrl, newUrl) -> {
             if (newUrl != null) {
-                System.out.println("[FLOUCI UPGRADE WEBVIEW] " + newUrl);
+                System.out.println("[KONNECT UPGRADE WEBVIEW] " + newUrl);
                 String lower = newUrl.toLowerCase();
-                if (lower.contains(com.esprit.services.FlouciPaymentService.SUCCESS_URL.toLowerCase()) || lower.contains("/payment/success")) {
+                if (lower.contains(com.esprit.services.KonnectPaymentService.SUCCESS_URL.toLowerCase()) || lower.contains("/payment/success")) {
                     webStatusLbl.setText("\u2705 Paiement detecte ! Verification...");
                     webStatusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 10; -fx-font-weight: bold;");
                     if (paymentIdHolder[0] != null) {
                         new Thread(() -> {
                             try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
-                            com.esprit.services.FlouciPaymentService.PaymentResult verifyResult = flouciSvc.verifyPayment(paymentIdHolder[0]);
+                            com.esprit.services.KonnectPaymentService.PaymentResult verifyResult = konnectSvc.verifyPayment(paymentIdHolder[0]);
                             javafx.application.Platform.runLater(() -> {
                                 if (verifyResult.isSuccess()) {
                                     processUpgradeSuccess(r, pointsToEarn);
                                     paymentStage.close();
                                 } else {
-                                    showUpgradeVerifyScreen(paymentStage, root, r, pointsToEarn, paymentIdHolder[0], flouciSvc);
+                                    showUpgradeVerifyScreen(paymentStage, root, r, pointsToEarn, paymentIdHolder[0], konnectSvc);
                                 }
                             });
                         }).start();
                     }
-                } else if (lower.contains(com.esprit.services.FlouciPaymentService.FAIL_URL.toLowerCase()) || lower.contains("/payment/fail")) {
+                } else if (lower.contains(com.esprit.services.KonnectPaymentService.FAIL_URL.toLowerCase()) || lower.contains("/payment/fail")) {
                     javafx.application.Platform.runLater(() -> {
                         root.setCenter(initialView);
                         statusLbl.setText("\u274C Paiement refuse. Reessayez.");
@@ -659,9 +659,9 @@ public class ReservationController {
         // Pay button
         payBtn.setOnAction(e -> {
             payBtn.setDisable(true);
-            payBtn.setText("\u23F3 Connexion a Flouci...");
+            payBtn.setText("\u23F3 Connexion a Konnect...");
             new Thread(() -> {
-                com.esprit.services.FlouciPaymentService.PaymentResult result = flouciSvc.generatePayment(
+                com.esprit.services.KonnectPaymentService.PaymentResult result = konnectSvc.initPayment(
                     r.getMontantTotal(), "TABAANI_UPGRADE_" + r.getCodeConfirmation());
                 javafx.application.Platform.runLater(() -> {
                     if (result.isSuccess() && result.getPaymentLink() != null) {
@@ -691,10 +691,10 @@ public class ReservationController {
     }
 
     /**
-     * Process successful upgrade from Cash to Flouci.
+     * Process successful upgrade from Cash to Konnect.
      */
     private void processUpgradeSuccess(Reservation r, int pointsToEarn) {
-        r.setModePaiement("Flouci");
+        r.setModePaiement("Konnect");
         if (reservationService.modifier(r)) {
             if (currentUser != null) {
                 userService.addLoyaltyPoints(currentUser.getId(), pointsToEarn);
@@ -706,10 +706,10 @@ public class ReservationController {
                     int totalPts = userService.getLoyaltyPoints(currentUser.getId());
                     emailService.sendPaymentConfirmationEmail(currentUser.getEmail(), name,
                         r.getNomEtablissement(), r.getCodeConfirmation(), r.getMontantTotal(),
-                        "Flouci (upgrade)", pointsToEarn, totalPts);
+                        "Konnect (upgrade)", pointsToEarn, totalPts);
                 }).start();
             }
-            showMessage("\u2705 Paiement Flouci confirme ! +" + pointsToEarn + " points gagnes \u2B50", true);
+            showMessage("\u2705 Paiement Konnect confirme ! +" + pointsToEarn + " points gagnes \u2B50", true);
             loadData();
         }
     }
@@ -718,8 +718,8 @@ public class ReservationController {
      * Show manual verify screen if auto-verify didn't confirm yet.
      */
     private void showUpgradeVerifyScreen(Stage paymentStage, BorderPane root, Reservation r,
-                                          int pointsToEarn, String flouciPaymentId,
-                                          com.esprit.services.FlouciPaymentService flouciSvc) {
+                                          int pointsToEarn, String konnectPaymentId,
+                                          com.esprit.services.KonnectPaymentService konnectSvc) {
         VBox verifyView = new VBox(16);
         verifyView.setPadding(new Insets(30, 24, 30, 24));
         verifyView.setAlignment(Pos.CENTER);
@@ -742,7 +742,7 @@ public class ReservationController {
             verifyBtn.setDisable(true);
             verifyBtn.setText("\u23F3 Verification...");
             new Thread(() -> {
-                com.esprit.services.FlouciPaymentService.PaymentResult result = flouciSvc.verifyPayment(flouciPaymentId);
+                com.esprit.services.KonnectPaymentService.PaymentResult result = konnectSvc.verifyPayment(konnectPaymentId);
                 javafx.application.Platform.runLater(() -> {
                     if (result.isSuccess()) {
                         processUpgradeSuccess(r, pointsToEarn);
@@ -825,7 +825,7 @@ public class ReservationController {
         Label editTitle = new Label("\u2728 Modifier le mode de paiement");
         editTitle.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 12; -fx-font-weight: bold;");
 
-        boolean isCurrentlyCard = "Flouci".equalsIgnoreCase(r.getModePaiement());
+        boolean isCurrentlyCard = "Konnect".equalsIgnoreCase(r.getModePaiement());
         boolean isCash = "Especes".equalsIgnoreCase(r.getModePaiement());
         VBox modeBox = new VBox(4);
         Label modeLbl = new Label("Mode de Paiement");
@@ -840,22 +840,22 @@ public class ReservationController {
             lockLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 9;");
             modeBox.getChildren().addAll(modeLbl, modeCombo, lockLbl);
         } else if (isCurrentlyCard) {
-            modeCombo.getItems().add("Flouci");
-            modeCombo.setValue("Flouci");
+            modeCombo.getItems().add("Konnect");
+            modeCombo.setValue("Konnect");
             modeCombo.setDisable(true);
-            Label lockLbl = new Label("\uD83D\uDD12 Le mode Flouci ne peut pas etre change en Especes");
+            Label lockLbl = new Label("\uD83D\uDD12 Le mode Konnect ne peut pas etre change en Especes");
             lockLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 9;");
             modeBox.getChildren().addAll(modeLbl, modeCombo, lockLbl);
         } else if (isCash) {
-            modeCombo.getItems().addAll("Especes", "Flouci");
+            modeCombo.getItems().addAll("Especes", "Konnect");
             modeCombo.setValue("Especes");
             modeCombo.setMaxWidth(Double.MAX_VALUE);
             int pointsToEarn = (int)(r.getMontantTotal() * 10);
-            Label upgradeTip = new Label("\u2B50 Passez en Flouci pour gagner " + pointsToEarn + " points de fidelite !");
+            Label upgradeTip = new Label("\u2B50 Passez en Konnect pour gagner " + pointsToEarn + " points de fidelite !");
             upgradeTip.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 9;");
             modeBox.getChildren().addAll(modeLbl, modeCombo, upgradeTip);
         } else {
-            modeCombo.getItems().addAll("Especes", "Flouci");
+            modeCombo.getItems().addAll("Especes", "Konnect");
             modeCombo.setValue(r.getModePaiement() != null ? r.getModePaiement() : "Especes");
             modeCombo.setMaxWidth(Double.MAX_VALUE);
             modeBox.getChildren().addAll(modeLbl, modeCombo);
@@ -898,7 +898,7 @@ public class ReservationController {
             }
 
             // Award points if upgrading from Especes to Carte
-            boolean upgrading = "Especes".equalsIgnoreCase(oldMode) && "Flouci".equalsIgnoreCase(newMode);
+            boolean upgrading = "Especes".equalsIgnoreCase(oldMode) && "Konnect".equalsIgnoreCase(newMode);
             if (upgrading && currentUser != null) {
                 int pts = (int)(r.getMontantTotal() * 10);
                 userService.addLoyaltyPoints(currentUser.getId(), pts);
@@ -986,7 +986,7 @@ public class ReservationController {
         addDetailRow(detailRows, "\u23F0 Temps", getTimeAgo(r), "#888");
 
         // Payment mode badge with lock info
-        boolean isCard = "Flouci".equalsIgnoreCase(r.getModePaiement());
+        boolean isCard = "Konnect".equalsIgnoreCase(r.getModePaiement());
         if (isCard) {
             HBox cardBadge = new HBox(8);
             cardBadge.setAlignment(Pos.CENTER);
@@ -2150,7 +2150,7 @@ public class ReservationController {
         // Quick stats
         double totalSpent = reservations.stream().mapToDouble(Reservation::getMontantTotal).sum();
         double avgSpent = totalSpent / reservations.size();
-        long cardPayments = reservations.stream().filter(rv -> "Flouci".equalsIgnoreCase(rv.getModePaiement())).count();
+        long cardPayments = reservations.stream().filter(rv -> "Konnect".equalsIgnoreCase(rv.getModePaiement())).count();
 
         HBox statsRow = new HBox(12);
         statsRow.setAlignment(Pos.CENTER);

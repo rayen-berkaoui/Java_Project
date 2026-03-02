@@ -30,7 +30,7 @@ import com.esprit.services.ReservationService;
 import com.esprit.services.EtablissementService;
 import com.esprit.services.EmailService;
 import com.esprit.services.utilisateurServices;
-import com.esprit.services.FlouciPaymentService;
+import com.esprit.services.KonnectPaymentService;
 import com.esprit.services.SmsService;
 import com.esprit.services.ChatbotService;
 import com.esprit.utils.ThemeManager;
@@ -65,7 +65,7 @@ public class PanierController {
     private final EtablissementService etabService = new EtablissementService();
     private final EmailService emailService = new EmailService();
     private final utilisateurServices userService = new utilisateurServices();
-    private final FlouciPaymentService flouciService = new FlouciPaymentService();
+    private final KonnectPaymentService konnectService = new KonnectPaymentService();
     private final SmsService smsService = new SmsService();
     private final ChatbotService chatbotService = new ChatbotService();
 
@@ -860,7 +860,7 @@ public class PanierController {
         VBox loyaltyInfo = new VBox(4);
         loyaltyInfo.setAlignment(Pos.CENTER);
         loyaltyInfo.setStyle("-fx-background-color: rgba(178,102,255,0.06); -fx-padding: 10; -fx-background-radius: 8;");
-        Label loyaltyLbl = new Label("\u2B50 Payez par Flouci et gagnez " + pointsToEarn + " points de fidelite !");
+        Label loyaltyLbl = new Label("\u2B50 Payez par Konnect et gagnez " + pointsToEarn + " points de fidelite !");
         loyaltyLbl.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 11; -fx-font-weight: bold;");
         Label currentPtsLbl = new Label("Solde actuel: " + (currentUser != null ? userService.getLoyaltyPoints(currentUser.getId()) : 0) + " pts");
         currentPtsLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
@@ -888,7 +888,7 @@ public class PanierController {
         cardBox.setStyle("-fx-background-color: rgba(100,181,246,0.08); -fx-background-radius: 14; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand; -fx-pref-width: 180;");
         Label cardIcon = new Label("\uD83D\uDCF1");
         cardIcon.setStyle("-fx-font-size: 36;");
-        Label cardLbl = new Label("Flouci");
+        Label cardLbl = new Label("Konnect");
         cardLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 14; -fx-font-weight: bold;");
         Label cardDesc = new Label("Paiement en ligne\n\u2B50 +" + pointsToEarn + " points !");
         cardDesc.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 10; -fx-font-weight: bold;");
@@ -945,12 +945,12 @@ public class PanierController {
     }
 
     // ================================================================
-    // FLOUCI PAYMENT DIALOG — IN-APP WEBVIEW (no external browser!)
+    // KONNECT PAYMENT DIALOG — IN-APP WEBVIEW (no external browser!)
     // ================================================================
     private void showCardPaymentDialog(Panier p, double finalPrice) {
         // Use a Stage instead of Dialog for the in-app WebView payment
         Stage paymentStage = new Stage();
-        paymentStage.setTitle("Paiement Flouci - TABAANI SmartTravel");
+        paymentStage.setTitle("Paiement Konnect - TABAANI SmartTravel");
         paymentStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
         paymentStage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
 
@@ -967,9 +967,9 @@ public class PanierController {
         topBar.setPadding(new Insets(10, 16, 10, 16));
         topBar.setStyle("-fx-background-color: #111; -fx-background-radius: 16 16 0 0;");
 
-        Label flouciIcon = new Label("\uD83D\uDCF1");
-        flouciIcon.setStyle("-fx-font-size: 18;");
-        Label topTitle = new Label("Paiement Flouci");
+        Label konnectIcon = new Label("\uD83D\uDCB3");
+        konnectIcon.setStyle("-fx-font-size: 18;");
+        Label topTitle = new Label("Paiement Konnect");
         topTitle.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;");
         Label amountTag = new Label(String.format("%.2f DT", finalPrice));
         amountTag.setStyle("-fx-background-color: rgba(255,215,0,0.15); -fx-text-fill: #FFD700; -fx-padding: 4 12; -fx-background-radius: 20; -fx-font-size: 12; -fx-font-weight: bold;");
@@ -980,7 +980,7 @@ public class PanierController {
         closeBtn.setStyle("-fx-background-color: rgba(255,107,107,0.15); -fx-text-fill: #FF6B6B; -fx-font-size: 14; -fx-background-radius: 20; -fx-padding: 4 10; -fx-cursor: hand;");
         closeBtn.setOnAction(e -> paymentStage.close());
 
-        topBar.getChildren().addAll(flouciIcon, topTitle, amountTag, spacer, closeBtn);
+        topBar.getChildren().addAll(konnectIcon, topTitle, amountTag, spacer, closeBtn);
 
         // Make title bar draggable
         final double[] dragOffset = {0, 0};
@@ -1001,7 +1001,7 @@ public class PanierController {
         Label mainIcon = new Label("\uD83D\uDCB3");
         mainIcon.setStyle("-fx-font-size: 48;");
 
-        Label payTitle = new Label("Paiement securise via Flouci");
+        Label payTitle = new Label("Paiement securise via Konnect");
         payTitle.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
 
         Label paySubtitle = new Label("Le paiement s'effectue directement dans l'application.\nAucune redirection externe.");
@@ -1030,7 +1030,7 @@ public class PanierController {
         bonusCard.getChildren().add(bonusLbl);
 
         // Pay button
-        Button payBtn = new Button("\uD83D\uDCF1 Payer avec Flouci");
+        Button payBtn = new Button("\uD83D\uDCB3 Payer avec Konnect");
         payBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 14 40; -fx-background-radius: 12; -fx-font-size: 14; -fx-cursor: hand;");
         payBtn.setMaxWidth(Double.MAX_VALUE);
 
@@ -1080,29 +1080,29 @@ public class PanierController {
         // ── Listen for URL changes to detect payment success/failure
         webEngine.locationProperty().addListener((obs, oldUrl, newUrl) -> {
             if (newUrl != null) {
-                System.out.println("[FLOUCI WEBVIEW] Navigated to: " + newUrl);
+                System.out.println("[KONNECT WEBVIEW] Navigated to: " + newUrl);
                 String lower = newUrl.toLowerCase();
-                if (lower.contains(FlouciPaymentService.SUCCESS_URL.toLowerCase()) || lower.contains("/payment/success")) {
+                if (lower.contains(KonnectPaymentService.SUCCESS_URL.toLowerCase()) || lower.contains("/payment/success")) {
                     webStatusLbl.setText("\u2705 Paiement detecte ! Verification en cours...");
                     webStatusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 10; -fx-font-weight: bold;");
                     // Auto-verify the payment
                     if (paymentId[0] != null) {
                         new Thread(() -> {
-                            // Small delay to let Flouci process
+                            // Small delay to let Konnect process
                             try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
-                            FlouciPaymentService.PaymentResult verifyResult = flouciService.verifyPayment(paymentId[0]);
+                            KonnectPaymentService.PaymentResult verifyResult = konnectService.verifyPayment(paymentId[0]);
                             javafx.application.Platform.runLater(() -> {
                                 if (verifyResult.isSuccess()) {
-                                    processFlouciPaymentSuccess(p, finalPrice, pointsToEarn, paymentId[0]);
+                                    processKonnectPaymentSuccess(p, finalPrice, pointsToEarn, paymentId[0]);
                                     paymentStage.close();
                                 } else {
-                                    // Payment might not be confirmed yet by Flouci, show manual verify
+                                    // Payment might not be confirmed yet by Konnect, show manual verify
                                     showPostPaymentVerification(paymentStage, root, p, finalPrice, pointsToEarn, paymentId[0]);
                                 }
                             });
                         }).start();
                     }
-                } else if (lower.contains(FlouciPaymentService.FAIL_URL.toLowerCase()) || lower.contains("/payment/fail")) {
+                } else if (lower.contains(KonnectPaymentService.FAIL_URL.toLowerCase()) || lower.contains("/payment/fail")) {
                     webStatusLbl.setText("\u274C Paiement refuse ou annule.");
                     webStatusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 10; -fx-font-weight: bold;");
                     javafx.application.Platform.runLater(() -> {
@@ -1110,7 +1110,7 @@ public class PanierController {
                         statusLbl.setText("\u274C Paiement refuse. Vous pouvez reessayer.");
                         statusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
                         payBtn.setDisable(false);
-                        payBtn.setText("\uD83D\uDCF1 Reessayer le paiement");
+                        payBtn.setText("\uD83D\uDCB3 Reessayer le paiement");
                     });
                 }
             }
@@ -1133,13 +1133,13 @@ public class PanierController {
         // ── Pay button action: generate link → show WebView
         payBtn.setOnAction(e -> {
             payBtn.setDisable(true);
-            payBtn.setText("\u23F3 Connexion a Flouci...");
+            payBtn.setText("\u23F3 Connexion a Konnect...");
             statusLbl.setText("");
 
             String description = "TABAANI_" + (p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService());
 
             new Thread(() -> {
-                FlouciPaymentService.PaymentResult result = flouciService.generatePayment(finalPrice, description);
+                KonnectPaymentService.PaymentResult result = konnectService.initPayment(finalPrice, description);
 
                 javafx.application.Platform.runLater(() -> {
                     if (result.isSuccess() && result.getPaymentLink() != null) {
@@ -1155,7 +1155,7 @@ public class PanierController {
                         statusLbl.setText("\u274C " + result.getMessage());
                         statusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
                         payBtn.setDisable(false);
-                        payBtn.setText("\uD83D\uDCF1 Reessayer le paiement Flouci");
+                        payBtn.setText("\uD83D\uDCB3 Reessayer le paiement Konnect");
                     }
                 });
             }).start();
@@ -1175,7 +1175,7 @@ public class PanierController {
      * Show post-payment verification screen when auto-verify didn't confirm yet.
      */
     private void showPostPaymentVerification(Stage paymentStage, BorderPane root, Panier p,
-                                              double finalPrice, int pointsToEarn, String flouciPaymentId) {
+                                              double finalPrice, int pointsToEarn, String konnectPaymentId) {
         VBox verifyView = new VBox(16);
         verifyView.setPadding(new Insets(30, 24, 30, 24));
         verifyView.setAlignment(Pos.CENTER);
@@ -1209,12 +1209,12 @@ public class PanierController {
             verifyStatus.setText("");
 
             new Thread(() -> {
-                FlouciPaymentService.PaymentResult result = flouciService.verifyPayment(flouciPaymentId);
+                KonnectPaymentService.PaymentResult result = konnectService.verifyPayment(konnectPaymentId);
                 javafx.application.Platform.runLater(() -> {
                     if (result.isSuccess()) {
                         verifyStatus.setText("\u2705 Paiement confirme !");
                         verifyStatus.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 13; -fx-font-weight: bold;");
-                        processFlouciPaymentSuccess(p, finalPrice, pointsToEarn, flouciPaymentId);
+                        processKonnectPaymentSuccess(p, finalPrice, pointsToEarn, konnectPaymentId);
                         // Close after small delay so user sees the success
                         new Thread(() -> {
                             try { Thread.sleep(1200); } catch (InterruptedException ignored) {}
@@ -1237,12 +1237,12 @@ public class PanierController {
         paymentStage.centerOnScreen();
     }
 
-    private void processFlouciPaymentSuccess(Panier p, double finalPrice, int pointsToEarn, String flouciPaymentId) {
+    private void processKonnectPaymentSuccess(Panier p, double finalPrice, int pointsToEarn, String konnectPaymentId) {
         Reservation r = new Reservation();
         r.setIdPanier(p.getIdPanier());
         r.setDatePaiement(LocalDateTime.now());
         r.setMontantTotal(finalPrice);
-        r.setModePaiement("Flouci");
+        r.setModePaiement("Konnect");
         r.setStatutPaiement("Paye");
 
         if (reservationService.ajouter(r)) {

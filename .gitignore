@@ -41,5 +41,6 @@ build/
 ### Secrets / Credentials ###
 sms.env.bat
 sms.properties
+konnect.properties
 *.env
 *.env.bat
