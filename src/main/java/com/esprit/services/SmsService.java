@@ -7,6 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Properties;
 
 /**
  * SMS Service — Send SMS notifications via Twilio API.
@@ -14,26 +15,51 @@ import java.util.Base64;
  * Setup:
  *   1. Create free Twilio account at https://www.twilio.com
  *   2. Get your Account SID, Auth Token, and a Twilio phone number
- *   3. Set environment variables: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
+ *   3. Create a file named "sms.properties" in the project root with:
+ *        TWILIO_ACCOUNT_SID=ACxxxxxxxx
+ *        TWILIO_AUTH_TOKEN=xxxxxxxx
+ *        TWILIO_PHONE_NUMBER=+1xxxxxxxxxx
+ *      This file is git-ignored so your secrets stay local.
  *   
  * Free trial: Can send to verified numbers only. 
  * For testing without Twilio: set SMS_TEST_MODE=true env variable to log SMS instead of sending.
  */
 public class SmsService {
 
-    private static final String TWILIO_ACCOUNT_SID = System.getenv("TWILIO_ACCOUNT_SID") != null
-        ? System.getenv("TWILIO_ACCOUNT_SID")
-        : "YOUR_TWILIO_ACCOUNT_SID";
+    // Load credentials: sms.properties file → env var → system property → placeholder
+    private static final Properties SMS_PROPS = loadSmsProperties();
 
-    private static final String TWILIO_AUTH_TOKEN = System.getenv("TWILIO_AUTH_TOKEN") != null
-        ? System.getenv("TWILIO_AUTH_TOKEN")
-        : "YOUR_TWILIO_AUTH_TOKEN";
+    private static Properties loadSmsProperties() {
+        Properties props = new Properties();
+        // Try loading from sms.properties in project root / working directory
+        File f = new File("sms.properties");
+        if (f.exists()) {
+            try (FileInputStream fis = new FileInputStream(f)) {
+                props.load(fis);
+                System.out.println("📱 SMS credentials loaded from sms.properties");
+            } catch (IOException e) {
+                System.err.println("⚠️ Could not read sms.properties: " + e.getMessage());
+            }
+        }
+        return props;
+    }
 
-    private static final String TWILIO_PHONE_NUMBER = System.getenv("TWILIO_PHONE_NUMBER") != null
-        ? System.getenv("TWILIO_PHONE_NUMBER")
-        : "+15005550006"; // Twilio test number
+    private static String resolve(String key, String defaultVal) {
+        // Priority: sms.properties → env var → system property → default
+        String val = SMS_PROPS.getProperty(key);
+        if (val != null && !val.isBlank()) return val.trim();
+        val = System.getenv(key);
+        if (val != null && !val.isBlank()) return val.trim();
+        val = System.getProperty(key);
+        if (val != null && !val.isBlank()) return val.trim();
+        return defaultVal;
+    }
 
-    // Test mode: log SMS instead of sending (set env SMS_TEST_MODE=true)
+    private static final String TWILIO_ACCOUNT_SID = resolve("TWILIO_ACCOUNT_SID", "YOUR_TWILIO_ACCOUNT_SID");
+    private static final String TWILIO_AUTH_TOKEN   = resolve("TWILIO_AUTH_TOKEN",   "YOUR_TWILIO_AUTH_TOKEN");
+    private static final String TWILIO_PHONE_NUMBER = resolve("TWILIO_PHONE_NUMBER", "+15005550006");
+
+    // Test mode: log SMS instead of sending (auto-enabled when no real credentials)
     private static final boolean TEST_MODE = "true".equalsIgnoreCase(System.getenv("SMS_TEST_MODE"))
         || TWILIO_ACCOUNT_SID.startsWith("YOUR_");
 
