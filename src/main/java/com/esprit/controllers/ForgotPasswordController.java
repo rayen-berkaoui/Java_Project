@@ -4,18 +4,29 @@ import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import javafx.scene.Node;
 
+import com.esprit.entities.utilisateur;
 import com.esprit.services.EmailService;
 import com.esprit.services.OTPService;
+import com.esprit.services.SmsOTPService;
 import com.esprit.services.utilisateurServices;
+import com.esprit.utils.ThemeManager;
 
 public class ForgotPasswordController {
 
@@ -50,9 +61,12 @@ public class ForgotPasswordController {
     private final utilisateurServices userService = new utilisateurServices();
     private final OTPService otpService = new OTPService();
     private final EmailService emailService = new EmailService();
+    private final SmsOTPService smsOTPService = new SmsOTPService();
 
     // State
     private String currentEmail;
+    private String currentPhone;
+    private String otpMethod = "EMAIL";
     private boolean newPwdVisible = false;
     private boolean confirmPwdVisible = false;
     private Timeline countdownTimeline;
@@ -118,16 +132,130 @@ public class ForgotPasswordController {
         }
 
         currentEmail = email;
+
+        // Look up user to get phone number for SMS option
+        utilisateur user = userService.getUserByEmail(email);
+        currentPhone = (user != null && user.getNumTel() > 0) ? String.valueOf(user.getNumTel()) : null;
+
+        showOtpMethodChoiceDialog();
+    }
+
+    /**
+     * Show SMS / Email choice dialog
+     */
+    private void showOtpMethodChoiceDialog() {
+        Stage choiceDialog = new Stage();
+        choiceDialog.initStyle(StageStyle.TRANSPARENT);
+        choiceDialog.initModality(Modality.APPLICATION_MODAL);
+        choiceDialog.initOwner((Stage) emailField.getScene().getWindow());
+
+        VBox container = new VBox(16);
+        container.setAlignment(Pos.CENTER);
+        container.setPadding(new Insets(28, 36, 28, 36));
+        container.setMaxWidth(380);
+        container.setStyle(
+            "-fx-background-color: #111111;" +
+            "-fx-background-radius: 20;" +
+            "-fx-border-color: rgba(255,215,0,0.25);" +
+            "-fx-border-radius: 20;" +
+            "-fx-border-width: 1.5;"
+        );
+        container.setEffect(new DropShadow(30, Color.rgb(0, 0, 0, 0.7)));
+
+        Label iconLbl = new Label("\uD83D\uDD10");
+        iconLbl.setStyle("-fx-font-size: 38;");
+
+        Label titleLbl = new Label("RÉCUPÉRATION DU COMPTE");
+        titleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+
+        Label subtitleLbl = new Label("Comment souhaitez-vous recevoir le code ?");
+        subtitleLbl.setStyle("-fx-text-fill: #aaaaaa; -fx-font-size: 12;");
+
+        // Email button
+        Button emailBtn = new Button("✉  Envoyer par Email");
+        emailBtn.setPrefWidth(260); emailBtn.setPrefHeight(46);
+        emailBtn.setStyle(
+            "-fx-background-color: linear-gradient(to right, #FFD700, #FFA500);" +
+            "-fx-text-fill: #0a0a0a; -fx-font-size: 13; -fx-font-weight: bold;" +
+            "-fx-background-radius: 12; -fx-cursor: hand;"
+        );
+        Label emailHint = new Label(maskEmail(currentEmail));
+        emailHint.setStyle("-fx-text-fill: #888888; -fx-font-size: 11;");
+
+        // SMS button
+        Button smsBtn = new Button("\uD83D\uDCF1  Envoyer par SMS");
+        smsBtn.setPrefWidth(260); smsBtn.setPrefHeight(46);
+        boolean smsAvail = smsOTPService.isConfigured() && currentPhone != null && currentPhone.length() >= 8;
+        if (smsAvail) {
+            smsBtn.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.08);" +
+                "-fx-text-fill: #51CF66; -fx-font-size: 13; -fx-font-weight: bold;" +
+                "-fx-background-radius: 12; -fx-cursor: hand;" +
+                "-fx-border-color: rgba(81,207,102,0.3); -fx-border-radius: 12;"
+            );
+        } else {
+            smsBtn.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.04);" +
+                "-fx-text-fill: #555555; -fx-font-size: 13;" +
+                "-fx-background-radius: 12;" +
+                "-fx-border-color: rgba(100,100,100,0.2); -fx-border-radius: 12;"
+            );
+            smsBtn.setDisable(true);
+        }
+        String maskedPhone = (currentPhone != null && currentPhone.length() >= 4)
+            ? "****" + currentPhone.substring(currentPhone.length() - 4)
+            : "N/A";
+        Label smsHint = new Label(smsAvail ? maskedPhone : "Service SMS non disponible");
+        smsHint.setStyle("-fx-text-fill: #888888; -fx-font-size: 11;");
+
+        // Cancel
+        Button cancelBtn = new Button("Annuler");
+        cancelBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #888888; -fx-font-size: 12; -fx-cursor: hand; -fx-underline: true;");
+
+        container.getChildren().addAll(iconLbl, titleLbl, subtitleLbl, emailBtn, emailHint, smsBtn, smsHint, cancelBtn);
+
+        emailBtn.setOnAction(e -> { otpMethod = "EMAIL"; choiceDialog.close(); sendOtpAndGoToStep2(); });
+        smsBtn.setOnAction(e -> { otpMethod = "SMS"; choiceDialog.close(); sendOtpAndGoToStep2(); });
+        cancelBtn.setOnAction(e -> choiceDialog.close());
+
+        StackPane overlay = new StackPane(container);
+        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
+        overlay.setAlignment(Pos.CENTER);
+
+        Scene scene = new Scene(overlay, 450, 420);
+        scene.setFill(Color.TRANSPARENT);
+        scene.setOnKeyPressed(e -> { if (e.getCode() == KeyCode.ESCAPE) choiceDialog.close(); });
+        choiceDialog.setScene(scene);
+
+        container.setOpacity(0); container.setScaleX(0.85); container.setScaleY(0.85);
+        choiceDialog.show();
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), container);
+        fadeIn.setFromValue(0); fadeIn.setToValue(1);
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(200), container);
+        scaleIn.setFromX(0.85); scaleIn.setFromY(0.85); scaleIn.setToX(1); scaleIn.setToY(1);
+        scaleIn.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+        new ParallelTransition(fadeIn, scaleIn).play();
+    }
+
+    /**
+     * Send OTP via chosen method and transition to step 2
+     */
+    private void sendOtpAndGoToStep2() {
         showStatus(step1StatusLabel, "⏳ Envoi du code en cours...", true);
 
-        // Send OTP in background thread to prevent UI freeze
         new Thread(() -> {
             String otp = otpService.generateOTP();
-            boolean stored = otpService.storeOTP(email, otp);
-            boolean sent = emailService.sendOtpEmail(email, otp);
+            boolean stored = otpService.storeOTP(currentEmail, otp);
+            boolean sent;
+            if ("SMS".equals(otpMethod)) {
+                sent = stored && smsOTPService.sendSmsOTP(currentPhone, otp);
+            } else {
+                sent = stored && emailService.sendOtpEmail(currentEmail, otp);
+            }
 
             Platform.runLater(() -> {
-                if (stored && sent) {
+                if (sent) {
                     goToStep2();
                 } else {
                     showStatus(step1StatusLabel, "❌ Erreur lors de l'envoi du code. Réessayez.", false);
@@ -172,10 +300,15 @@ public class ForgotPasswordController {
         new Thread(() -> {
             String otp = otpService.generateOTP();
             boolean stored = otpService.storeOTP(currentEmail, otp);
-            boolean sent = emailService.sendOtpEmail(currentEmail, otp);
+            boolean sent;
+            if ("SMS".equals(otpMethod)) {
+                sent = stored && smsOTPService.sendSmsOTP(currentPhone, otp);
+            } else {
+                sent = stored && emailService.sendOtpEmail(currentEmail, otp);
+            }
 
             Platform.runLater(() -> {
-                if (stored && sent) {
+                if (sent) {
                     showStatus(step2StatusLabel, "✅ Nouveau code envoyé !", true);
                     otpField.clear();
                     startCountdown();
@@ -297,9 +430,14 @@ public class ForgotPasswordController {
     // STEP MANAGEMENT
     // ================================================
     private void goToStep2() {
-        // Mask the email for display
-        String masked = maskEmail(currentEmail);
-        otpInfoLabel.setText("Un code a été envoyé à " + masked);
+        // Show appropriate message based on OTP method
+        if ("SMS".equals(otpMethod) && currentPhone != null && currentPhone.length() >= 4) {
+            String maskedPhone = "****" + currentPhone.substring(currentPhone.length() - 4);
+            otpInfoLabel.setText("Un code a été envoyé au " + maskedPhone);
+        } else {
+            String masked = maskEmail(currentEmail);
+            otpInfoLabel.setText("Un code a été envoyé à " + masked);
+        }
         otpField.clear();
         step2StatusLabel.setText("");
         showStep(step2Pane);
@@ -435,7 +573,7 @@ public class ForgotPasswordController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newScene.getStylesheets().add(ThemeManager.getInstance().getCssPath());
             newScene.setFill(javafx.scene.paint.Color.BLACK);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);

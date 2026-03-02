@@ -22,6 +22,8 @@ public class utilisateur {
     private double faceConfidence;    // best match confidence score (0.0 - 1.0)
     private int faceSamplesCount;     // number of face samples stored
     private LocalDate lastFaceLogin;  // last successful face login date
+    private String totpSecret;        // TOTP secret key for Google Authenticator 2FA
+    private boolean totpEnabled;      // whether 2FA is enabled for this user
 
     // =========================
     // Constructeur vide
@@ -189,6 +191,22 @@ public class utilisateur {
 
     public void setLastFaceLogin(LocalDate lastFaceLogin) {
         this.lastFaceLogin = lastFaceLogin;
+    }
+
+    public String getTotpSecret() {
+        return totpSecret;
+    }
+
+    public void setTotpSecret(String totpSecret) {
+        this.totpSecret = totpSecret;
+    }
+
+    public boolean isTotpEnabled() {
+        return totpEnabled;
+    }
+
+    public void setTotpEnabled(boolean totpEnabled) {
+        this.totpEnabled = totpEnabled;
     }
 
     // =========================

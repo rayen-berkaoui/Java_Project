@@ -25,6 +25,9 @@ import javafx.application.Platform;
 import com.esprit.services.utilisateurServices;
 import com.esprit.services.EmailService;
 import com.esprit.services.OTPService;
+import com.esprit.services.PasswordStrengthService;
+import com.esprit.services.SmsOTPService;
+import com.esprit.utils.ThemeManager;
 
 public class signupController {
 
@@ -51,6 +54,8 @@ public class signupController {
     private utilisateurServices utilisateurService;
     private EmailService emailService;
     private OTPService otpService;
+    private PasswordStrengthService passwordStrengthService;
+    private SmsOTPService smsOTPService;
 
     private boolean passwordVisible = false;
     private double xOffset = 0;
@@ -63,6 +68,7 @@ public class signupController {
     private String pendingPassword;
     private int pendingNumTel;
     private int pendingRoleId;
+    private String pendingOtpMethod = "EMAIL"; // "EMAIL" or "SMS"
     private Timeline countdownTimeline;
 
     // ═══ Dialog references ═══
@@ -77,6 +83,8 @@ public class signupController {
         utilisateurService = new utilisateurServices();
         emailService = new EmailService();
         otpService = new OTPService();
+        passwordStrengthService = new PasswordStrengthService();
+        smsOTPService = new SmsOTPService();
     }
 
     @FXML
@@ -327,26 +335,181 @@ public class signupController {
             signupButton.setText("Envoi en cours...");
             errorLabel.setText("");
 
-            // Send OTP in background thread
-            new Thread(() -> {
-                String otp = otpService.generateOTP();
-                boolean stored = otpService.storeOTP(email, otp);
-                boolean sent = stored && emailService.sendVerificationEmail(email, otp);
-
-                Platform.runLater(() -> {
-                    if (sent) {
-                        showVerificationDialog();
-                    } else {
-                        signupButton.setDisable(false);
-                        signupButton.setText("CRÉER MON COMPTE  ›");
-                        showError("❌ Erreur d'envoi de l'email. Réessayez.");
-                    }
-                });
-            }).start();
+            // Show OTP method choice dialog
+            showOtpMethodChoiceDialog();
 
         } catch (NumberFormatException e) {
             showError("❌ Numéro invalide");
         }
+    }
+
+    /**
+     * Show a choice dialog: send OTP via Email or SMS
+     */
+    private void showOtpMethodChoiceDialog() {
+        Stage choiceDialog = new Stage();
+        choiceDialog.initStyle(StageStyle.TRANSPARENT);
+        choiceDialog.initModality(Modality.APPLICATION_MODAL);
+        choiceDialog.initOwner((Stage) signupButton.getScene().getWindow());
+
+        VBox container = new VBox(18);
+        container.setAlignment(Pos.CENTER);
+        container.setPadding(new Insets(30, 40, 30, 40));
+        container.setMaxWidth(400);
+        container.setStyle(
+            "-fx-background-color: #111111;" +
+            "-fx-background-radius: 20;" +
+            "-fx-border-color: rgba(255,215,0,0.25);" +
+            "-fx-border-radius: 20;" +
+            "-fx-border-width: 1.5;"
+        );
+        container.setEffect(new DropShadow(30, Color.rgb(0, 0, 0, 0.7)));
+
+        Label icon = new Label("\uD83D\uDD10");
+        icon.setStyle("-fx-font-size: 40;");
+
+        Label title = new Label("VÉRIFICATION DU COMPTE");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 17; -fx-font-weight: bold;");
+
+        Label subtitle = new Label("Choisissez comment recevoir votre code de vérification");
+        subtitle.setStyle("-fx-text-fill: #aaaaaa; -fx-font-size: 12; -fx-text-alignment: center;");
+        subtitle.setWrapText(true);
+
+        // ── Email button ──
+        Button emailBtn = new Button("✉  Envoyer par Email");
+        emailBtn.setPrefWidth(280);
+        emailBtn.setPrefHeight(50);
+        emailBtn.setStyle(
+            "-fx-background-color: linear-gradient(to right, #FFD700, #FFA500);" +
+            "-fx-text-fill: #0a0a0a;" +
+            "-fx-font-size: 14;" +
+            "-fx-font-weight: bold;" +
+            "-fx-background-radius: 12;" +
+            "-fx-cursor: hand;"
+        );
+        Label emailHint = new Label(maskEmail(pendingEmail));
+        emailHint.setStyle("-fx-text-fill: #888888; -fx-font-size: 11;");
+
+        // ── SMS button ──
+        Button smsBtn = new Button("\uD83D\uDCF1  Envoyer par SMS");
+        smsBtn.setPrefWidth(280);
+        smsBtn.setPrefHeight(50);
+        String phoneDisplay = String.valueOf(pendingNumTel);
+        boolean smsAvailable = smsOTPService.isConfigured() && phoneDisplay.length() >= 8;
+        if (smsAvailable) {
+            smsBtn.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.08);" +
+                "-fx-text-fill: #51CF66;" +
+                "-fx-font-size: 14;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 12;" +
+                "-fx-cursor: hand;" +
+                "-fx-border-color: rgba(81,207,102,0.3);" +
+                "-fx-border-radius: 12;"
+            );
+        } else {
+            smsBtn.setStyle(
+                "-fx-background-color: rgba(255,255,255,0.04);" +
+                "-fx-text-fill: #555555;" +
+                "-fx-font-size: 14;" +
+                "-fx-background-radius: 12;" +
+                "-fx-border-color: rgba(100,100,100,0.2);" +
+                "-fx-border-radius: 12;"
+            );
+            smsBtn.setDisable(true);
+        }
+        String maskedPhone = phoneDisplay.length() >= 8
+            ? "****" + phoneDisplay.substring(phoneDisplay.length() - 4)
+            : phoneDisplay;
+        Label smsHint = new Label(smsAvailable ? maskedPhone : "Service SMS non disponible");
+        smsHint.setStyle("-fx-text-fill: #888888; -fx-font-size: 11;");
+
+        // ── Cancel ──
+        Button cancelBtn = new Button("Annuler");
+        cancelBtn.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: #888888; -fx-font-size: 12; -fx-cursor: hand; -fx-underline: true;"
+        );
+
+        container.getChildren().addAll(icon, title, subtitle, emailBtn, emailHint, smsBtn, smsHint, cancelBtn);
+
+        // ── Actions ──
+        emailBtn.setOnAction(e -> {
+            pendingOtpMethod = "EMAIL";
+            choiceDialog.close();
+            sendOtpViaChosenMethod();
+        });
+
+        smsBtn.setOnAction(e -> {
+            pendingOtpMethod = "SMS";
+            choiceDialog.close();
+            sendOtpViaChosenMethod();
+        });
+
+        cancelBtn.setOnAction(e -> {
+            choiceDialog.close();
+            signupButton.setDisable(false);
+            signupButton.setText("CRÉER MON COMPTE  ›");
+        });
+
+        StackPane overlay = new StackPane(container);
+        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
+        overlay.setAlignment(Pos.CENTER);
+
+        Scene scene = new Scene(overlay, 480, 440);
+        scene.setFill(Color.TRANSPARENT);
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ESCAPE) {
+                choiceDialog.close();
+                signupButton.setDisable(false);
+                signupButton.setText("CRÉER MON COMPTE  ›");
+            }
+        });
+
+        choiceDialog.setScene(scene);
+
+        // Entrance animation
+        container.setOpacity(0);
+        container.setScaleX(0.85);
+        container.setScaleY(0.85);
+        choiceDialog.show();
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), container);
+        fadeIn.setFromValue(0); fadeIn.setToValue(1);
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(200), container);
+        scaleIn.setFromX(0.85); scaleIn.setFromY(0.85); scaleIn.setToX(1); scaleIn.setToY(1);
+        scaleIn.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+        new ParallelTransition(fadeIn, scaleIn).play();
+    }
+
+    /**
+     * Send OTP using the method chosen by the user (EMAIL or SMS)
+     */
+    private void sendOtpViaChosenMethod() {
+        new Thread(() -> {
+            String otp = otpService.generateOTP();
+            boolean stored = otpService.storeOTP(pendingEmail, otp);
+            boolean sent = false;
+
+            if ("SMS".equals(pendingOtpMethod)) {
+                String phone = String.valueOf(pendingNumTel);
+                sent = stored && smsOTPService.sendSmsOTP(phone, otp);
+            } else {
+                sent = stored && emailService.sendVerificationEmail(pendingEmail, otp);
+            }
+
+            final boolean success = sent;
+            Platform.runLater(() -> {
+                if (success) {
+                    showVerificationDialog();
+                } else {
+                    signupButton.setDisable(false);
+                    signupButton.setText("CRÉER MON COMPTE  ›");
+                    showError("SMS".equals(pendingOtpMethod)
+                        ? "❌ Erreur d'envoi du SMS. Réessayez."
+                        : "❌ Erreur d'envoi de l'email. Réessayez.");
+                }
+            });
+        }).start();
     }
 
     /**
@@ -384,11 +547,12 @@ public class signupController {
         HBox topBar = new HBox(closeBtn);
         topBar.setAlignment(Pos.CENTER_RIGHT);
 
-        // Email icon + title
-        Label icon = new Label("📧");
+        // Dynamic icon + title based on OTP method
+        boolean viaSms = "SMS".equals(pendingOtpMethod);
+        Label icon = new Label(viaSms ? "📱" : "📧");
         icon.setStyle("-fx-font-size: 36;");
 
-        Label title = new Label("VÉRIFICATION EMAIL");
+        Label title = new Label(viaSms ? "VÉRIFICATION SMS" : "VÉRIFICATION EMAIL");
         title.setStyle(
             "-fx-text-fill: #FFD700; -fx-font-size: 17; -fx-font-weight: bold; -fx-letter-spacing: 1;"
         );
@@ -399,9 +563,11 @@ public class signupController {
         accentLine.setMaxWidth(180);
         accentLine.setStyle("-fx-background-color: linear-gradient(to right, transparent, #FFD700, transparent);");
 
-        // Info label
-        String maskedEmail = maskEmail(pendingEmail);
-        Label infoLabel = new Label("Un code de vérification a été envoyé à\n" + maskedEmail);
+        // Info label — show email or phone depending on method
+        String destination = viaSms
+            ? "****" + String.valueOf(pendingNumTel).substring(Math.max(0, String.valueOf(pendingNumTel).length() - 4))
+            : maskEmail(pendingEmail);
+        Label infoLabel = new Label("Un code de vérification a été envoyé" + (viaSms ? " au\n" : " à\n") + destination);
         infoLabel.setWrapText(true);
         infoLabel.setStyle("-fx-text-fill: #aaaaaa; -fx-font-size: 12.5; -fx-text-alignment: center;");
         infoLabel.setAlignment(Pos.CENTER);
@@ -688,7 +854,12 @@ public class signupController {
         new Thread(() -> {
             String otp = otpService.generateOTP();
             boolean stored = otpService.storeOTP(pendingEmail, otp);
-            boolean sent = stored && emailService.sendVerificationEmail(pendingEmail, otp);
+            boolean sent;
+            if ("SMS".equals(pendingOtpMethod)) {
+                sent = stored && smsOTPService.sendSmsOTP(String.valueOf(pendingNumTel), otp);
+            } else {
+                sent = stored && emailService.sendVerificationEmail(pendingEmail, otp);
+            }
 
             Platform.runLater(() -> {
                 dialogResendButton.setText("Renvoyer le code");
@@ -724,14 +895,34 @@ public class signupController {
     }
 
     private void updateStrength(String password) {
-
-        if (password.length() < 8) {
-            passwordHintLabel.setText("⚠ Minimum 8 caractères");
-            strengthBar.setProgress(0.3);
-        } else {
-            passwordHintLabel.setText("✅ Mot de passe fort");
-            strengthBar.setProgress(1);
+        if (password.isEmpty()) {
+            passwordHintLabel.setText("");
+            strengthBar.setProgress(0);
+            strengthBar.setStyle("");
+            return;
         }
+
+        PasswordStrengthService.PasswordAnalysis analysis = passwordStrengthService.analyze(password);
+
+        // Update progress bar
+        strengthBar.setProgress(analysis.getProgress());
+
+        // Dynamic color on the progress bar via accent color
+        String barColor = analysis.getColor();
+        strengthBar.setStyle("-fx-accent: " + barColor + ";");
+
+        // Build hint text: label + crack time + feedback
+        StringBuilder hint = new StringBuilder();
+        hint.append(analysis.getLabel());
+        if (analysis.getCrackTime() != null && !analysis.getCrackTime().isEmpty()) {
+            hint.append("  \u23F1 ").append(analysis.getCrackTime());
+        }
+        if (analysis.getFeedback() != null && !analysis.getFeedback().isEmpty()) {
+            hint.append("\n\uD83D\uDCA1 ").append(analysis.getFeedback());
+        }
+
+        passwordHintLabel.setText(hint.toString());
+        passwordHintLabel.setStyle("-fx-text-fill: " + barColor + "; -fx-font-size: 11;");
     }
 
     private void validatePasswords() {
@@ -754,6 +945,7 @@ public class signupController {
                         !phoneField.getText().isEmpty() &&
                         (touristeRadio.isSelected() || partenaireRadio.isSelected()) &&
                         passwordField.getText().length() >= 8 &&
+                        passwordStrengthService.analyze(passwordField.getText()).getScore() >= 2 &&
                         passwordField.getText().equals(confirmPasswordField.getText()) &&
                         termsCheckBox.isSelected();
 
@@ -846,7 +1038,7 @@ public class signupController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newScene.getStylesheets().add(ThemeManager.getInstance().getCssPath());
             newScene.setFill(javafx.scene.paint.Color.BLACK);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);

@@ -28,7 +28,7 @@
                         <Label text="&#x2708;" style="-fx-font-size: 16;" />
                     </StackPane>
                     <VBox spacing="0">
-                        <Label text="SMARTTRAVEL" style="-fx-font-size: 16; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="TABAANI" style="-fx-font-size: 16; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
                         <Label text="Voyage &amp; Loisirs" style="-fx-font-size: 9; -fx-text-fill: #666666;" />
                     </VBox>
                 </HBox>
@@ -134,7 +134,7 @@
                             <Label text="&#x2708;" style="-fx-font-size: 10;" />
                         </StackPane>
                         <VBox spacing="0">
-                            <Label text="SmartTravel v1.0" style="-fx-text-fill: #444444; -fx-font-size: 10;" />
+                            <Label text="Tabaani v1.0" style="-fx-text-fill: #444444; -fx-font-size: 10;" />
                             <Label text="2025-2026" style="-fx-text-fill: #333333; -fx-font-size: 8;" />
                         </VBox>
                     </HBox>
@@ -882,9 +882,6 @@
 
                         <HBox alignment="CENTER_LEFT" spacing="12">
                             <Label text="&#x1F464; Mon Profil" style="-fx-font-size: 22; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
-                            <Region HBox.hgrow="ALWAYS" />
-                            <Button text="&#x1F464; Profil Complet" styleClass="dashboard-button" onAction="#handleGoToProfile"
-                                    style="-fx-padding: 10 20; -fx-font-size: 12;" />
                         </HBox>
 
                         <VBox spacing="20" maxWidth="700" alignment="CENTER"
@@ -904,29 +901,6 @@
 
                             <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.12), transparent); -fx-pref-height: 1;" prefWidth="600" />
 
-                            <HBox spacing="30" alignment="CENTER">
-                                <VBox spacing="16" HBox.hgrow="ALWAYS">
-                                    <VBox spacing="4">
-                                        <Label text="NOM" style="-fx-text-fill: rgba(255,215,0,0.7); -fx-font-size: 10; -fx-font-weight: bold;" />
-                                        <TextField fx:id="editNomField" promptText="Votre nom" styleClass="text-field-modern" />
-                                    </VBox>
-                                    <VBox spacing="4">
-                                        <Label text="EMAIL" style="-fx-text-fill: rgba(255,215,0,0.7); -fx-font-size: 10; -fx-font-weight: bold;" />
-                                        <TextField fx:id="editEmailField" promptText="Votre email" styleClass="text-field-modern" />
-                                    </VBox>
-                                </VBox>
-                                <VBox spacing="16" HBox.hgrow="ALWAYS">
-                                    <VBox spacing="4">
-                                        <Label text="PRENOM" style="-fx-text-fill: rgba(255,215,0,0.7); -fx-font-size: 10; -fx-font-weight: bold;" />
-                                        <TextField fx:id="editPrenomField" promptText="Votre prenom" styleClass="text-field-modern" />
-                                    </VBox>
-                                    <VBox spacing="4">
-                                        <Label text="TELEPHONE" style="-fx-text-fill: rgba(255,215,0,0.7); -fx-font-size: 10; -fx-font-weight: bold;" />
-                                        <TextField fx:id="editTelField" promptText="Votre numero" styleClass="text-field-modern" />
-                                    </VBox>
-                                </VBox>
-                            </HBox>
-
                             <HBox spacing="20" alignment="CENTER" style="-fx-padding: 10 0 0 0;">
                                 <HBox spacing="8" alignment="CENTER"
                                       style="-fx-background-color: rgba(81,207,102,0.08); -fx-padding: 8 16; -fx-background-radius: 10;">
@@ -940,12 +914,13 @@
                                 </HBox>
                             </HBox>
 
-                            <Label fx:id="profilMessage" text="" style="-fx-font-size: 12; -fx-text-fill: #51CF66;" />
+                            <Label fx:id="profilMessage" text="" style="-fx-font-size: 12; -fx-text-fill: #888888;" />
 
-                            <HBox spacing="12" alignment="CENTER">
-                                <Button text="&#x1F4BE; Sauvegarder les Modifications" styleClass="dashboard-button" onAction="#handleSaveProfile"
-                                        style="-fx-padding: 12 30; -fx-font-size: 13;" />
-                            </HBox>
+                            <VBox spacing="8" alignment="CENTER" style="-fx-padding: 15 0 0 0;">
+                                <Label text="Pour modifier vos informations, acc&#xe9;dez &#xe0; votre profil complet." style="-fx-text-fill: #666666; -fx-font-size: 12;" />
+                                <Button text="&#x1F464; Acc&#xe9;der au Profil Complet" styleClass="dashboard-button" onAction="#handleGoToProfile"
+                                        style="-fx-padding: 14 40; -fx-font-size: 14;" />
+                            </VBox>
                         </VBox>
                     </VBox>
                 </ScrollPane>

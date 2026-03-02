@@ -7,6 +7,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
+import com.esprit.utils.ThemeManager;
+
 public class Main extends Application {
 
     @Override
@@ -18,9 +20,9 @@ public class Main extends Application {
 
         Scene scene = new Scene(loader.load());
 
-        // ✅ Load CSS correctly
+        // ✅ Load CSS based on saved theme preference
         scene.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
+                ThemeManager.getInstance().getCssPath()
         );
 
         // ✅ Remove white background

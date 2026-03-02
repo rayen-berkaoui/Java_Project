@@ -18,14 +18,17 @@ import javafx.scene.Node;
 
 import com.esprit.entities.utilisateur;
 import com.esprit.services.utilisateurServices;
+import com.esprit.utils.ThemeManager;
+import com.esprit.utils.SessionManager;
+import javafx.application.Platform;
 
 import java.io.ByteArrayInputStream;
 import java.util.Base64;
 
 /**
- * Controller for the main SmartTravel user interface.
- * User-focused hub: browse destinations, restaurants, reviews, reservations and edit profile.
- * Uses FAKE data for destinations/restaurants/reviews/reservations — profile editing is real.
+ * Controller for the main Tabaani user interface.
+ * User-focused hub: browse destinations, restaurants, reviews, reservations and view profile.
+ * Profile editing is handled in UserProfileController (no duplication).
  */
 public class MainInterfaceController {
 
@@ -71,7 +74,7 @@ public class MainInterfaceController {
     @FXML private VBox subPanelReservations;
     @FXML private VBox subPanelFavoris;
 
-    // ═══════ PROFILE EDIT ═══════
+    // ═══════ PROFILE VIEW (read-only) ═══════
     @FXML private Label profilInitials;
     @FXML private ImageView profilImageView;
     @FXML private Label profilFullName;
@@ -79,10 +82,6 @@ public class MainInterfaceController {
     @FXML private Label profilStatut;
     @FXML private Label profilDate;
     @FXML private Label profilMessage;
-    @FXML private TextField editNomField;
-    @FXML private TextField editPrenomField;
-    @FXML private TextField editEmailField;
-    @FXML private TextField editTelField;
 
     private double xOffset = 0;
     private double yOffset = 0;
@@ -113,6 +112,13 @@ public class MainInterfaceController {
 
         // Show accueil by default
         showPanel("accueil");
+
+        // Start session monitoring (auto-logout on inactivity)
+        Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null) {
+                SessionManager.getInstance().startMonitoring(titleBar.getScene());
+            }
+        });
     }
 
     /**
@@ -143,7 +149,7 @@ public class MainInterfaceController {
     }
 
     /**
-     * Populate the profile editing panel with user data
+     * Populate the profile panel with user data (read-only view)
      */
     private void populateProfile(utilisateur user) {
         if (profilInitials != null) {
@@ -160,11 +166,6 @@ public class MainInterfaceController {
         if (profilEmail != null) {
             profilEmail.setText(user.getEmail());
         }
-
-        if (editNomField != null) editNomField.setText(user.getNom());
-        if (editPrenomField != null) editPrenomField.setText(user.getPrenom());
-        if (editEmailField != null) editEmailField.setText(user.getEmail());
-        if (editTelField != null) editTelField.setText(user.getNumTel() != 0 ? String.valueOf(user.getNumTel()) : "");
 
         if (profilStatut != null) {
             profilStatut.setText("Statut: " + (user.getStatut() != null ? user.getStatut() : "ACTIF"));
@@ -350,85 +351,6 @@ public class MainInterfaceController {
     }
 
     // ═══════════════════════════════════════════════════
-    // PROFILE ACTIONS
-    // ═══════════════════════════════════════════════════
-
-    @FXML
-    public void handleSaveProfile() {
-        if (currentUser == null) {
-            if (profilMessage != null) {
-                profilMessage.setStyle("-fx-font-size: 12; -fx-text-fill: #FF6B6B;");
-                profilMessage.setText("Erreur: utilisateur non connecte.");
-            }
-            return;
-        }
-
-        String nom = editNomField != null ? editNomField.getText().trim() : "";
-        String prenom = editPrenomField != null ? editPrenomField.getText().trim() : "";
-        String email = editEmailField != null ? editEmailField.getText().trim() : "";
-        String tel = editTelField != null ? editTelField.getText().trim() : "";
-
-        if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty()) {
-            if (profilMessage != null) {
-                profilMessage.setStyle("-fx-font-size: 12; -fx-text-fill: #FF6B6B;");
-                profilMessage.setText("Veuillez remplir tous les champs obligatoires.");
-            }
-            return;
-        }
-
-        try {
-            int telNum = 0;
-            if (!tel.isEmpty()) {
-                telNum = Integer.parseInt(tel);
-            }
-
-            boolean success = userService.updateProfile(currentUser.getId(), prenom, nom, email, telNum);
-            if (!success) {
-                if (profilMessage != null) {
-                    profilMessage.setStyle("-fx-font-size: 12; -fx-text-fill: #FF6B6B;");
-                    profilMessage.setText("Echec de la mise a jour du profil.");
-                }
-                return;
-            }
-
-            currentUser.setNom(nom);
-            currentUser.setPrenom(prenom);
-            currentUser.setEmail(email);
-            currentUser.setNumTel(telNum);
-
-            // Update UI
-            String fullName = nom + " " + prenom;
-            if (userNameLabel != null) userNameLabel.setText(fullName);
-            if (profilFullName != null) profilFullName.setText(fullName);
-            if (profilEmail != null) profilEmail.setText(email);
-            if (welcomeLabel != null) welcomeLabel.setText("\uD83C\uDF0D Bonjour, " + prenom + " !");
-
-            if (profilInitials != null) {
-                String initials = "";
-                if (!nom.isEmpty()) initials += nom.charAt(0);
-                if (!prenom.isEmpty()) initials += prenom.charAt(0);
-                profilInitials.setText(initials.toUpperCase());
-            }
-
-            if (profilMessage != null) {
-                profilMessage.setStyle("-fx-font-size: 12; -fx-text-fill: #51CF66;");
-                profilMessage.setText("Profil mis a jour avec succes !");
-            }
-        } catch (NumberFormatException ex) {
-            if (profilMessage != null) {
-                profilMessage.setStyle("-fx-font-size: 12; -fx-text-fill: #FF6B6B;");
-                profilMessage.setText("Numero de telephone invalide.");
-            }
-        } catch (Exception ex) {
-            if (profilMessage != null) {
-                profilMessage.setStyle("-fx-font-size: 12; -fx-text-fill: #FF6B6B;");
-                profilMessage.setText("Erreur lors de la mise a jour: " + ex.getMessage());
-            }
-            ex.printStackTrace();
-        }
-    }
-
-    // ═══════════════════════════════════════════════════
     // NAVIGATION TO FULL PROFILE PAGE
     // ═══════════════════════════════════════════════════
 
@@ -444,7 +366,7 @@ public class MainInterfaceController {
             }
 
             Stage stage = (Stage) titleBar.getScene().getWindow();
-            fadeTransition(stage, root, "SmartTravel - Mon Profil");
+            fadeTransition(stage, root, "Tabaani - Mon Profil");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -472,7 +394,7 @@ public class MainInterfaceController {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/login.fxml"));
             Parent root = loader.load();
             Stage stage = (Stage) titleBar.getScene().getWindow();
-            fadeTransition(stage, root, "SmartTravel - Connexion");
+            fadeTransition(stage, root, "Tabaani - Connexion");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -501,7 +423,7 @@ public class MainInterfaceController {
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
             newScene.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
+                ThemeManager.getInstance().getCssPath()
             );
             newScene.setFill(javafx.scene.paint.Color.BLACK);
 

@@ -166,7 +166,7 @@
 
                                 <VBox spacing="6">
                                     <Label text="TÉLÉPHONE" styleClass="field-label" />
-                                    <TextField fx:id="phoneField" styleClass="text-field-modern" prefHeight="42" promptText="+216 XX XXX XXX" />
+                                    <TextField fx:id="phoneField" styleClass="text-field-modern" prefHeight="42" promptText="+216 25 485 598" />
                                 </VBox>
 
                                 <HBox spacing="15">
@@ -264,6 +264,39 @@
                                     <Label fx:id="securityMessageLabel" text="" style="-fx-font-size: 12;" />
                                     <Button text="🔄  Changer le mot de passe" styleClass="login-button-modern" prefHeight="45"
                                             style="-fx-padding: 10 30;" onAction="#handleChangePassword" />
+                                </HBox>
+                            </VBox>
+
+                            <!-- Two-Factor Authentication Card -->
+                            <VBox spacing="18" styleClass="content-card">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="🛡" style="-fx-font-size: 15;" />
+                                    <Label text="Authentification &#xe0; deux facteurs (2FA)" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="twoFAStatusLabel" text="D&#xe9;sactiv&#xe9;" style="-fx-text-fill: #FF6B6B; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                </HBox>
+                                <Separator />
+                                <Label text="Prot&#xe9;gez votre compte avec un code &#xe0; 6 chiffres g&#xe9;n&#xe9;r&#xe9; par une application comme Google Authenticator ou Authy. &#xc0; chaque connexion, vous devrez saisir ce code en plus de votre mot de passe."
+                                       style="-fx-text-fill: #888888; -fx-font-size: 12;" wrapText="true" />
+
+                                <!-- QR Code container (hidden until Enable is clicked) -->
+                                <VBox fx:id="qrCodeContainer" spacing="14" alignment="CENTER" visible="false" managed="false"
+                                      style="-fx-background-color: rgba(255,215,0,0.04); -fx-padding: 20; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.12); -fx-border-radius: 12; -fx-border-width: 1;">
+                                    <Label text="1&#xfe0f;&#x20e3;  Scannez ce QR code avec Google Authenticator" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold;" />
+                                    <ImageView fx:id="qrCodeImageView" fitWidth="200" fitHeight="200" preserveRatio="true"
+                                               style="-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 10, 0, 0, 0);" />
+                                    <Label fx:id="totpSecretLabel" text="" style="-fx-text-fill: #aaaaaa; -fx-font-size: 11; -fx-font-family: monospace;" />
+                                    <Label text="2&#xfe0f;&#x20e3;  Entrez le code &#xe0; 6 chiffres pour confirmer" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold; -fx-padding: 10 0 0 0;" />
+                                    <TextField fx:id="totpVerifyField" promptText="000 000" maxWidth="180" alignment="CENTER"
+                                               styleClass="text-field-modern" style="-fx-font-size: 22; -fx-font-weight: bold; -fx-padding: 12 20;" />
+                                    <Button text="&#x2705;  Confirmer et activer" styleClass="login-button-modern" prefHeight="42"
+                                            style="-fx-padding: 10 30;" onAction="#handleConfirm2FA" />
+                                </VBox>
+
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <Button fx:id="toggle2FAButton" text="&#x1F6E1;  Activer la 2FA" styleClass="login-button-modern" prefHeight="42"
+                                            style="-fx-padding: 10 30;" onAction="#handleToggle2FA" />
+                                    <Label fx:id="twoFAMessageLabel" text="" style="-fx-font-size: 12;" />
                                 </HBox>
                             </VBox>
 
@@ -402,6 +435,22 @@
                                 </HBox>
                             </VBox>
 
+                            <!-- Appearance / Theme -->
+                            <VBox spacing="15" styleClass="content-card">
+                                <HBox spacing="10" alignment="CENTER_LEFT">
+                                    <Label text="🎨" style="-fx-font-size: 15;" />
+                                    <Label text="Apparence" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;" />
+                                </HBox>
+                                <Separator />
+                                <HBox spacing="15" alignment="CENTER_LEFT">
+                                    <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                        <Label text="Mode Sombre" style="-fx-text-fill: #ffffff; -fx-font-size: 13;" />
+                                        <Label text="Basculer entre le thème sombre et clair" style="-fx-text-fill: #555555; -fx-font-size: 10;" />
+                                    </VBox>
+                                    <CheckBox fx:id="darkModeToggle" text="" styleClass="custom-checkbox" selected="true" onAction="#handleThemeToggle" />
+                                </HBox>
+                            </VBox>
+
                             <!-- Privacy -->
                             <VBox spacing="15" styleClass="content-card">
                                 <HBox spacing="10" alignment="CENTER_LEFT">
@@ -467,7 +516,7 @@
                                     <Label text="Chat en direct" style="-fx-text-fill: #FFB74D; -fx-font-size: 15; -fx-font-weight: bold;" />
                                     <Label text="Disponible maintenant" style="-fx-text-fill: #888888; -fx-font-size: 11;" />
                                     <HBox spacing="6" alignment="CENTER">
-                                        <Circle radius="4" style="-fx-fill: #51CF66;" />
+                                        <Circle radius="4" style="-fx-fill: #35b9e5;" />
                                         <Label text="En ligne" style="-fx-text-fill: #51CF66; -fx-font-size: 10;" />
                                     </HBox>
                                 </VBox>

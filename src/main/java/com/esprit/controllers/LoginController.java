@@ -18,6 +18,11 @@ import javafx.application.Platform;
 import com.esprit.entities.utilisateur;
 import com.esprit.services.utilisateurServices;
 import com.esprit.services.FaceRecognitionService;
+import com.esprit.services.TOTPService;
+import com.esprit.services.SmsOTPService;
+import com.esprit.services.OTPService;
+import com.esprit.services.EmailService;
+import com.esprit.utils.ThemeManager;
 
 import org.bytedeco.opencv.opencv_core.Mat;
 
@@ -27,6 +32,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.effect.DropShadow;
+import javafx.scene.input.KeyCode;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.StageStyle;
 
 public class LoginController {
 
@@ -64,6 +77,10 @@ public class LoginController {
 
     private utilisateurServices utilisateurService;
     private FaceRecognitionService faceService;
+    private TOTPService totpService;
+    private SmsOTPService smsOTPService;
+    private OTPService otpService;
+    private EmailService emailService;
     private ScheduledExecutorService cameraTimer;
     private boolean passwordVisible = false;
     private boolean faceCurrentlyDetected = false;
@@ -80,6 +97,10 @@ public class LoginController {
     public LoginController() {
         utilisateurService = new utilisateurServices();
         faceService = new FaceRecognitionService();
+        totpService = new TOTPService();
+        smsOTPService = new SmsOTPService();
+        otpService = new OTPService();
+        emailService = new EmailService();
     }
 
     @FXML
@@ -106,7 +127,15 @@ public class LoginController {
         // Make sure camera stops when window closes
         Platform.runLater(() -> {
             if (emailField != null && emailField.getScene() != null) {
-                emailField.getScene().getWindow().setOnHiding(e -> stopCameraCleanup());
+                if (emailField.getScene().getWindow() != null) {
+                    emailField.getScene().getWindow().setOnHiding(e -> stopCameraCleanup());
+                } else {
+                    emailField.getScene().windowProperty().addListener((obs, oldW, newW) -> {
+                        if (newW != null) {
+                            newW.setOnHiding(e -> stopCameraCleanup());
+                        }
+                    });
+                }
             }
         });
     }
@@ -378,11 +407,15 @@ public class LoginController {
                         // Update last face login in database
                         utilisateurService.updateLastFaceLogin(matchedUser.getId(), finalScore);
 
-                        // Stop camera and redirect
+                        // Stop camera and check 2FA before redirect
                         PauseTransition delay = new PauseTransition(Duration.millis(1200));
                         delay.setOnFinished(e -> {
                             stopCameraCleanup();
-                            redirectToDashboard(matchedUser);
+                            if (totpService.is2FAEnabled(matchedUser.getId())) {
+                                show2FAVerificationDialog(matchedUser);
+                            } else {
+                                redirectToDashboard(matchedUser);
+                            }
                         });
                         delay.play();
 
@@ -615,6 +648,13 @@ public class LoginController {
             // Save or clear "Remember Me" credentials
             saveCredentials(email, password);
 
+            // ✅ Check if 2FA (TOTP) is enabled for this user
+            if (totpService.is2FAEnabled(user.getId())) {
+                // Show 2FA verification dialog before proceeding
+                show2FAVerificationDialog(user);
+                return;
+            }
+
             errorLabel.setText("✅ Bienvenue " + user.getNom());
             errorLabel.setStyle("-fx-text-fill: #51CF66;");
 
@@ -690,6 +730,273 @@ public class LoginController {
     }
 
     // =========================
+    // 2FA VERIFICATION DIALOG
+    // =========================
+
+    /**
+     * Show a stylish 2FA TOTP verification dialog.
+     * The user must enter the 6-digit code from Google Authenticator.
+     * Also offers SMS OTP and Email OTP as alternatives.
+     */
+    private void show2FAVerificationDialog(utilisateur user) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.TRANSPARENT);
+        dialog.initOwner(emailField.getScene().getWindow());
+
+        // ── Main container ──
+        VBox container = new VBox(18);
+        container.setAlignment(Pos.CENTER);
+        container.setPadding(new Insets(35, 40, 35, 40));
+        container.setMaxWidth(420);
+        container.setStyle(
+            "-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e);" +
+            "-fx-background-radius: 20;" +
+            "-fx-border-color: rgba(255,215,0,0.3);" +
+            "-fx-border-width: 1;" +
+            "-fx-border-radius: 20;"
+        );
+        container.setEffect(new DropShadow(30, Color.rgb(0, 0, 0, 0.7)));
+
+        // ── Shield icon ──
+        Label shieldIcon = new Label("\uD83D\uDD10");
+        shieldIcon.setStyle("-fx-font-size: 48;");
+
+        // ── Title ──
+        Label title = new Label("Vérification 2FA");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 22; -fx-font-weight: bold;");
+
+        Label subtitle = new Label("Entrez le code à 6 chiffres de votre\napplication d'authentification");
+        subtitle.setStyle("-fx-text-fill: #aaaaaa; -fx-font-size: 13; -fx-text-alignment: center;");
+        subtitle.setWrapText(true);
+
+        // ── Code input (6-digit) ──
+        TextField codeField = new TextField();
+        codeField.setPromptText("000 000");
+        codeField.setMaxWidth(220);
+        codeField.setAlignment(Pos.CENTER);
+        codeField.setStyle(
+            "-fx-background-color: rgba(255,255,255,0.08);" +
+            "-fx-text-fill: white;" +
+            "-fx-font-size: 28;" +
+            "-fx-font-weight: bold;" +
+            "-fx-prompt-text-fill: #555555;" +
+            "-fx-padding: 12 20;" +
+            "-fx-background-radius: 12;" +
+            "-fx-border-color: rgba(255,215,0,0.2);" +
+            "-fx-border-radius: 12;" +
+            "-fx-alignment: center;"
+        );
+        // Restrict to 6 digits only
+        codeField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal.matches("\\d*")) {
+                codeField.setText(newVal.replaceAll("[^\\d]", ""));
+            }
+            if (newVal.length() > 6) {
+                codeField.setText(newVal.substring(0, 6));
+            }
+        });
+
+        // ── Error label ──
+        Label errorLbl = new Label();
+        errorLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12;");
+        errorLbl.setVisible(false);
+
+        // ── Verify button ──
+        Button verifyBtn = new Button("✓  Vérifier");
+        verifyBtn.setMaxWidth(220);
+        verifyBtn.setStyle(
+            "-fx-background-color: linear-gradient(to right, #FFD700, #FFA500);" +
+            "-fx-text-fill: #1a1a2e;" +
+            "-fx-font-size: 15;" +
+            "-fx-font-weight: bold;" +
+            "-fx-padding: 12 30;" +
+            "-fx-background-radius: 12;" +
+            "-fx-cursor: hand;"
+        );
+
+        // ── Alternative methods ──
+        Label altLabel = new Label("— ou utilisez une autre méthode —");
+        altLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 11;");
+
+        HBox altButtons = new HBox(10);
+        altButtons.setAlignment(Pos.CENTER);
+
+        Button smsBtn = new Button("\uD83D\uDCF1 SMS");
+        smsBtn.setStyle(
+            "-fx-background-color: rgba(255,255,255,0.08);" +
+            "-fx-text-fill: #51CF66;" +
+            "-fx-font-size: 12;" +
+            "-fx-padding: 8 18;" +
+            "-fx-background-radius: 10;" +
+            "-fx-cursor: hand;" +
+            "-fx-border-color: rgba(81,207,102,0.3);" +
+            "-fx-border-radius: 10;"
+        );
+
+        Button emailBtn = new Button("✉ Email");
+        emailBtn.setStyle(
+            "-fx-background-color: rgba(255,255,255,0.08);" +
+            "-fx-text-fill: #74C0FC;" +
+            "-fx-font-size: 12;" +
+            "-fx-padding: 8 18;" +
+            "-fx-background-radius: 10;" +
+            "-fx-cursor: hand;" +
+            "-fx-border-color: rgba(116,192,252,0.3);" +
+            "-fx-border-radius: 10;"
+        );
+
+        altButtons.getChildren().addAll(smsBtn, emailBtn);
+
+        // ── Cancel button ──
+        Button cancelBtn = new Button("Annuler");
+        cancelBtn.setStyle(
+            "-fx-background-color: transparent;" +
+            "-fx-text-fill: #888888;" +
+            "-fx-font-size: 12;" +
+            "-fx-cursor: hand;" +
+            "-fx-underline: true;"
+        );
+
+        container.getChildren().addAll(shieldIcon, title, subtitle, codeField, errorLbl,
+                                       verifyBtn, altLabel, altButtons, cancelBtn);
+
+        // ── Verify TOTP code action ──
+        Runnable verifyAction = () -> {
+            String code = codeField.getText().trim();
+            if (code.length() != 6) {
+                errorLbl.setText("❌ Le code doit contenir 6 chiffres");
+                errorLbl.setVisible(true);
+                shakeNode(codeField);
+                return;
+            }
+            try {
+                String secret = totpService.getSecret(user.getId());
+                if (secret != null && totpService.verifyCode(secret, Integer.parseInt(code))) {
+                    // ✅ 2FA verified!
+                    dialog.close();
+                    errorLabel.setText("✅ Bienvenue " + user.getNom());
+                    errorLabel.setStyle("-fx-text-fill: #51CF66;");
+                    redirectToDashboard(user);
+                } else {
+                    errorLbl.setText("❌ Code invalide. Réessayez.");
+                    errorLbl.setVisible(true);
+                    shakeNode(codeField);
+                    codeField.clear();
+                    codeField.requestFocus();
+                }
+            } catch (Exception ex) {
+                errorLbl.setText("❌ Erreur de vérification: " + ex.getMessage());
+                errorLbl.setVisible(true);
+            }
+        };
+
+        verifyBtn.setOnAction(e -> verifyAction.run());
+        codeField.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ENTER) verifyAction.run();
+        });
+
+        // ── SMS OTP alternative ──
+        smsBtn.setOnAction(e -> {
+            String phone = String.valueOf(user.getNumTel());
+            if (phone == null || phone.isEmpty()) {
+                errorLbl.setText("❌ Aucun numéro de téléphone enregistré");
+                errorLbl.setVisible(true);
+                return;
+            }
+            if (!smsOTPService.isConfigured()) {
+                errorLbl.setText("⚠ Service SMS non configuré");
+                errorLbl.setVisible(true);
+                return;
+            }
+            String otp = otpService.generateOTP();
+            otpService.storeOTP(user.getEmail(), otp);
+            smsOTPService.sendSmsOTP(phone, otp);
+            subtitle.setText("Un code SMS a été envoyé au " + phone.replaceAll(".(?=.{3})", "*"));
+            codeField.clear();
+            codeField.setPromptText("Code SMS");
+            codeField.requestFocus();
+            // Override verify action for SMS OTP
+            verifyBtn.setOnAction(ev -> {
+                String enteredCode = codeField.getText().trim();
+                if (otpService.verifyOTP(user.getEmail(), enteredCode)) {
+                    dialog.close();
+                    errorLabel.setText("✅ Bienvenue " + user.getNom());
+                    errorLabel.setStyle("-fx-text-fill: #51CF66;");
+                    redirectToDashboard(user);
+                } else {
+                    errorLbl.setText("❌ Code SMS invalide ou expiré");
+                    errorLbl.setVisible(true);
+                    shakeNode(codeField);
+                    codeField.clear();
+                }
+            });
+        });
+
+        // ── Email OTP alternative ──
+        emailBtn.setOnAction(e -> {
+            String otp = otpService.generateOTP();
+            otpService.storeOTP(user.getEmail(), otp);
+            emailService.sendOtpEmail(user.getEmail(), otp);
+            subtitle.setText("Un code a été envoyé à " + user.getEmail().replaceAll("(?<=.).(?=.*@)", "*"));
+            codeField.clear();
+            codeField.setPromptText("Code Email");
+            codeField.requestFocus();
+            // Override verify action for Email OTP
+            verifyBtn.setOnAction(ev -> {
+                String enteredCode = codeField.getText().trim();
+                if (otpService.verifyOTP(user.getEmail(), enteredCode)) {
+                    dialog.close();
+                    errorLabel.setText("✅ Bienvenue " + user.getNom());
+                    errorLabel.setStyle("-fx-text-fill: #51CF66;");
+                    redirectToDashboard(user);
+                } else {
+                    errorLbl.setText("❌ Code email invalide ou expiré");
+                    errorLbl.setVisible(true);
+                    shakeNode(codeField);
+                    codeField.clear();
+                }
+            });
+        });
+
+        cancelBtn.setOnAction(e -> dialog.close());
+
+        // ── Build scene ──
+        StackPane root = new StackPane(container);
+        root.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
+        root.setPadding(new Insets(40));
+
+        Scene scene = new Scene(root, 500, 520);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ESCAPE) dialog.close();
+        });
+
+        dialog.setScene(scene);
+
+        // ── Entrance animation ──
+        container.setOpacity(0);
+        container.setScaleX(0.85);
+        container.setScaleY(0.85);
+
+        dialog.show();
+        codeField.requestFocus();
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(250), container);
+        fadeIn.setFromValue(0);
+        fadeIn.setToValue(1);
+
+        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(250), container);
+        scaleIn.setFromX(0.85);
+        scaleIn.setFromY(0.85);
+        scaleIn.setToX(1);
+        scaleIn.setToY(1);
+        scaleIn.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
+
+        new ParallelTransition(fadeIn, scaleIn).play();
+    }
+
+    // =========================
     // DASHBOARD REDIRECT (ROLE-BASED)
     // =========================
     private void redirectToDashboard(utilisateur user) {
@@ -717,7 +1024,7 @@ public class LoginController {
                 controller.setUser(user);
 
                 Stage stage = (Stage) emailField.getScene().getWindow();
-                fadeTransition(stage, root, "SmartTravel - Accueil");
+                fadeTransition(stage, root, "Tabaani - Accueil");
             }
 
         } catch (Exception e) {
@@ -845,7 +1152,7 @@ public class LoginController {
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
             newScene.getStylesheets().add(
-                getClass().getResource("/style.css").toExternalForm()
+                ThemeManager.getInstance().getCssPath()
             );
             newScene.setFill(javafx.scene.paint.Color.BLACK);
 

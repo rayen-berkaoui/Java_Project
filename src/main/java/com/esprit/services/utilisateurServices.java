@@ -540,13 +540,37 @@ public class utilisateurServices implements ICrud<utilisateur> {
     // ✅ GET SINGLE USER BY ID
     // =====================================================
     public utilisateur getUserById(int id) {
+        // Refresh connection to handle stale/closed connections
+        con = MyDataBase.getInstance().getConnection();
         String sql = "SELECT * FROM utilisateur WHERE id = ?";
         try {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return mapUser(rs);
-        } catch (SQLException e) { e.printStackTrace(); }
+            else System.out.println("⚠️ getUserById: no user found with id=" + id);
+        } catch (SQLException e) {
+            System.out.println("❌ getUserById SQL error for id=" + id + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // =====================================================
+    // ✅ GET USER BY EMAIL
+    // =====================================================
+    public utilisateur getUserByEmail(String email) {
+        con = MyDataBase.getInstance().getConnection();
+        String sql = "SELECT * FROM utilisateur WHERE email = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return mapUser(rs);
+        } catch (SQLException e) {
+            System.out.println("❌ getUserByEmail SQL error for email=" + email + ": " + e.getMessage());
+            e.printStackTrace();
+        }
         return null;
     }
 
@@ -587,6 +611,8 @@ public class utilisateurServices implements ICrud<utilisateur> {
             Date faceLoginDate = rs.getDate("last_face_login");
             if (faceLoginDate != null) u.setLastFaceLogin(faceLoginDate.toLocalDate());
         } catch (SQLException ignored) {}
+        try { u.setTotpSecret(rs.getString("totp_secret")); } catch (SQLException ignored) {}
+        try { u.setTotpEnabled(rs.getBoolean("totp_enabled")); } catch (SQLException ignored) {}
         Date date = rs.getDate("date_creation");
         if (date != null) u.setDateCreation(date.toLocalDate());
         return u;

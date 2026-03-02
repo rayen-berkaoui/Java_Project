@@ -21,6 +21,8 @@ import com.esprit.entities.RolePermission;
 import com.esprit.entities.role;
 import com.esprit.entities.utilisateur;
 import com.esprit.services.*;
+import com.esprit.utils.ThemeManager;
+import com.esprit.utils.SessionManager;
 
 import java.io.File;
 import java.time.LocalDate;
@@ -103,6 +105,7 @@ public class DashboardController {
     private final RolePermissionService permService = new RolePermissionService();
     private final ExportService exportService = new ExportService();
     private final ImportService importService = new ImportService();
+    private final PdfReportService pdfReportService = new PdfReportService();
 
     // State
     private String currentUserName;
@@ -133,6 +136,13 @@ public class DashboardController {
 
         // Load bulk role combo
         loadRolesCombo();
+
+        // Session timeout — start monitoring once scene is available
+        javafx.application.Platform.runLater(() -> {
+            if (contentArea != null && contentArea.getScene() != null) {
+                SessionManager.getInstance().startMonitoring(contentArea.getScene());
+            }
+        });
     }
 
     public void setUserName(String userName) {
@@ -574,7 +584,7 @@ public class DashboardController {
 
             boolean success = false;
             switch (format) {
-                case "PDF": success = exportService.exportToPDF(users, file); break;
+                case "PDF": success = pdfReportService.generateReport(users, file, currentUserName, currentAdminId); break;
                 case "Excel": success = exportService.exportToExcel(users, file); break;
                 case "CSV": success = exportService.exportToCSV(users, file); break;
             }
@@ -946,9 +956,14 @@ public class DashboardController {
     @FXML
     private void handleViewProfile() {
         try {
+            System.out.println("\uD83D\uDC64 handleViewProfile: currentAdminId = " + currentAdminId);
+            if (currentAdminId <= 0) {
+                showAlert("Erreur", "ID administrateur non défini (id=" + currentAdminId + "). Reconnectez-vous.");
+                return;
+            }
             utilisateur adminUser = userService.getUserById(currentAdminId);
             if (adminUser == null) {
-                showAlert("Erreur", "Impossible de charger le profil administrateur.");
+                showAlert("Erreur", "Impossible de charger le profil administrateur (id=" + currentAdminId + ").");
                 return;
             }
 
@@ -962,6 +977,7 @@ public class DashboardController {
             fadeTransition(stage, root, "Tabaani - Mon Profil");
         } catch (Exception e) {
             e.printStackTrace();
+            showAlert("Erreur", "Erreur lors du chargement du profil: " + e.getMessage());
         }
     }
 
@@ -1020,7 +1036,7 @@ public class DashboardController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newScene.getStylesheets().add(ThemeManager.getInstance().getCssPath());
             newScene.setFill(javafx.scene.paint.Color.BLACK);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);

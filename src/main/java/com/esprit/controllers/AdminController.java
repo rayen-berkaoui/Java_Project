@@ -20,6 +20,9 @@ import com.esprit.entities.role;
 import com.esprit.entities.utilisateur;
 import com.esprit.services.roleServices;
 import com.esprit.services.utilisateurServices;
+import com.esprit.utils.ThemeManager;
+import com.esprit.utils.SessionManager;
+import javafx.application.Platform;
 
 import java.util.List;
 import java.util.Optional;
@@ -118,6 +121,13 @@ public class AdminController {
         if (userSearchField != null) {
             userSearchField.setOnAction(e -> handleSearchUsers());
         }
+
+        // Start session monitoring (auto-logout on inactivity)
+        Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null) {
+                SessionManager.getInstance().startMonitoring(titleBar.getScene());
+            }
+        });
     }
 
     // ================= SORT SETUP =================
@@ -756,7 +766,7 @@ public class AdminController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            newScene.getStylesheets().add(ThemeManager.getInstance().getCssPath());
             newScene.setFill(javafx.scene.paint.Color.BLACK);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
