@@ -17,6 +17,9 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.effect.Glow;
+import javafx.scene.web.WebView;
+import javafx.scene.web.WebEngine;
+import javafx.concurrent.Worker;
 
 import com.esprit.entities.Panier;
 import com.esprit.entities.Reservation;
@@ -942,90 +945,196 @@ public class PanierController {
     }
 
     // ================================================================
-    // FLOUCI PAYMENT DIALOG (Tunisian Online Payment)
+    // FLOUCI PAYMENT DIALOG — IN-APP WEBVIEW (no external browser!)
     // ================================================================
     private void showCardPaymentDialog(Panier p, double finalPrice) {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Paiement Flouci");
-        dialog.setHeaderText(null);
+        // Use a Stage instead of Dialog for the in-app WebView payment
+        Stage paymentStage = new Stage();
+        paymentStage.setTitle("Paiement Flouci - TABAANI SmartTravel");
+        paymentStage.initModality(javafx.stage.Modality.APPLICATION_MODAL);
+        paymentStage.initStyle(javafx.stage.StageStyle.TRANSPARENT);
 
-        DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
-        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-
-        VBox content = new VBox(16);
-        content.setPadding(new Insets(24));
-        content.setStyle("-fx-background-color: #1a1a1a;");
-        content.setMinWidth(480);
-
-        // Flouci Logo/Header
-        HBox logoRow = new HBox(12);
-        logoRow.setAlignment(Pos.CENTER);
-        Label flouciIcon = new Label("\uD83D\uDCF1");
-        flouciIcon.setStyle("-fx-font-size: 30;");
-        VBox logoText = new VBox(2);
-        Label titleLbl = new Label("Paiement via Flouci");
-        titleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
-        Label subtitleLbl = new Label("Paiement en ligne securise - Tunisie");
-        subtitleLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
-        logoText.getChildren().addAll(titleLbl, subtitleLbl);
-        logoRow.getChildren().addAll(flouciIcon, logoText);
-
-        // Amount display
-        HBox amountBox = new HBox();
-        amountBox.setAlignment(Pos.CENTER);
-        amountBox.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-padding: 16; -fx-background-radius: 12;");
-        Label amountLbl = new Label(String.format("Montant: %.2f DT", finalPrice));
-        amountLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 20; -fx-font-weight: bold;");
-        amountBox.getChildren().add(amountLbl);
-
-        // Loyalty points bonus
         int pointsToEarn = (int)(finalPrice * 10);
-        HBox bonusBox = new HBox(8);
-        bonusBox.setAlignment(Pos.CENTER);
-        bonusBox.setStyle("-fx-background-color: rgba(178,102,255,0.08); -fx-padding: 10; -fx-background-radius: 8;");
-        Label bonusLbl = new Label("\u2B50 Vous gagnerez " + pointsToEarn + " points de fidelite avec ce paiement !");
-        bonusLbl.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 11; -fx-font-weight: bold;");
-        bonusBox.getChildren().add(bonusLbl);
-
-        // How it works section
-        VBox howItWorks = new VBox(8);
-        howItWorks.setStyle("-fx-background-color: rgba(100,181,246,0.04); -fx-padding: 14; -fx-background-radius: 10;");
-        Label howTitle = new Label("\uD83D\uDCA1 Comment ca marche ?");
-        howTitle.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 12; -fx-font-weight: bold;");
-        Label step1 = new Label("1\uFE0F\u20E3 Cliquez sur 'Payer avec Flouci' ci-dessous");
-        step1.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        Label step2 = new Label("2\uFE0F\u20E3 Un lien s'ouvrira dans votre navigateur");
-        step2.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        Label step3 = new Label("3\uFE0F\u20E3 Payez avec votre wallet Flouci ou carte bancaire");
-        step3.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        Label step4 = new Label("4\uFE0F\u20E3 Revenez ici et cliquez 'Verifier le paiement'");
-        step4.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        howItWorks.getChildren().addAll(howTitle, step1, step2, step3, step4);
-
-        // Status area
-        Label statusLbl = new Label("");
-        statusLbl.setWrapText(true);
-        statusLbl.setMaxWidth(420);
-
-        // Payment ID storage
         final String[] paymentId = {null};
 
-        // Action buttons
-        Button payBtn = new Button("\uD83D\uDCF1 Payer avec Flouci - " + String.format("%.2f DT", finalPrice));
-        payBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 12 28; -fx-background-radius: 10; -fx-font-size: 13; -fx-cursor: hand;");
+        // ── Root container
+        BorderPane root = new BorderPane();
+        root.setStyle("-fx-background-color: #1a1a1a; -fx-background-radius: 16; -fx-border-radius: 16; -fx-border-color: #333; -fx-border-width: 1;");
+
+        // ── Custom title bar (draggable)
+        HBox topBar = new HBox(10);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(10, 16, 10, 16));
+        topBar.setStyle("-fx-background-color: #111; -fx-background-radius: 16 16 0 0;");
+
+        Label flouciIcon = new Label("\uD83D\uDCF1");
+        flouciIcon.setStyle("-fx-font-size: 18;");
+        Label topTitle = new Label("Paiement Flouci");
+        topTitle.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold;");
+        Label amountTag = new Label(String.format("%.2f DT", finalPrice));
+        amountTag.setStyle("-fx-background-color: rgba(255,215,0,0.15); -fx-text-fill: #FFD700; -fx-padding: 4 12; -fx-background-radius: 20; -fx-font-size: 12; -fx-font-weight: bold;");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button closeBtn = new Button("\u2715");
+        closeBtn.setStyle("-fx-background-color: rgba(255,107,107,0.15); -fx-text-fill: #FF6B6B; -fx-font-size: 14; -fx-background-radius: 20; -fx-padding: 4 10; -fx-cursor: hand;");
+        closeBtn.setOnAction(e -> paymentStage.close());
+
+        topBar.getChildren().addAll(flouciIcon, topTitle, amountTag, spacer, closeBtn);
+
+        // Make title bar draggable
+        final double[] dragOffset = {0, 0};
+        topBar.setOnMousePressed(e -> { dragOffset[0] = e.getSceneX(); dragOffset[1] = e.getSceneY(); });
+        topBar.setOnMouseDragged(e -> {
+            paymentStage.setX(e.getScreenX() - dragOffset[0]);
+            paymentStage.setY(e.getScreenY() - dragOffset[1]);
+        });
+
+        root.setTop(topBar);
+
+        // ── Initial view: info + pay button (before generating link)
+        VBox initialView = new VBox(14);
+        initialView.setPadding(new Insets(20, 24, 20, 24));
+        initialView.setAlignment(Pos.CENTER);
+        initialView.setStyle("-fx-background-color: #1a1a1a;");
+
+        Label mainIcon = new Label("\uD83D\uDCB3");
+        mainIcon.setStyle("-fx-font-size: 48;");
+
+        Label payTitle = new Label("Paiement securise via Flouci");
+        payTitle.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
+
+        Label paySubtitle = new Label("Le paiement s'effectue directement dans l'application.\nAucune redirection externe.");
+        paySubtitle.setStyle("-fx-text-fill: #888; -fx-font-size: 11; -fx-text-alignment: center;");
+        paySubtitle.setWrapText(true);
+
+        // Amount card
+        HBox amountCard = new HBox();
+        amountCard.setAlignment(Pos.CENTER);
+        amountCard.setStyle("-fx-background-color: linear-gradient(to right, rgba(255,215,0,0.1), rgba(255,140,0,0.1)); -fx-padding: 16 20; -fx-background-radius: 12;");
+        VBox amountInfo = new VBox(4);
+        amountInfo.setAlignment(Pos.CENTER);
+        Label amountLabel = new Label(String.format("%.2f DT", finalPrice));
+        amountLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 28; -fx-font-weight: bold;");
+        Label amountSub = new Label("Montant total a payer");
+        amountSub.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
+        amountInfo.getChildren().addAll(amountLabel, amountSub);
+        amountCard.getChildren().add(amountInfo);
+
+        // Points bonus
+        HBox bonusCard = new HBox(8);
+        bonusCard.setAlignment(Pos.CENTER);
+        bonusCard.setStyle("-fx-background-color: rgba(178,102,255,0.08); -fx-padding: 10 16; -fx-background-radius: 8;");
+        Label bonusLbl = new Label("\u2B50 +" + pointsToEarn + " points de fidelite");
+        bonusLbl.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 11; -fx-font-weight: bold;");
+        bonusCard.getChildren().add(bonusLbl);
+
+        // Pay button
+        Button payBtn = new Button("\uD83D\uDCF1 Payer avec Flouci");
+        payBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 14 40; -fx-background-radius: 12; -fx-font-size: 14; -fx-cursor: hand;");
         payBtn.setMaxWidth(Double.MAX_VALUE);
 
-        Button verifyBtn = new Button("\u2705 Verifier le paiement");
-        verifyBtn.setStyle("-fx-background-color: rgba(81,207,102,0.15); -fx-text-fill: #51CF66; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 10; -fx-font-size: 12; -fx-cursor: hand;");
-        verifyBtn.setMaxWidth(Double.MAX_VALUE);
-        verifyBtn.setDisable(true);
+        // Security badges
+        HBox securityRow = new HBox(16);
+        securityRow.setAlignment(Pos.CENTER);
+        Label secBadge1 = new Label("\uD83D\uDD12 SSL Securise");
+        secBadge1.setStyle("-fx-text-fill: #666; -fx-font-size: 9;");
+        Label secBadge2 = new Label("\u2705 BCT Approuve");
+        secBadge2.setStyle("-fx-text-fill: #666; -fx-font-size: 9;");
+        Label secBadge3 = new Label("\uD83C\uDDF9\uD83C\uDDF3 Tunisie");
+        secBadge3.setStyle("-fx-text-fill: #666; -fx-font-size: 9;");
+        securityRow.getChildren().addAll(secBadge1, secBadge2, secBadge3);
 
+        Label statusLbl = new Label("");
+        statusLbl.setWrapText(true);
+        statusLbl.setMaxWidth(400);
+
+        initialView.getChildren().addAll(mainIcon, payTitle, paySubtitle, amountCard, bonusCard, payBtn, securityRow, statusLbl);
+
+        // ── WebView for in-app payment
+        WebView webView = new WebView();
+        WebEngine webEngine = webView.getEngine();
+        webView.setPrefSize(700, 580);
+        webView.setStyle("-fx-background-color: white;");
+
+        // Status bar below WebView
+        HBox webStatusBar = new HBox(10);
+        webStatusBar.setPadding(new Insets(8, 16, 8, 16));
+        webStatusBar.setAlignment(Pos.CENTER_LEFT);
+        webStatusBar.setStyle("-fx-background-color: #111; -fx-background-radius: 0 0 16 16;");
+        Label webStatusIcon = new Label("\uD83D\uDD12");
+        webStatusIcon.setStyle("-fx-font-size: 12;");
+        Label webStatusLbl = new Label("Chargement de la page de paiement...");
+        webStatusLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
+        Region webSpacer = new Region();
+        HBox.setHgrow(webSpacer, Priority.ALWAYS);
+        Button cancelPayBtn = new Button("Annuler");
+        cancelPayBtn.setStyle("-fx-background-color: rgba(255,107,107,0.15); -fx-text-fill: #FF6B6B; -fx-padding: 5 16; -fx-background-radius: 6; -fx-font-size: 10; -fx-cursor: hand;");
+        cancelPayBtn.setOnAction(e -> paymentStage.close());
+        webStatusBar.getChildren().addAll(webStatusIcon, webStatusLbl, webSpacer, cancelPayBtn);
+
+        VBox webViewContainer = new VBox();
+        webViewContainer.getChildren().addAll(webView, webStatusBar);
+        VBox.setVgrow(webView, Priority.ALWAYS);
+
+        // ── Listen for URL changes to detect payment success/failure
+        webEngine.locationProperty().addListener((obs, oldUrl, newUrl) -> {
+            if (newUrl != null) {
+                System.out.println("[FLOUCI WEBVIEW] Navigated to: " + newUrl);
+                String lower = newUrl.toLowerCase();
+                if (lower.contains(FlouciPaymentService.SUCCESS_URL.toLowerCase()) || lower.contains("/payment/success")) {
+                    webStatusLbl.setText("\u2705 Paiement detecte ! Verification en cours...");
+                    webStatusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 10; -fx-font-weight: bold;");
+                    // Auto-verify the payment
+                    if (paymentId[0] != null) {
+                        new Thread(() -> {
+                            // Small delay to let Flouci process
+                            try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
+                            FlouciPaymentService.PaymentResult verifyResult = flouciService.verifyPayment(paymentId[0]);
+                            javafx.application.Platform.runLater(() -> {
+                                if (verifyResult.isSuccess()) {
+                                    processFlouciPaymentSuccess(p, finalPrice, pointsToEarn, paymentId[0]);
+                                    paymentStage.close();
+                                } else {
+                                    // Payment might not be confirmed yet by Flouci, show manual verify
+                                    showPostPaymentVerification(paymentStage, root, p, finalPrice, pointsToEarn, paymentId[0]);
+                                }
+                            });
+                        }).start();
+                    }
+                } else if (lower.contains(FlouciPaymentService.FAIL_URL.toLowerCase()) || lower.contains("/payment/fail")) {
+                    webStatusLbl.setText("\u274C Paiement refuse ou annule.");
+                    webStatusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 10; -fx-font-weight: bold;");
+                    javafx.application.Platform.runLater(() -> {
+                        root.setCenter(initialView);
+                        statusLbl.setText("\u274C Paiement refuse. Vous pouvez reessayer.");
+                        statusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+                        payBtn.setDisable(false);
+                        payBtn.setText("\uD83D\uDCF1 Reessayer le paiement");
+                    });
+                }
+            }
+        });
+
+        // Loading indicator on WebView
+        webEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+            if (newState == Worker.State.RUNNING) {
+                webStatusLbl.setText("\u23F3 Chargement...");
+                webStatusLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
+            } else if (newState == Worker.State.SUCCEEDED) {
+                webStatusLbl.setText("\uD83D\uDD12 Page securisee chargee");
+                webStatusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 10;");
+            } else if (newState == Worker.State.FAILED) {
+                webStatusLbl.setText("\u26A0 Erreur de chargement. Verifiez votre connexion.");
+                webStatusLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 10;");
+            }
+        });
+
+        // ── Pay button action: generate link → show WebView
         payBtn.setOnAction(e -> {
             payBtn.setDisable(true);
-            payBtn.setText("\u23F3 Generation du lien...");
+            payBtn.setText("\u23F3 Connexion a Flouci...");
             statusLbl.setText("");
-            statusLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
 
             String description = "TABAANI_" + (p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService());
 
@@ -1035,20 +1144,13 @@ public class PanierController {
                 javafx.application.Platform.runLater(() -> {
                     if (result.isSuccess() && result.getPaymentLink() != null) {
                         paymentId[0] = result.getPaymentId();
-                        // Open payment link in default browser
-                        try {
-                            java.awt.Desktop.getDesktop().browse(new java.net.URI(result.getPaymentLink()));
-                            statusLbl.setText("\u2705 Lien ouvert dans votre navigateur. Completez le paiement puis revenez ici.");
-                            statusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
-                            verifyBtn.setDisable(false);
-                            payBtn.setText("\uD83D\uDD17 Lien ouvert - Payez dans le navigateur");
-                        } catch (Exception ex) {
-                            // If browser doesn't open, show the link
-                            statusLbl.setText("\uD83D\uDD17 Copiez ce lien dans votre navigateur:\n" + result.getPaymentLink());
-                            statusLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 10;");
-                            verifyBtn.setDisable(false);
-                            payBtn.setText("\uD83D\uDCCB Lien genere (voir ci-dessus)");
-                        }
+                        // Load payment page in the in-app WebView
+                        webEngine.load(result.getPaymentLink());
+                        root.setCenter(webViewContainer);
+                        // Resize the stage for the WebView
+                        paymentStage.setWidth(750);
+                        paymentStage.setHeight(680);
+                        paymentStage.centerOnScreen();
                     } else {
                         statusLbl.setText("\u274C " + result.getMessage());
                         statusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
@@ -1059,29 +1161,68 @@ public class PanierController {
             }).start();
         });
 
+        // Start with the initial info view
+        root.setCenter(initialView);
+
+        Scene scene = new Scene(root, 520, 480);
+        scene.setFill(Color.TRANSPARENT);
+        paymentStage.setScene(scene);
+        paymentStage.centerOnScreen();
+        paymentStage.showAndWait();
+    }
+
+    /**
+     * Show post-payment verification screen when auto-verify didn't confirm yet.
+     */
+    private void showPostPaymentVerification(Stage paymentStage, BorderPane root, Panier p,
+                                              double finalPrice, int pointsToEarn, String flouciPaymentId) {
+        VBox verifyView = new VBox(16);
+        verifyView.setPadding(new Insets(30, 24, 30, 24));
+        verifyView.setAlignment(Pos.CENTER);
+        verifyView.setStyle("-fx-background-color: #1a1a1a;");
+
+        Label checkIcon = new Label("\u23F3");
+        checkIcon.setStyle("-fx-font-size: 48;");
+
+        Label verifyTitle = new Label("Verification du paiement");
+        verifyTitle.setStyle("-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;");
+
+        Label verifyMsg = new Label("Le paiement a ete detecte. Veuillez patienter\nou cliquez le bouton ci-dessous pour verifier.");
+        verifyMsg.setStyle("-fx-text-fill: #888; -fx-font-size: 11; -fx-text-alignment: center;");
+        verifyMsg.setWrapText(true);
+
+        Label verifyStatus = new Label("");
+        verifyStatus.setWrapText(true);
+        verifyStatus.setMaxWidth(400);
+
+        Button verifyBtn = new Button("\u2705 Verifier le paiement");
+        verifyBtn.setStyle("-fx-background-color: rgba(81,207,102,0.2); -fx-text-fill: #51CF66; -fx-font-weight: bold; -fx-padding: 12 32; -fx-background-radius: 10; -fx-font-size: 13; -fx-cursor: hand;");
+        verifyBtn.setMaxWidth(Double.MAX_VALUE);
+
+        Button cancelBtn = new Button("Annuler");
+        cancelBtn.setStyle("-fx-background-color: rgba(255,107,107,0.1); -fx-text-fill: #FF6B6B; -fx-padding: 8 24; -fx-background-radius: 8; -fx-font-size: 11; -fx-cursor: hand;");
+        cancelBtn.setOnAction(e -> paymentStage.close());
+
         verifyBtn.setOnAction(e -> {
-            if (paymentId[0] == null) {
-                statusLbl.setText("\u26A0 Veuillez d'abord generer un paiement.");
-                statusLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 11;");
-                return;
-            }
             verifyBtn.setDisable(true);
-            verifyBtn.setText("\u23F3 Verification...");
+            verifyBtn.setText("\u23F3 Verification en cours...");
+            verifyStatus.setText("");
 
             new Thread(() -> {
-                FlouciPaymentService.PaymentResult result = flouciService.verifyPayment(paymentId[0]);
-
+                FlouciPaymentService.PaymentResult result = flouciService.verifyPayment(flouciPaymentId);
                 javafx.application.Platform.runLater(() -> {
                     if (result.isSuccess()) {
-                        statusLbl.setText("\u2705 Paiement confirme par Flouci !");
-                        statusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 13; -fx-font-weight: bold;");
-
-                        // Create reservation
-                        processFlouciPaymentSuccess(p, finalPrice, pointsToEarn, paymentId[0]);
-                        dialog.close();
+                        verifyStatus.setText("\u2705 Paiement confirme !");
+                        verifyStatus.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 13; -fx-font-weight: bold;");
+                        processFlouciPaymentSuccess(p, finalPrice, pointsToEarn, flouciPaymentId);
+                        // Close after small delay so user sees the success
+                        new Thread(() -> {
+                            try { Thread.sleep(1200); } catch (InterruptedException ignored) {}
+                            javafx.application.Platform.runLater(paymentStage::close);
+                        }).start();
                     } else {
-                        statusLbl.setText("\u23F3 " + result.getMessage() + "\nReessayez dans quelques secondes.");
-                        statusLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 11;");
+                        verifyStatus.setText("\u23F3 " + result.getMessage() + "\nReessayez dans quelques secondes.");
+                        verifyStatus.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 11;");
                         verifyBtn.setDisable(false);
                         verifyBtn.setText("\u2705 Verifier le paiement");
                     }
@@ -1089,11 +1230,11 @@ public class PanierController {
             }).start();
         });
 
-        content.getChildren().addAll(logoRow, amountBox, bonusBox, howItWorks, payBtn, verifyBtn, statusLbl);
-        dp.setContent(content);
-        dp.getButtonTypes().add(new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE));
-
-        dialog.showAndWait();
+        verifyView.getChildren().addAll(checkIcon, verifyTitle, verifyMsg, verifyBtn, verifyStatus, cancelBtn);
+        root.setCenter(verifyView);
+        paymentStage.setWidth(520);
+        paymentStage.setHeight(420);
+        paymentStage.centerOnScreen();
     }
 
     private void processFlouciPaymentSuccess(Panier p, double finalPrice, int pointsToEarn, String flouciPaymentId) {

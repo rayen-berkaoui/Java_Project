@@ -43,6 +43,13 @@
             <version>${javafx.version}</version>
         </dependency>
 
+        <!-- JavaFX Web (WebView for in-app Flouci payment) -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
         <!-- (Optional) JUnit -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
