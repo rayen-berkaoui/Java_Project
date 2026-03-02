@@ -91,6 +91,8 @@ public class FlouciPaymentService {
             HttpURLConnection conn = (HttpURLConnection) new URL(GENERATE_URL).openConnection();
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
+            conn.setRequestProperty("apppublic", APP_TOKEN);
+            conn.setRequestProperty("appsecret", APP_SECRET);
             conn.setDoOutput(true);
             conn.setConnectTimeout(15000);
             conn.setReadTimeout(15000);

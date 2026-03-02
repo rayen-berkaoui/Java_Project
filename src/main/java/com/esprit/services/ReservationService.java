@@ -75,7 +75,10 @@ public class ReservationService {
             ps.setDouble(3, r.getMontantTotal());
             ps.setString(4, r.getModePaiement());
             ps.setString(5, r.getStatutPaiement() != null ? r.getStatutPaiement() : "En cours de paiement");
-            ps.setString(6, r.getCodeConfirmation() != null ? r.getCodeConfirmation() : generateConfirmationCode());
+            // Generate confirmation code if not already set, and update the object
+            String code = r.getCodeConfirmation() != null ? r.getCodeConfirmation() : generateConfirmationCode();
+            r.setCodeConfirmation(code);
+            ps.setString(6, code);
             int rows = ps.executeUpdate();
             if (rows > 0) {
                 ResultSet keys = ps.getGeneratedKeys();
