@@ -33,6 +33,7 @@ import java.util.List;
 public class MainInterfaceController {
 
     @FXML private HBox titleBar;
+    @FXML private Button fullscreenBtn;
     @FXML private Label userNameLabel;
     @FXML private Label welcomeLabel;
     @FXML private StackPane panierBadge;
@@ -968,6 +969,11 @@ public class MainInterfaceController {
 
     @FXML public void handleMinimize() { ((Stage) titleBar.getScene().getWindow()).setIconified(true); }
     @FXML public void handleClose() { ((Stage) titleBar.getScene().getWindow()).close(); }
+    @FXML public void handleToggleFullscreen() {
+        Stage stage = (Stage) titleBar.getScene().getWindow();
+        stage.setFullScreen(!stage.isFullScreen());
+        if (fullscreenBtn != null) fullscreenBtn.setText(stage.isFullScreen() ? "\u29C9" : "\u26F6");
+    }
 
     @FXML public void handleLogout() {
         try {

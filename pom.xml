@@ -98,12 +98,8 @@
             <version>1.3.35</version>
         </dependency>
 
-        <!-- Stripe Java SDK for Real Payment Processing -->
-        <dependency>
-            <groupId>com.stripe</groupId>
-            <artifactId>stripe-java</artifactId>
-            <version>24.18.0</version>
-        </dependency>
+        <!-- Flouci Payment API (uses HttpURLConnection, no external SDK needed) -->
+        <!-- Twilio SMS (uses HttpURLConnection, no external SDK needed) -->
 
         <!-- Gson for JSON parsing (AI API responses) -->
         <dependency>

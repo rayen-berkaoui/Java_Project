@@ -27,7 +27,8 @@ import com.esprit.services.ReservationService;
 import com.esprit.services.EtablissementService;
 import com.esprit.services.EmailService;
 import com.esprit.services.utilisateurServices;
-import com.esprit.services.StripePaymentService;
+import com.esprit.services.FlouciPaymentService;
+import com.esprit.services.SmsService;
 import com.esprit.services.ChatbotService;
 import com.esprit.utils.ThemeManager;
 
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 public class PanierController {
 
     @FXML private HBox titleBar;
+    @FXML private Button fullscreenBtn;
     @FXML private Label userNameLabel;
     @FXML private Label totalItemsLabel;
     @FXML private Label enAttenteLabel;
@@ -60,7 +62,8 @@ public class PanierController {
     private final EtablissementService etabService = new EtablissementService();
     private final EmailService emailService = new EmailService();
     private final utilisateurServices userService = new utilisateurServices();
-    private final StripePaymentService stripeService = new StripePaymentService();
+    private final FlouciPaymentService flouciService = new FlouciPaymentService();
+    private final SmsService smsService = new SmsService();
     private final ChatbotService chatbotService = new ChatbotService();
 
     private List<Panier> panierItems;
@@ -187,175 +190,223 @@ public class PanierController {
     }
 
     // ================================================================
-    // BUILD PANIER CARD - PROFESSIONAL DESIGN
+    // BUILD PANIER CARD - ENHANCED CAROUSEL DESIGN
     // ================================================================
     private VBox buildPanierCard(Panier p) {
-        VBox card = new VBox(10);
-        card.setMinWidth(310);
-        card.setMaxWidth(420);
-        card.setStyle("-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 14; " +
-                "-fx-border-color: rgba(255,215,0,0.15); -fx-border-radius: 14; -fx-border-width: 1;");
+        VBox card = new VBox(0);
+        card.setMinWidth(340);
+        card.setMaxWidth(440);
+        card.setStyle("-fx-background-color: rgba(15,15,15,0.95); -fx-background-radius: 16; " +
+                "-fx-border-color: rgba(255,215,0,0.18); -fx-border-radius: 16; -fx-border-width: 1;" +
+                "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.08), 12, 0, 0, 4);");
 
-        // TOP: icon + name + price
-        HBox header = new HBox(12);
-        header.setAlignment(Pos.CENTER_LEFT);
+        // ── GRADIENT HEADER BAR ──
+        HBox headerBar = new HBox(12);
+        headerBar.setAlignment(Pos.CENTER_LEFT);
+        headerBar.setPadding(new Insets(16, 18, 12, 18));
+        headerBar.setStyle("-fx-background-color: linear-gradient(to right, rgba(255,215,0,0.10), rgba(255,140,0,0.06)); -fx-background-radius: 16 16 0 0;");
+
         StackPane iconPane = new StackPane();
-        iconPane.setPrefSize(48, 48);
-        iconPane.setStyle("-fx-background-color: rgba(255,215,0,0.1); -fx-background-radius: 12;");
+        iconPane.setPrefSize(52, 52);
+        iconPane.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-background-radius: 14;");
         String icon = getServiceIcon(p.getTypeService());
         Label iconLabel = new Label(icon);
-        iconLabel.setStyle("-fx-font-size: 20;");
+        iconLabel.setStyle("-fx-font-size: 24;");
         iconPane.getChildren().add(iconLabel);
 
-        VBox nameBox = new VBox(2);
+        VBox nameBox = new VBox(3);
         HBox.setHgrow(nameBox, Priority.ALWAYS);
         String displayName = p.getNomEtablissement() != null && !p.getNomEtablissement().isEmpty()
                 ? p.getNomEtablissement() : p.getTypeService();
         Label nameLabel = new Label(displayName);
-        nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;");
-        nameLabel.setMaxWidth(200);
-        Label typeLabel = new Label(p.getTypeService());
-        typeLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 10;");
-        nameBox.getChildren().addAll(nameLabel, typeLabel);
+        nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;");
+        nameLabel.setMaxWidth(220);
+        nameLabel.setWrapText(true);
+        Label typeChip = new Label(p.getTypeService());
+        typeChip.setStyle("-fx-text-fill: #999; -fx-font-size: 9; -fx-background-color: rgba(255,255,255,0.05); -fx-padding: 2 8; -fx-background-radius: 6;");
+        nameBox.getChildren().addAll(nameLabel, typeChip);
 
+        boolean isRestoItem = isRestoOrCafeType(p.getTypeService());
         VBox priceBox = new VBox(2);
         priceBox.setAlignment(Pos.CENTER_RIGHT);
-        // Check if this is a restaurant/cafe (no price)
-        boolean isRestoItem = p.getTypeService() != null &&
-            (p.getTypeService().toLowerCase().contains("restaurant") || p.getTypeService().toLowerCase().contains("caf") || p.getTypeService().toLowerCase().contains("resto"));
         if (isRestoItem) {
             Label gratuitLabel = new Label("Gratuit");
             gratuitLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 16; -fx-font-weight: bold;");
-            priceBox.getChildren().add(gratuitLabel);
+            Label payOnSpot = new Label("Sur place");
+            payOnSpot.setStyle("-fx-text-fill: #888; -fx-font-size: 9;");
+            priceBox.getChildren().addAll(gratuitLabel, payOnSpot);
         } else {
             Label prixLabel = new Label(String.format("%.2f DT", p.getPrixEstime()));
-            prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
-            priceBox.getChildren().add(prixLabel);
+            prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 20; -fx-font-weight: bold;");
+            // Per-person price
+            if (p.getNbPersonnes() > 1) {
+                Label perPerson = new Label(String.format("%.2f DT/pers", p.getPrixEstime() / p.getNbPersonnes()));
+                perPerson.setStyle("-fx-text-fill: #888; -fx-font-size: 9;");
+                priceBox.getChildren().addAll(prixLabel, perPerson);
+            } else {
+                priceBox.getChildren().add(prixLabel);
+            }
         }
+        headerBar.getChildren().addAll(iconPane, nameBox, priceBox);
 
-        header.getChildren().addAll(iconPane, nameBox, priceBox);
+        // ── DETAIL SECTIONS (scrollable carousel of info tiles) ──
+        VBox detailSections = new VBox(8);
+        detailSections.setPadding(new Insets(10, 14, 6, 14));
 
-        // DETAIL GRID
-        VBox details = new VBox(6);
-        details.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 12; -fx-background-radius: 8;");
-        HBox row1 = new HBox(16);
-        row1.getChildren().addAll(
-            buildDetailChip("\uD83D\uDCC5", (p.getDateDebut() != null ? p.getDateDebut().format(DTF) : "N/A")
-                + " \u2192 " + (p.getDateFin() != null ? p.getDateFin().format(DTF) : "N/A"))
+        // Section 1: Date range tile
+        HBox dateSection = new HBox(10);
+        dateSection.setAlignment(Pos.CENTER_LEFT);
+        dateSection.setStyle("-fx-background-color: rgba(100,181,246,0.06); -fx-padding: 10 14; -fx-background-radius: 10;");
+        Label calIcon = new Label("\uD83D\uDCC5");
+        calIcon.setStyle("-fx-font-size: 16;");
+        VBox dateInfo = new VBox(2);
+        HBox.setHgrow(dateInfo, Priority.ALWAYS);
+        Label dateTitle = new Label("Periode de sejour");
+        dateTitle.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 9; -fx-font-weight: bold;");
+        Label dateRange = new Label((p.getDateDebut() != null ? p.getDateDebut().format(DTF) : "N/A")
+                + "  \u2192  " + (p.getDateFin() != null ? p.getDateFin().format(DTF) : "N/A"));
+        dateRange.setStyle("-fx-text-fill: #ccc; -fx-font-size: 11;");
+        String durationStr = "";
+        if (p.getDateDebut() != null && p.getDateFin() != null) {
+            long days = java.time.temporal.ChronoUnit.DAYS.between(p.getDateDebut(), p.getDateFin());
+            durationStr = days + " jour" + (days > 1 ? "s" : "");
+        }
+        if (!durationStr.isEmpty()) {
+            Label durLabel = new Label("\u23F1 " + durationStr);
+            durLabel.setStyle("-fx-text-fill: #888; -fx-font-size: 9;");
+            dateInfo.getChildren().addAll(dateTitle, dateRange, durLabel);
+        } else {
+            dateInfo.getChildren().addAll(dateTitle, dateRange);
+        }
+        dateSection.getChildren().addAll(calIcon, dateInfo);
+
+        // Section 2: People tiles row
+        HBox peopleTiles = new HBox(6);
+        peopleTiles.setAlignment(Pos.CENTER);
+        peopleTiles.getChildren().addAll(
+            buildInfoTile("\uD83D\uDC65", String.valueOf(p.getNbPersonnes()), "Total"),
+            buildInfoTile("\uD83E\uDDD1", String.valueOf(p.getNbAdultes()), "Adultes"),
+            buildInfoTile("\uD83D\uDC76", String.valueOf(p.getNbEnfants()), "Enfants")
         );
-        HBox row2 = new HBox(16);
-        row2.getChildren().addAll(
-            buildDetailChip("\uD83D\uDC65", p.getNbPersonnes() + " pers."),
-            buildDetailChip("\uD83E\uDDD1", p.getNbAdultes() + " adultes"),
-            buildDetailChip("\uD83D\uDC76", p.getNbEnfants() + " enfants")
-        );
-        details.getChildren().addAll(row1, row2);
 
-        // Room display for hotels
+        detailSections.getChildren().addAll(dateSection, peopleTiles);
+
+        // Section 3: Hotel-specific room info
         boolean isHotelItem = p.getTypeService() != null && (p.getTypeService().toLowerCase().contains("hotel") || p.getTypeService().toLowerCase().contains("voyage") || p.getTypeService().toLowerCase().contains("hebergement"));
         if (isHotelItem && p.getNbChambres() > 0) {
-            HBox roomRow = new HBox(16);
-            roomRow.getChildren().addAll(
-                buildDetailChip("\uD83D\uDECF", p.getNbChambres() + " chambre(s)"),
-                buildDetailChip("\uD83C\uDFE8", getDurationNights(p) + " nuit(s)")
+            HBox hotelTiles = new HBox(6);
+            hotelTiles.setAlignment(Pos.CENTER);
+            hotelTiles.getChildren().addAll(
+                buildInfoTile("\uD83D\uDECF", String.valueOf(p.getNbChambres()), "Chambres"),
+                buildInfoTile("\uD83C\uDF19", String.valueOf(getDurationNights(p)), "Nuits")
             );
-            details.getChildren().add(roomRow);
+            detailSections.getChildren().add(hotelTiles);
         }
 
-        // FEATURE #14: Dynamic Pricing Indicator
+        // Section 4: Dynamic Pricing
         if (!isRestoItem) {
+            String pricingLevel = getDynamicPricingLevel(p);
             HBox pricingRow = new HBox(8);
             pricingRow.setAlignment(Pos.CENTER_LEFT);
-            String pricingLevel = getDynamicPricingLevel(p);
+            pricingRow.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 6 12; -fx-background-radius: 8;");
             Label pricingBadge = new Label(pricingLevel);
             pricingBadge.setStyle(getPricingBadgeStyle(pricingLevel));
             pricingRow.getChildren().add(pricingBadge);
-            details.getChildren().add(pricingRow);
+            detailSections.getChildren().add(pricingRow);
         }
 
-        // FEATURE #7: Weather widget for destination
+        // Section 5: Weather widget
         try {
             String city = guessCity(p);
             if (city != null && !city.isEmpty()) {
                 com.esprit.services.WeatherService weatherSvc = new com.esprit.services.WeatherService();
                 com.esprit.services.WeatherService.WeatherInfo weather = weatherSvc.getWeather(city);
                 if (weather != null) {
-                    HBox weatherRow = new HBox(8);
-                    weatherRow.setAlignment(Pos.CENTER_LEFT);
-                    weatherRow.setStyle("-fx-background-color: rgba(100,181,246,0.06); -fx-padding: 6 10; -fx-background-radius: 6;");
-                    Label weatherLbl = new Label(weather.getEmoji() + " " + city + ": " + String.format("%.0f", weather.temp) + "\u00B0C - " + weather.description);
-                    weatherLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 9;");
-                    weatherRow.getChildren().add(weatherLbl);
-                    details.getChildren().add(weatherRow);
+                    HBox weatherTile = new HBox(10);
+                    weatherTile.setAlignment(Pos.CENTER_LEFT);
+                    weatherTile.setStyle("-fx-background-color: rgba(100,181,246,0.06); -fx-padding: 10 14; -fx-background-radius: 10;");
+                    Label wIcon = new Label(weather.getEmoji());
+                    wIcon.setStyle("-fx-font-size: 22;");
+                    VBox wInfo = new VBox(2);
+                    Label wCity = new Label("\uD83C\uDF0D " + city);
+                    wCity.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 10; -fx-font-weight: bold;");
+                    Label wTemp = new Label(String.format("%.0f\u00B0C - %s", weather.temp, weather.description));
+                    wTemp.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+                    wInfo.getChildren().addAll(wCity, wTemp);
+                    weatherTile.getChildren().addAll(wIcon, wInfo);
+                    detailSections.getChildren().add(weatherTile);
                 }
             }
         } catch (Exception ignored) { /* weather is optional */ }
 
-        // FEATURE #8: Currency converter button
+        // Section 6: Currency converter
         if (!isRestoItem && p.getPrixEstime() > 0) {
             Button currencyBtn = new Button("\uD83D\uDCB1 Convertir devise");
-            currencyBtn.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-text-fill: #FFD700; -fx-padding: 4 10; -fx-background-radius: 6; -fx-font-size: 9; -fx-cursor: hand;");
+            currencyBtn.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-text-fill: #FFD700; -fx-padding: 6 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-cursor: hand;");
+            currencyBtn.setMaxWidth(Double.MAX_VALUE);
             currencyBtn.setOnAction(e -> showCurrencyConverterDialog(p.getPrixEstime()));
-            details.getChildren().add(currencyBtn);
+            detailSections.getChildren().add(currencyBtn);
         }
 
-        // Discount info if promo applied (only for items with price)
+        // Section 7: Promo discount display
         if (!isRestoItem && appliedPromo != null && discountPercent > 0) {
             double discounted = p.getPrixEstime() * (1 - discountPercent / 100.0);
-            HBox promoRow = new HBox(8);
-            promoRow.setAlignment(Pos.CENTER);
-            promoRow.setStyle("-fx-background-color: rgba(81,207,102,0.06); -fx-padding: 8; -fx-background-radius: 8;");
+            HBox promoTile = new HBox(10);
+            promoTile.setAlignment(Pos.CENTER);
+            promoTile.setStyle("-fx-background-color: rgba(81,207,102,0.06); -fx-padding: 10; -fx-background-radius: 10;");
             Label oldPrice = new Label(String.format("%.2f DT", p.getPrixEstime()));
             oldPrice.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11; -fx-strikethrough: true;");
             Label arrow = new Label("\u2192");
             arrow.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
             Label newPrice = new Label(String.format("%.2f DT", discounted));
-            newPrice.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 13; -fx-font-weight: bold;");
+            newPrice.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 14; -fx-font-weight: bold;");
             Label discLabel = new Label("-" + (int)discountPercent + "%");
-            discLabel.setStyle("-fx-background-color: rgba(81,207,102,0.2); -fx-text-fill: #51CF66; -fx-padding: 2 8; -fx-background-radius: 6; -fx-font-size: 9; -fx-font-weight: bold;");
-            promoRow.getChildren().addAll(oldPrice, arrow, newPrice, discLabel);
-            details.getChildren().add(promoRow);
+            discLabel.setStyle("-fx-background-color: rgba(81,207,102,0.2); -fx-text-fill: #51CF66; -fx-padding: 2 10; -fx-background-radius: 6; -fx-font-size: 10; -fx-font-weight: bold;");
+            promoTile.getChildren().addAll(oldPrice, arrow, newPrice, discLabel);
+            detailSections.getChildren().add(promoTile);
         }
 
-        // STATUT BADGE
+        // ── STATUS BADGE ──
         HBox statutRow = new HBox();
         statutRow.setAlignment(Pos.CENTER);
+        statutRow.setPadding(new Insets(0, 14, 0, 14));
         Label statutBadge;
         if (isRestoItem && "confirme".equalsIgnoreCase(p.getStatutItem())) {
             statutBadge = new Label("\u2705 Reservation confirmee - Paiement sur place");
-            statutBadge.setStyle("-fx-background-color: rgba(81,207,102,0.08); -fx-text-fill: #51CF66; -fx-padding: 5 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
+            statutBadge.setStyle("-fx-background-color: rgba(81,207,102,0.08); -fx-text-fill: #51CF66; -fx-padding: 6 16; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
         } else {
             statutBadge = new Label("\u23F3 En attente de confirmation");
-            statutBadge.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-text-fill: #FFD700; -fx-padding: 5 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
+            statutBadge.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-text-fill: #FFD700; -fx-padding: 6 16; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
         }
         statutRow.getChildren().add(statutBadge);
 
-        // ACTION BUTTONS
-        HBox buttons = new HBox(6);
-        buttons.setAlignment(Pos.CENTER);
+        // ── ACTION BUTTONS ──
+        VBox actionsArea = new VBox(6);
+        actionsArea.setPadding(new Insets(8, 14, 14, 14));
+
+        HBox mainButtons = new HBox(6);
+        mainButtons.setAlignment(Pos.CENTER);
 
         Button modifyBtn = new Button("\u270F Modifier");
         modifyBtn.setStyle("-fx-background-color: rgba(255,167,38,0.12); -fx-text-fill: #FFA726; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
         modifyBtn.setOnAction(e -> showModifyPanierDialog(p));
 
-        // Only show "Confirmer" for payable items (not restaurants/cafes)
         if (!isRestoItem) {
             Button confirmBtn = new Button("\u2705 Confirmer");
             confirmBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
             confirmBtn.setOnAction(e -> showPaymentMethodDialog(p));
-            buttons.getChildren().addAll(modifyBtn, confirmBtn);
+            mainButtons.getChildren().addAll(modifyBtn, confirmBtn);
         } else {
-            buttons.getChildren().add(modifyBtn);
+            mainButtons.getChildren().add(modifyBtn);
         }
 
         Button deleteBtn = new Button("\uD83D\uDDD1");
         deleteBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-padding: 8 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
         deleteBtn.setOnAction(e -> deletePanierItem(p));
-        buttons.getChildren().add(deleteBtn);
+        mainButtons.getChildren().add(deleteBtn);
 
-        // INNOVATIVE FEATURES ROW
-        HBox innovativeButtons = new HBox(6);
-        innovativeButtons.setAlignment(Pos.CENTER);
+        HBox extraButtons = new HBox(6);
+        extraButtons.setAlignment(Pos.CENTER);
 
         Button duplicateBtn = new Button("\uD83D\uDCCB Dupliquer");
         duplicateBtn.setStyle("-fx-background-color: rgba(41,182,246,0.12); -fx-text-fill: #29B6F6; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
@@ -369,9 +420,9 @@ public class PanierController {
         compareBtn.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         compareBtn.setOnAction(e -> showPriceComparisonDialog(p));
 
-        innovativeButtons.getChildren().addAll(duplicateBtn, shareBtn, compareBtn);
+        extraButtons.getChildren().addAll(duplicateBtn, shareBtn, compareBtn);
 
-        // FEATURE #16: Split Payment / Group Booking (per-person price display)
+        // Split payment info
         if (!isRestoItem && p.getNbPersonnes() > 1 && p.getPrixEstime() > 0) {
             HBox splitRow = new HBox(8);
             splitRow.setAlignment(Pos.CENTER);
@@ -380,11 +431,31 @@ public class PanierController {
             Label splitLbl = new Label("\uD83D\uDC65 Split: " + String.format("%.2f DT", perPerson) + "/personne");
             splitLbl.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 9; -fx-font-weight: bold;");
             splitRow.getChildren().add(splitLbl);
-            card.getChildren().addAll(header, details, statutRow, buttons, innovativeButtons, splitRow);
+            actionsArea.getChildren().addAll(mainButtons, extraButtons, splitRow);
         } else {
-            card.getChildren().addAll(header, details, statutRow, buttons, innovativeButtons);
+            actionsArea.getChildren().addAll(mainButtons, extraButtons);
         }
+
+        // ── ASSEMBLE CARD ──
+        card.getChildren().addAll(headerBar, detailSections, statutRow, actionsArea);
         return card;
+    }
+
+    /** Builds a small info tile for the carousel detail view */
+    private VBox buildInfoTile(String icon, String value, String label) {
+        VBox tile = new VBox(2);
+        tile.setAlignment(Pos.CENTER);
+        tile.setPadding(new Insets(8, 12, 8, 12));
+        tile.setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 10; -fx-border-color: rgba(255,255,255,0.05); -fx-border-radius: 10;");
+        HBox.setHgrow(tile, Priority.ALWAYS);
+        Label iLbl = new Label(icon);
+        iLbl.setStyle("-fx-font-size: 14;");
+        Label vLbl = new Label(value);
+        vLbl.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;");
+        Label lLbl = new Label(label);
+        lLbl.setStyle("-fx-text-fill: #666; -fx-font-size: 9;");
+        tile.getChildren().addAll(iLbl, vLbl, lLbl);
+        return tile;
     }
 
     private HBox buildDetailChip(String icon, String text) {
@@ -786,7 +857,7 @@ public class PanierController {
         VBox loyaltyInfo = new VBox(4);
         loyaltyInfo.setAlignment(Pos.CENTER);
         loyaltyInfo.setStyle("-fx-background-color: rgba(178,102,255,0.06); -fx-padding: 10; -fx-background-radius: 8;");
-        Label loyaltyLbl = new Label("\u2B50 Payez par carte et gagnez " + pointsToEarn + " points de fidelite !");
+        Label loyaltyLbl = new Label("\u2B50 Payez par Flouci et gagnez " + pointsToEarn + " points de fidelite !");
         loyaltyLbl.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 11; -fx-font-weight: bold;");
         Label currentPtsLbl = new Label("Solde actuel: " + (currentUser != null ? userService.getLoyaltyPoints(currentUser.getId()) : 0) + " pts");
         currentPtsLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
@@ -812,11 +883,11 @@ public class PanierController {
         cardBox.setAlignment(Pos.CENTER);
         cardBox.setPadding(new Insets(20));
         cardBox.setStyle("-fx-background-color: rgba(100,181,246,0.08); -fx-background-radius: 14; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 14; -fx-border-width: 1; -fx-cursor: hand; -fx-pref-width: 180;");
-        Label cardIcon = new Label("\uD83D\uDCB3");
+        Label cardIcon = new Label("\uD83D\uDCF1");
         cardIcon.setStyle("-fx-font-size: 36;");
-        Label cardLbl = new Label("Carte Bancaire");
+        Label cardLbl = new Label("Flouci");
         cardLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 14; -fx-font-weight: bold;");
-        Label cardDesc = new Label("Visa / Mastercard\n\u2B50 +" + pointsToEarn + " points !");
+        Label cardDesc = new Label("Paiement en ligne\n\u2B50 +" + pointsToEarn + " points !");
         cardDesc.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 10; -fx-font-weight: bold;");
         cardDesc.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
         cardBox.getChildren().addAll(cardIcon, cardLbl, cardDesc);
@@ -871,11 +942,11 @@ public class PanierController {
     }
 
     // ================================================================
-    // CARD PAYMENT DIALOG
+    // FLOUCI PAYMENT DIALOG (Tunisian Online Payment)
     // ================================================================
     private void showCardPaymentDialog(Panier p, double finalPrice) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Paiement par Carte");
+        dialog.setTitle("Paiement Flouci");
         dialog.setHeaderText(null);
 
         DialogPane dp = dialog.getDialogPane();
@@ -885,17 +956,30 @@ public class PanierController {
         VBox content = new VBox(16);
         content.setPadding(new Insets(24));
         content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(480);
 
-        Label titleLbl = new Label("\uD83D\uDCB3 Paiement par Carte Bancaire");
-        titleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
+        // Flouci Logo/Header
+        HBox logoRow = new HBox(12);
+        logoRow.setAlignment(Pos.CENTER);
+        Label flouciIcon = new Label("\uD83D\uDCF1");
+        flouciIcon.setStyle("-fx-font-size: 30;");
+        VBox logoText = new VBox(2);
+        Label titleLbl = new Label("Paiement via Flouci");
+        titleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+        Label subtitleLbl = new Label("Paiement en ligne securise - Tunisie");
+        subtitleLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+        logoText.getChildren().addAll(titleLbl, subtitleLbl);
+        logoRow.getChildren().addAll(flouciIcon, logoText);
 
+        // Amount display
         HBox amountBox = new HBox();
         amountBox.setAlignment(Pos.CENTER);
-        amountBox.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-padding: 14; -fx-background-radius: 10;");
+        amountBox.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-padding: 16; -fx-background-radius: 12;");
         Label amountLbl = new Label(String.format("Montant: %.2f DT", finalPrice));
-        amountLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+        amountLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 20; -fx-font-weight: bold;");
         amountBox.getChildren().add(amountLbl);
 
+        // Loyalty points bonus
         int pointsToEarn = (int)(finalPrice * 10);
         HBox bonusBox = new HBox(8);
         bonusBox.setAlignment(Pos.CENTER);
@@ -904,184 +988,134 @@ public class PanierController {
         bonusLbl.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 11; -fx-font-weight: bold;");
         bonusBox.getChildren().add(bonusLbl);
 
-        VBox cardVisual = new VBox(12);
-        cardVisual.setStyle("-fx-background-color: linear-gradient(to bottom right, #1a1a2e, #16213e); -fx-padding: 20; -fx-background-radius: 14; -fx-border-color: rgba(100,181,246,0.3); -fx-border-radius: 14; -fx-border-width: 1;");
+        // How it works section
+        VBox howItWorks = new VBox(8);
+        howItWorks.setStyle("-fx-background-color: rgba(100,181,246,0.04); -fx-padding: 14; -fx-background-radius: 10;");
+        Label howTitle = new Label("\uD83D\uDCA1 Comment ca marche ?");
+        howTitle.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 12; -fx-font-weight: bold;");
+        Label step1 = new Label("1\uFE0F\u20E3 Cliquez sur 'Payer avec Flouci' ci-dessous");
+        step1.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        Label step2 = new Label("2\uFE0F\u20E3 Un lien s'ouvrira dans votre navigateur");
+        step2.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        Label step3 = new Label("3\uFE0F\u20E3 Payez avec votre wallet Flouci ou carte bancaire");
+        step3.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        Label step4 = new Label("4\uFE0F\u20E3 Revenez ici et cliquez 'Verifier le paiement'");
+        step4.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        howItWorks.getChildren().addAll(howTitle, step1, step2, step3, step4);
 
-        VBox numBox = new VBox(4);
-        Label numLbl = new Label("Numero de carte");
-        numLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        TextField cardNumField = new TextField();
-        cardNumField.setPromptText("1234 5678 9012 3456");
-        cardNumField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-font-size: 14; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
-        numBox.getChildren().addAll(numLbl, cardNumField);
+        // Status area
+        Label statusLbl = new Label("");
+        statusLbl.setWrapText(true);
+        statusLbl.setMaxWidth(420);
 
-        VBox holderBox = new VBox(4);
-        Label holderLbl = new Label("Titulaire de la carte");
-        holderLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        TextField holderField = new TextField();
-        holderField.setPromptText("NOM PRENOM");
-        if (currentUser != null) holderField.setText((currentUser.getNom() + " " + currentUser.getPrenom()).toUpperCase());
-        holderField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
-        holderBox.getChildren().addAll(holderLbl, holderField);
+        // Payment ID storage
+        final String[] paymentId = {null};
 
-        HBox expiryRow = new HBox(12);
-        VBox expiryBox = new VBox(4);
-        HBox.setHgrow(expiryBox, Priority.ALWAYS);
-        Label expiryLbl = new Label("Date d'expiration");
-        expiryLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        TextField expiryField = new TextField();
-        expiryField.setPromptText("MM/AA");
-        expiryField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
-        expiryBox.getChildren().addAll(expiryLbl, expiryField);
+        // Action buttons
+        Button payBtn = new Button("\uD83D\uDCF1 Payer avec Flouci - " + String.format("%.2f DT", finalPrice));
+        payBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 12 28; -fx-background-radius: 10; -fx-font-size: 13; -fx-cursor: hand;");
+        payBtn.setMaxWidth(Double.MAX_VALUE);
 
-        VBox cvvBox = new VBox(4);
-        HBox.setHgrow(cvvBox, Priority.ALWAYS);
-        Label cvvLbl = new Label("CVV");
-        cvvLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        PasswordField cvvField = new PasswordField();
-        cvvField.setPromptText("123");
-        cvvField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
-        cvvBox.getChildren().addAll(cvvLbl, cvvField);
+        Button verifyBtn = new Button("\u2705 Verifier le paiement");
+        verifyBtn.setStyle("-fx-background-color: rgba(81,207,102,0.15); -fx-text-fill: #51CF66; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 10; -fx-font-size: 12; -fx-cursor: hand;");
+        verifyBtn.setMaxWidth(Double.MAX_VALUE);
+        verifyBtn.setDisable(true);
 
-        expiryRow.getChildren().addAll(expiryBox, cvvBox);
-        cardVisual.getChildren().addAll(numBox, holderBox, expiryRow);
+        payBtn.setOnAction(e -> {
+            payBtn.setDisable(true);
+            payBtn.setText("\u23F3 Generation du lien...");
+            statusLbl.setText("");
+            statusLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
 
-        Label errorLbl = new Label("");
-        errorLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+            String description = "TABAANI_" + (p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService());
 
-        content.getChildren().addAll(titleLbl, amountBox, bonusBox, cardVisual, errorLbl);
-        dp.setContent(content);
+            new Thread(() -> {
+                FlouciPaymentService.PaymentResult result = flouciService.generatePayment(finalPrice, description);
 
-        ButtonType payType = new ButtonType("\uD83D\uDD12 Payer " + String.format("%.2f DT", finalPrice), ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelType = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
-        dp.getButtonTypes().addAll(payType, cancelType);
-
-        Button payButton = (Button) dp.lookupButton(payType);
-        payButton.setStyle("-fx-background-color: linear-gradient(to right, #64B5F6, #42A5F5); -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 8; -fx-font-size: 13;");
-
-        payButton.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
-            String cardNum = cardNumField.getText().trim().replaceAll("\\s", "");
-            String holder = holderField.getText().trim();
-            String expiry = expiryField.getText().trim();
-            String cvv = cvvField.getText().trim();
-
-            if (cardNum.length() < 13 || cardNum.length() > 19) {
-                errorLbl.setText("Numero de carte invalide (13-19 chiffres)");
-                event.consume(); return;
-            }
-            if (!stripeService.isValidCardNumber(cardNum)) {
-                errorLbl.setText("Numero de carte invalide (verification Luhn)");
-                event.consume(); return;
-            }
-            if (holder.isEmpty()) {
-                errorLbl.setText("Veuillez saisir le nom du titulaire");
-                event.consume(); return;
-            }
-            if (!expiry.matches("\\d{2}/\\d{2}")) {
-                errorLbl.setText("Format de date invalide (MM/AA)");
-                event.consume(); return;
-            }
-            if (cvv.length() < 3 || cvv.length() > 4) {
-                errorLbl.setText("CVV invalide (3-4 chiffres)");
-                event.consume(); return;
-            }
+                javafx.application.Platform.runLater(() -> {
+                    if (result.isSuccess() && result.getPaymentLink() != null) {
+                        paymentId[0] = result.getPaymentId();
+                        // Open payment link in default browser
+                        try {
+                            java.awt.Desktop.getDesktop().browse(new java.net.URI(result.getPaymentLink()));
+                            statusLbl.setText("\u2705 Lien ouvert dans votre navigateur. Completez le paiement puis revenez ici.");
+                            statusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
+                            verifyBtn.setDisable(false);
+                            payBtn.setText("\uD83D\uDD17 Lien ouvert - Payez dans le navigateur");
+                        } catch (Exception ex) {
+                            // If browser doesn't open, show the link
+                            statusLbl.setText("\uD83D\uDD17 Copiez ce lien dans votre navigateur:\n" + result.getPaymentLink());
+                            statusLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 10;");
+                            verifyBtn.setDisable(false);
+                            payBtn.setText("\uD83D\uDCCB Lien genere (voir ci-dessus)");
+                        }
+                    } else {
+                        statusLbl.setText("\u274C " + result.getMessage());
+                        statusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+                        payBtn.setDisable(false);
+                        payBtn.setText("\uD83D\uDCF1 Reessayer le paiement Flouci");
+                    }
+                });
+            }).start();
         });
 
-        Optional<ButtonType> result = dialog.showAndWait();
-        if (result.isPresent() && result.get() == payType) {
-            String cardNum = cardNumField.getText().trim().replaceAll("\\s", "");
-            String expiry = expiryField.getText().trim();
-            String cvv = cvvField.getText().trim();
-            String email = currentUser != null ? currentUser.getEmail() : "";
-            String description = "TABAANI - " + (p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService());
+        verifyBtn.setOnAction(e -> {
+            if (paymentId[0] == null) {
+                statusLbl.setText("\u26A0 Veuillez d'abord generer un paiement.");
+                statusLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 11;");
+                return;
+            }
+            verifyBtn.setDisable(true);
+            verifyBtn.setText("\u23F3 Verification...");
 
-            int expMonth = Integer.parseInt(expiry.substring(0, 2));
-            int expYear = 2000 + Integer.parseInt(expiry.substring(3));
+            new Thread(() -> {
+                FlouciPaymentService.PaymentResult result = flouciService.verifyPayment(paymentId[0]);
 
-            processPaymentCard(p, finalPrice, cardNum, expMonth, expYear, cvv, description, email);
-        }
-    }
+                javafx.application.Platform.runLater(() -> {
+                    if (result.isSuccess()) {
+                        statusLbl.setText("\u2705 Paiement confirme par Flouci !");
+                        statusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 13; -fx-font-weight: bold;");
 
-    private void processPaymentCard(Panier p, double finalPrice, String cardNum, int expMonth, int expYear, String cvv, String description, String email) {
-        // Show processing indicator
-        javafx.application.Platform.runLater(() -> showMessage("\u23F3 Traitement du paiement Stripe en cours...", true));
-
-        new Thread(() -> {
-            StripePaymentService.PaymentResult stripeResult = stripeService.processPayment(
-                finalPrice, cardNum, expMonth, expYear, cvv, description, email
-            );
-
-            javafx.application.Platform.runLater(() -> {
-                if (stripeResult.isSuccess()) {
-                    Reservation r = new Reservation();
-                    r.setIdPanier(p.getIdPanier());
-                    r.setDatePaiement(LocalDateTime.now());
-                    r.setMontantTotal(finalPrice);
-                    r.setModePaiement("Carte Bancaire (Stripe)");
-                    r.setStatutPaiement("Paye");
-
-                    if (reservationService.ajouter(r)) {
-                        panierService.modifier(updatePanierStatut(p, "confirme"));
-                        int pointsEarned = (int)(finalPrice * 10);
-                        if (currentUser != null) {
-                            userService.addLoyaltyPoints(currentUser.getId(), pointsEarned);
-                            currentUser.setLoyaltyPoints(currentUser.getLoyaltyPoints() + pointsEarned);
-                        }
-                        sendConfirmationEmail(p, r, finalPrice, pointsEarned);
-                        showPaymentSuccessOverlay(p, r, finalPrice, pointsEarned);
-                        loadData();
+                        // Create reservation
+                        processFlouciPaymentSuccess(p, finalPrice, pointsToEarn, paymentId[0]);
+                        dialog.close();
                     } else {
-                        showMessage("Echec de l'enregistrement de la reservation.", false);
+                        statusLbl.setText("\u23F3 " + result.getMessage() + "\nReessayez dans quelques secondes.");
+                        statusLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 11;");
+                        verifyBtn.setDisable(false);
+                        verifyBtn.setText("\u2705 Verifier le paiement");
                     }
-                } else {
-                    showStripeErrorDialog(stripeResult.getMessage());
-                }
-            });
-        }).start();
+                });
+            }).start();
+        });
+
+        content.getChildren().addAll(logoRow, amountBox, bonusBox, howItWorks, payBtn, verifyBtn, statusLbl);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+        dialog.showAndWait();
     }
 
-    private void showStripeErrorDialog(String errorMsg) {
-        Dialog<ButtonType> errDialog = new Dialog<>();
-        errDialog.setTitle("Echec du Paiement");
-        errDialog.setHeaderText(null);
-        DialogPane edp = errDialog.getDialogPane();
-        edp.setStyle("-fx-background-color: " + ThemeManager.dialogBg() + ";");
-        edp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
-        if (ThemeManager.getCurrentTheme() == ThemeManager.Theme.LIGHT) {
-            edp.getStylesheets().add(getClass().getResource("/style-light.css").toExternalForm());
+    private void processFlouciPaymentSuccess(Panier p, double finalPrice, int pointsToEarn, String flouciPaymentId) {
+        Reservation r = new Reservation();
+        r.setIdPanier(p.getIdPanier());
+        r.setDatePaiement(LocalDateTime.now());
+        r.setMontantTotal(finalPrice);
+        r.setModePaiement("Flouci");
+        r.setStatutPaiement("Paye");
+
+        if (reservationService.ajouter(r)) {
+            panierService.modifier(updatePanierStatut(p, "confirme"));
+            if (currentUser != null) {
+                userService.addLoyaltyPoints(currentUser.getId(), pointsToEarn);
+                currentUser.setLoyaltyPoints(currentUser.getLoyaltyPoints() + pointsToEarn);
+            }
+            sendConfirmationEmail(p, r, finalPrice, pointsToEarn);
+            showPaymentSuccessOverlay(p, r, finalPrice, pointsToEarn);
+            loadData();
+        } else {
+            showMessage("Echec de l'enregistrement de la reservation.", false);
         }
-
-        VBox errContent = new VBox(14);
-        errContent.setPadding(new Insets(24));
-        errContent.setAlignment(Pos.CENTER);
-
-        StackPane errIcon = new StackPane();
-        errIcon.setPrefSize(60, 60);
-        errIcon.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-background-radius: 30;");
-        Label eIcon = new Label("\u274C");
-        eIcon.setStyle("-fx-font-size: 28;");
-        errIcon.getChildren().add(eIcon);
-
-        Label errTitle = new Label("Paiement Refuse");
-        errTitle.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 18; -fx-font-weight: bold;");
-
-        Label errDesc = new Label(errorMsg);
-        errDesc.setStyle("-fx-text-fill: " + ThemeManager.textSecondary() + "; -fx-font-size: 12;");
-        errDesc.setWrapText(true);
-        errDesc.setMaxWidth(350);
-
-        VBox tipBox = new VBox(6);
-        tipBox.setStyle("-fx-background-color: rgba(255,215,0,0.05); -fx-padding: 12; -fx-background-radius: 8;");
-        Label tipTitle = new Label("\uD83D\uDCA1 Cartes de test Stripe:");
-        tipTitle.setStyle("-fx-text-fill: " + ThemeManager.accent() + "; -fx-font-size: 11; -fx-font-weight: bold;");
-        Label tipCard = new Label("Succes: 4242 4242 4242 4242\nRefus: 4000 0000 0000 0002\nExp: N'importe quel futur  CVV: 123");
-        tipCard.setStyle("-fx-text-fill: " + ThemeManager.textSecondary() + "; -fx-font-size: 10;");
-        tipBox.getChildren().addAll(tipTitle, tipCard);
-
-        errContent.getChildren().addAll(errIcon, errTitle, errDesc, tipBox);
-        edp.setContent(errContent);
-        edp.getButtonTypes().add(new ButtonType("Compris", ButtonBar.ButtonData.OK_DONE));
-        errDialog.showAndWait();
     }
 
     private void sendConfirmationEmail(Panier p, Reservation r, double finalPrice, int pointsEarned) {
@@ -1095,6 +1129,18 @@ public class PanierController {
                 r.getCodeConfirmation(), finalPrice, r.getModePaiement(),
                 pointsEarned, totalPoints
             );
+            // Also send SMS notification
+            try {
+                int numTel = currentUser.getNumTel();
+                if (numTel > 0) {
+                    String phoneStr = String.valueOf(numTel);
+                    smsService.sendPaymentConfirmation(
+                        phoneStr, customerName, serviceName,
+                        r.getCodeConfirmation(), finalPrice);
+                }
+            } catch (Exception e) {
+                System.err.println("[SMS] Could not send SMS: " + e.getMessage());
+            }
         }).start();
     }
 
@@ -1665,6 +1711,11 @@ public class PanierController {
 
     @FXML public void handleMinimize() { ((Stage) titleBar.getScene().getWindow()).setIconified(true); }
     @FXML public void handleClose() { ((Stage) titleBar.getScene().getWindow()).close(); }
+    @FXML public void handleToggleFullscreen() {
+        Stage stage = (Stage) titleBar.getScene().getWindow();
+        stage.setFullScreen(!stage.isFullScreen());
+        if (fullscreenBtn != null) fullscreenBtn.setText(stage.isFullScreen() ? "\u29C9" : "\u26F6");
+    }
 
     @FXML public void handleLogout() {
         try {

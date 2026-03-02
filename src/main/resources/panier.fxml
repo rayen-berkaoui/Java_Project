@@ -67,6 +67,7 @@
 
                 <HBox spacing="2">
                     <Button text="&#x2014;" onAction="#handleMinimize" styleClass="window-button" />
+                    <Button fx:id="fullscreenBtn" text="&#x26F6;" onAction="#handleToggleFullscreen" styleClass="window-button" />
                     <Button text="&#x2715;" onAction="#handleClose" styleClass="window-button-close" />
                 </HBox>
             </HBox>

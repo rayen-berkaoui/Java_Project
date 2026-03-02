@@ -37,6 +37,7 @@ import javafx.stage.FileChooser;
 public class ReservationController {
 
     @FXML private HBox titleBar;
+    @FXML private Button fullscreenBtn;
     @FXML private Label userNameLabel;
     @FXML private Label totalReservationsLabel;
     @FXML private Label payeLabel;
@@ -168,65 +169,75 @@ public class ReservationController {
     }
 
     // ================================================================
-    // BUILD RESERVATION CARD - PROFESSIONAL DESIGN
+    // BUILD RESERVATION CARD - ENHANCED CAROUSEL DESIGN
     // ================================================================
     private VBox buildReservationCard(Reservation r, int index) {
-        VBox card = new VBox(10);
-        card.setMinWidth(310);
-        card.setMaxWidth(420);
+        VBox card = new VBox(0);
+        card.setMinWidth(340);
+        card.setMaxWidth(440);
 
         String bgColor = CARD_COLORS[index % CARD_COLORS.length];
         String statutColor = getStatutColor(r.getStatutPaiement());
         String statutIcon = getStatutIcon(r.getStatutPaiement());
 
-        card.setStyle("-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 14; " +
-                "-fx-border-color: " + bgColor.replace("0.08", "0.15") + "; -fx-border-radius: 14; -fx-border-width: 1;");
+        card.setStyle("-fx-background-color: rgba(15,15,15,0.95); -fx-background-radius: 16; " +
+                "-fx-border-color: " + bgColor.replace("0.08", "0.18") + "; -fx-border-radius: 16; -fx-border-width: 1;" +
+                "-fx-effect: dropshadow(gaussian, " + bgColor.replace("0.08", "0.08") + ", 12, 0, 0, 4);");
 
-        // TOP: icon + name + price
-        HBox header = new HBox(12);
-        header.setAlignment(Pos.CENTER_LEFT);
+        // ── GRADIENT HEADER BAR ──
+        HBox headerBar = new HBox(12);
+        headerBar.setAlignment(Pos.CENTER_LEFT);
+        headerBar.setPadding(new Insets(16, 18, 12, 18));
+        headerBar.setStyle("-fx-background-color: linear-gradient(to right, " + bgColor + ", rgba(0,0,0,0)); -fx-background-radius: 16 16 0 0;");
 
         StackPane iconPane = new StackPane();
-        iconPane.setPrefSize(48, 48);
-        iconPane.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 12;");
+        iconPane.setPrefSize(52, 52);
+        iconPane.setStyle("-fx-background-color: " + bgColor + "; -fx-background-radius: 14;");
         String svcIcon = getServiceIcon(r.getTypeService());
         Label iconLabel = new Label(svcIcon);
-        iconLabel.setStyle("-fx-font-size: 20;");
+        iconLabel.setStyle("-fx-font-size: 24;");
         iconPane.getChildren().add(iconLabel);
 
-        VBox nameBox = new VBox(2);
+        VBox nameBox = new VBox(3);
         HBox.setHgrow(nameBox, Priority.ALWAYS);
         String displayName = r.getNomEtablissement() != null && !r.getNomEtablissement().isEmpty()
                 ? r.getNomEtablissement() : (r.getTypeService() != null ? r.getTypeService() : "Reservation");
         Label nameLabel = new Label(displayName);
-        nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;");
-        nameLabel.setMaxWidth(200);
-        Label typeLabel = new Label(r.getTypeService() != null ? r.getTypeService() : "");
-        typeLabel.setStyle("-fx-text-fill: #666; -fx-font-size: 10;");
-        nameBox.getChildren().addAll(nameLabel, typeLabel);
+        nameLabel.setStyle("-fx-text-fill: white; -fx-font-size: 15; -fx-font-weight: bold;");
+        nameLabel.setMaxWidth(220);
+        nameLabel.setWrapText(true);
+        Label typeChip = new Label(r.getTypeService() != null ? r.getTypeService() : "");
+        typeChip.setStyle("-fx-text-fill: #999; -fx-font-size: 9; -fx-background-color: rgba(255,255,255,0.05); -fx-padding: 2 8; -fx-background-radius: 6;");
+        nameBox.getChildren().addAll(nameLabel, typeChip);
 
         VBox priceBox = new VBox(2);
         priceBox.setAlignment(Pos.CENTER_RIGHT);
-        boolean isRestoRes = r.getTypeService() != null &&
-            (r.getTypeService().toLowerCase().contains("restaurant") || r.getTypeService().toLowerCase().contains("caf") || r.getTypeService().toLowerCase().contains("resto"));
+        boolean isRestoRes = isRestoOrCafeType(r.getTypeService());
         if (isRestoRes) {
             Label gratuitLabel = new Label("Sur place");
             gratuitLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 14; -fx-font-weight: bold;");
             priceBox.getChildren().add(gratuitLabel);
         } else {
             Label prixLabel = new Label(String.format("%.2f DT", r.getMontantTotal()));
-            prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
-            priceBox.getChildren().add(prixLabel);
+            prixLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 20; -fx-font-weight: bold;");
+            // Per-person price
+            if (r.getNbPersonnes() > 1) {
+                Label perPerson = new Label(String.format("%.2f DT/pers", r.getMontantTotal() / r.getNbPersonnes()));
+                perPerson.setStyle("-fx-text-fill: #888; -fx-font-size: 9;");
+                priceBox.getChildren().addAll(prixLabel, perPerson);
+            } else {
+                priceBox.getChildren().add(prixLabel);
+            }
         }
+        headerBar.getChildren().addAll(iconPane, nameBox, priceBox);
 
-        header.getChildren().addAll(iconPane, nameBox, priceBox);
-
-        // CONFIRMATION CODE BADGE
+        // ── CONFIRMATION CODE & STATUS STRIP ──
         HBox codeBadge = new HBox(8);
         codeBadge.setAlignment(Pos.CENTER);
-        codeBadge.setStyle("-fx-background-color: rgba(255,215,0,0.06); -fx-padding: 8 14; -fx-background-radius: 8;");
+        codeBadge.setPadding(new Insets(0, 14, 0, 14));
+        codeBadge.setStyle("-fx-background-color: rgba(255,215,0,0.04); -fx-padding: 8 18;");
         Label codeIcon = new Label("\uD83D\uDD11");
-        codeIcon.setStyle("-fx-font-size: 11;");
+        codeIcon.setStyle("-fx-font-size: 12;");
         Label codeLabel = new Label(r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "N/A");
         codeLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold; -fx-font-family: 'Consolas';");
         Region codeSpacer = new Region();
@@ -234,40 +245,71 @@ public class ReservationController {
         Label statutBadge = new Label(statutIcon + " " + (r.getStatutPaiement() != null ? r.getStatutPaiement() : "Inconnu"));
         String sbBg = statutColor.replace("rgb(", "rgba(").replace(")", ",0.12)");
         statutBadge.setStyle("-fx-background-color: " + sbBg + "; -fx-text-fill: " + statutColor +
-                "; -fx-padding: 4 12; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
+                "; -fx-padding: 4 14; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold;");
         codeBadge.getChildren().addAll(codeIcon, codeLabel, codeSpacer, statutBadge);
 
-        // PROGRESS TRACKER
+        // ── PROGRESS TRACKER ──
         HBox progressTracker = buildProgressTracker(r);
+        progressTracker.setPadding(new Insets(4, 14, 4, 14));
 
-        // DETAIL GRID
-        VBox details = new VBox(6);
-        details.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 12; -fx-background-radius: 8;");
+        // ── DETAIL TILES (carousel sections) ──
+        VBox detailSections = new VBox(8);
+        detailSections.setPadding(new Insets(6, 14, 6, 14));
 
-        HBox row1 = new HBox(16);
-        row1.getChildren().addAll(
-            buildDetailChip("\uD83D\uDCC5", r.getDatePaiement() != null ? r.getDatePaiement().format(DTF) : "N/A"),
-            buildDetailChip("\uD83D\uDCB3", r.getModePaiement() != null ? r.getModePaiement() : "N/A")
+        // Info tiles row
+        HBox infoTiles = new HBox(6);
+        infoTiles.setAlignment(Pos.CENTER);
+        infoTiles.getChildren().addAll(
+            buildInfoTile("\uD83D\uDCC5", r.getDatePaiement() != null ? r.getDatePaiement().format(DTF) : "N/A", "Date"),
+            buildInfoTile("\uD83D\uDCB3", r.getModePaiement() != null ? r.getModePaiement() : "N/A", "Paiement"),
+            buildInfoTile("\uD83D\uDC65", r.getNbPersonnes() + "", "Personnes")
         );
-        HBox row2 = new HBox(16);
-        row2.getChildren().addAll(
-            buildDetailChip("\uD83D\uDC65", r.getNbPersonnes() + " personnes"),
-            buildDetailChip("\u23F0", getTimeAgo(r))
-        );
-        details.getChildren().addAll(row1, row2);
 
-        // ACTION BUTTONS
-        HBox buttons = new HBox(6);
-        buttons.setAlignment(Pos.CENTER);
+        // Time ago
+        HBox timeRow = new HBox(8);
+        timeRow.setAlignment(Pos.CENTER);
+        timeRow.setStyle("-fx-background-color: rgba(255,255,255,0.02); -fx-padding: 6 12; -fx-background-radius: 8;");
+        Label timeIcon = new Label("\u23F0");
+        timeIcon.setStyle("-fx-font-size: 11;");
+        Label timeLabel = new Label(getTimeAgo(r));
+        timeLabel.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
+        timeRow.getChildren().addAll(timeIcon, timeLabel);
 
-        // Upgrade button: Cash -> Card (one-way only!) - not for restaurants
+        detailSections.getChildren().addAll(infoTiles, timeRow);
+
+        // Show rating stars if already rated
+        if (r.getRating() > 0) {
+            HBox ratingDisplay = new HBox(6);
+            ratingDisplay.setAlignment(Pos.CENTER);
+            ratingDisplay.setStyle("-fx-background-color: rgba(255,215,0,0.04); -fx-padding: 8; -fx-background-radius: 8;");
+            StringBuilder stars = new StringBuilder();
+            for (int s = 0; s < 5; s++) stars.append(s < r.getRating() ? "\u2605" : "\u2606");
+            Label ratingStars = new Label(stars.toString());
+            ratingStars.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16;");
+            ratingDisplay.getChildren().add(ratingStars);
+            if (r.getReviewComment() != null && !r.getReviewComment().isEmpty()) {
+                Label reviewSnippet = new Label("\"" + (r.getReviewComment().length() > 35 ? r.getReviewComment().substring(0, 35) + "..." : r.getReviewComment()) + "\"");
+                reviewSnippet.setStyle("-fx-text-fill: #888; -fx-font-size: 9; -fx-font-style: italic;");
+                ratingDisplay.getChildren().add(reviewSnippet);
+            }
+            detailSections.getChildren().add(ratingDisplay);
+        }
+
+        // ── ACTION BUTTONS ──
+        VBox actionsArea = new VBox(6);
+        actionsArea.setPadding(new Insets(6, 14, 14, 14));
+
+        HBox mainButtons = new HBox(6);
+        mainButtons.setAlignment(Pos.CENTER);
+
+        // Upgrade button: Cash -> Flouci
         boolean isCash = "Especes".equalsIgnoreCase(r.getModePaiement());
         boolean isPaid = r.getStatutPaiement() != null && (r.getStatutPaiement().toLowerCase().contains("pay"));
         if (isCash && isPaid && !isRestoRes) {
-            Button upgradeBtn = new Button("\uD83D\uDCB3 Passer en Carte");
+            Button upgradeBtn = new Button("\uD83D\uDCF1 Passer en Flouci");
             upgradeBtn.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-text-fill: #64B5F6; -fx-padding: 7 12; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
             upgradeBtn.setOnAction(e -> showUpgradeToCardDialog(r));
-            buttons.getChildren().add(upgradeBtn);
+            mainButtons.getChildren().add(upgradeBtn);
         }
 
         Button modifyBtn = new Button("\u270F Modifier");
@@ -286,11 +328,11 @@ public class ReservationController {
         deleteBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-padding: 7 12; -fx-background-radius: 8; -fx-font-size: 10; -fx-font-weight: bold; -fx-cursor: hand;");
         deleteBtn.setOnAction(e -> deleteReservation(r));
 
-        buttons.getChildren().addAll(modifyBtn, detailBtn, factureBtn, deleteBtn);
+        mainButtons.getChildren().addAll(modifyBtn, detailBtn, factureBtn, deleteBtn);
 
-        // INNOVATIVE FEATURES ROW
-        HBox innovativeButtons = new HBox(6);
-        innovativeButtons.setAlignment(Pos.CENTER);
+        // Feature buttons row 1
+        HBox featureRow1 = new HBox(6);
+        featureRow1.setAlignment(Pos.CENTER);
 
         Button shareBtn = new Button("\uD83D\uDCE4 Partager");
         shareBtn.setStyle("-fx-background-color: rgba(41,182,246,0.12); -fx-text-fill: #29B6F6; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
@@ -304,48 +346,48 @@ public class ReservationController {
         ratingBtn.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         ratingBtn.setOnAction(e -> showRatingDialog(r));
 
-        innovativeButtons.getChildren().addAll(shareBtn, countdownBtn, ratingBtn);
+        featureRow1.getChildren().addAll(shareBtn, countdownBtn, ratingBtn);
 
-        // FEATURE ROW 2: AI + Calendar + Re-book
-        HBox featureButtons = new HBox(6);
-        featureButtons.setAlignment(Pos.CENTER);
+        // Feature buttons row 2
+        HBox featureRow2 = new HBox(6);
+        featureRow2.setAlignment(Pos.CENTER);
 
-        // FEATURE #11: Calendar Export
         Button calendarBtn = new Button("\uD83D\uDCC5 Calendrier");
         calendarBtn.setStyle("-fx-background-color: rgba(81,207,102,0.12); -fx-text-fill: #51CF66; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         calendarBtn.setOnAction(e -> exportToCalendar(r));
 
-        // FEATURE #6: AI Review Generator
         Button aiReviewBtn = new Button("\uD83E\uDD16 AI Avis");
         aiReviewBtn.setStyle("-fx-background-color: rgba(178,102,255,0.12); -fx-text-fill: #B266FF; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         aiReviewBtn.setOnAction(e -> showAIReviewGenerator(r));
 
-        // FEATURE #18: Re-book / Book Again
         Button rebookBtn = new Button("\uD83D\uDD01 Re-book");
         rebookBtn.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         rebookBtn.setOnAction(e -> rebookReservation(r));
 
-        featureButtons.getChildren().addAll(calendarBtn, aiReviewBtn, rebookBtn);
+        featureRow2.getChildren().addAll(calendarBtn, aiReviewBtn, rebookBtn);
 
-        // Show rating stars if already rated
-        HBox ratingDisplay = new HBox(4);
-        ratingDisplay.setAlignment(Pos.CENTER);
-        if (r.getRating() > 0) {
-            StringBuilder stars = new StringBuilder();
-            for (int s = 0; s < 5; s++) stars.append(s < r.getRating() ? "\u2605" : "\u2606");
-            Label ratingStars = new Label(stars.toString());
-            ratingStars.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 14;");
-            ratingDisplay.getChildren().add(ratingStars);
-            if (r.getReviewComment() != null && !r.getReviewComment().isEmpty()) {
-                Label reviewSnippet = new Label("\"" + (r.getReviewComment().length() > 30 ? r.getReviewComment().substring(0, 30) + "..." : r.getReviewComment()) + "\"");
-                reviewSnippet.setStyle("-fx-text-fill: #888; -fx-font-size: 9; -fx-font-style: italic;");
-                ratingDisplay.getChildren().add(reviewSnippet);
-            }
-        }
+        actionsArea.getChildren().addAll(mainButtons, featureRow1, featureRow2);
 
-        card.getChildren().addAll(header, codeBadge, progressTracker, details, buttons, innovativeButtons, featureButtons);
-        if (r.getRating() > 0) card.getChildren().add(ratingDisplay);
+        // ── ASSEMBLE CARD ──
+        card.getChildren().addAll(headerBar, codeBadge, progressTracker, detailSections, actionsArea);
         return card;
+    }
+
+    /** Builds a small info tile for the carousel detail view */
+    private VBox buildInfoTile(String icon, String value, String label) {
+        VBox tile = new VBox(2);
+        tile.setAlignment(Pos.CENTER);
+        tile.setPadding(new Insets(8, 12, 8, 12));
+        tile.setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 10; -fx-border-color: rgba(255,255,255,0.05); -fx-border-radius: 10;");
+        HBox.setHgrow(tile, Priority.ALWAYS);
+        Label iLbl = new Label(icon);
+        iLbl.setStyle("-fx-font-size: 14;");
+        Label vLbl = new Label(value);
+        vLbl.setStyle("-fx-text-fill: white; -fx-font-size: 12; -fx-font-weight: bold;");
+        Label lLbl = new Label(label);
+        lLbl.setStyle("-fx-text-fill: #666; -fx-font-size: 9;");
+        tile.getChildren().addAll(iLbl, vLbl, lLbl);
+        return tile;
     }
 
     private HBox buildDetailChip(String icon, String text) {
@@ -474,29 +516,29 @@ public class ReservationController {
     // ================================================================
     private void showUpgradeToCardDialog(Reservation r) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Passer en Carte Bancaire");
+        dialog.setTitle("Passer en Paiement Flouci");
         dialog.setHeaderText(null);
 
         DialogPane dp = dialog.getDialogPane();
         dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
-        VBox content = new VBox(16);
+        VBox content = new VBox(14);
         content.setPadding(new Insets(24));
         content.setStyle("-fx-background-color: #1a1a1a;");
-        content.setMinWidth(460);
+        content.setMinWidth(480);
 
         // Header
         HBox headerRow = new HBox(14);
         headerRow.setAlignment(Pos.CENTER_LEFT);
         StackPane headerIcon = new StackPane();
         headerIcon.setPrefSize(50, 50);
-        headerIcon.setStyle("-fx-background-color: rgba(100,181,246,0.12); -fx-background-radius: 14;");
-        Label hIcon = new Label("\uD83D\uDCB3");
+        headerIcon.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-background-radius: 14;");
+        Label hIcon = new Label("\uD83D\uDCF1");
         hIcon.setStyle("-fx-font-size: 22;");
         headerIcon.getChildren().add(hIcon);
         VBox headerText = new VBox(2);
-        Label titleLbl = new Label("Passer de Especes a Carte");
+        Label titleLbl = new Label("Passer de Especes a Flouci");
         titleLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
         Label subLbl = new Label(r.getCodeConfirmation() + " | " + String.format("%.2f DT", r.getMontantTotal()));
         subLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
@@ -505,116 +547,106 @@ public class ReservationController {
 
         // Info box
         VBox infoBox = new VBox(8);
-        infoBox.setStyle("-fx-background-color: rgba(100,181,246,0.04); -fx-padding: 14; -fx-background-radius: 10;");
-        Label infoTitle = new Label("\u2139 Pourquoi passer en Carte ?");
-        infoTitle.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 12; -fx-font-weight: bold;");
+        infoBox.setStyle("-fx-background-color: rgba(255,215,0,0.04); -fx-padding: 14; -fx-background-radius: 10;");
+        Label infoTitle = new Label("\u2139 Pourquoi payer via Flouci ?");
+        infoTitle.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;");
         int pointsToEarn = (int)(r.getMontantTotal() * 10);
         Label infoPts = new Label("\u2B50 Gagnez " + pointsToEarn + " points de fidelite");
         infoPts.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 11;");
-        Label infoSecurity = new Label("\uD83D\uDD12 Paiement securise et tracable");
+        Label infoSecurity = new Label("\uD83D\uDD12 Paiement securise via l'application Flouci");
         infoSecurity.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
-        Label infoWarning = new Label("\u26A0 Cette action est irreversible : vous ne pourrez pas revenir aux especes");
+        Label infoWarning = new Label("\u26A0 Cette action est irreversible");
         infoWarning.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 10;");
-        infoWarning.setWrapText(true);
         infoBox.getChildren().addAll(infoTitle, infoPts, infoSecurity, infoWarning);
 
-        // Card form
-        VBox cardVisual = new VBox(12);
-        cardVisual.setStyle("-fx-background-color: linear-gradient(to bottom right, #1a1a2e, #16213e); -fx-padding: 18; -fx-background-radius: 14; -fx-border-color: rgba(100,181,246,0.3); -fx-border-radius: 14; -fx-border-width: 1;");
+        // Status label
+        Label statusLbl = new Label("");
+        statusLbl.setWrapText(true);
+        statusLbl.setMaxWidth(420);
 
-        VBox numBox = new VBox(4);
-        Label numLbl = new Label("Numero de carte");
-        numLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        TextField cardNumField = new TextField();
-        cardNumField.setPromptText("1234 5678 9012 3456");
-        cardNumField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-font-size: 13; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
-        numBox.getChildren().addAll(numLbl, cardNumField);
+        final String[] paymentIdHolder = {null};
+        com.esprit.services.FlouciPaymentService flouciSvc = new com.esprit.services.FlouciPaymentService();
 
-        VBox holderBox = new VBox(4);
-        Label holderLbl = new Label("Titulaire");
-        holderLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        TextField holderField = new TextField();
-        if (currentUser != null) holderField.setText((currentUser.getNom() + " " + currentUser.getPrenom()).toUpperCase());
-        holderField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
-        holderBox.getChildren().addAll(holderLbl, holderField);
+        // Pay button
+        Button payBtn = new Button("\uD83D\uDCF1 Payer via Flouci - " + String.format("%.2f DT", r.getMontantTotal()));
+        payBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 12 28; -fx-background-radius: 10; -fx-font-size: 13; -fx-cursor: hand;");
+        payBtn.setMaxWidth(Double.MAX_VALUE);
 
-        HBox expiryRow = new HBox(12);
-        VBox expiryBox = new VBox(4);
-        HBox.setHgrow(expiryBox, Priority.ALWAYS);
-        Label expiryLbl = new Label("Expiration (MM/AA)");
-        expiryLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        TextField expiryField = new TextField();
-        expiryField.setPromptText("MM/AA");
-        expiryField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
-        expiryBox.getChildren().addAll(expiryLbl, expiryField);
+        Button verifyBtn = new Button("\u2705 Verifier le paiement");
+        verifyBtn.setStyle("-fx-background-color: rgba(81,207,102,0.15); -fx-text-fill: #51CF66; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 10; -fx-font-size: 12; -fx-cursor: hand;");
+        verifyBtn.setMaxWidth(Double.MAX_VALUE);
+        verifyBtn.setDisable(true);
 
-        VBox cvvBox = new VBox(4);
-        HBox.setHgrow(cvvBox, Priority.ALWAYS);
-        Label cvvLbl = new Label("CVV");
-        cvvLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
-        PasswordField cvvField = new PasswordField();
-        cvvField.setPromptText("123");
-        cvvField.setStyle("-fx-background-color: rgba(255,255,255,0.08); -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-padding: 10; -fx-background-radius: 8; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 8;");
-        cvvBox.getChildren().addAll(cvvLbl, cvvField);
-        expiryRow.getChildren().addAll(expiryBox, cvvBox);
-
-        cardVisual.getChildren().addAll(numBox, holderBox, expiryRow);
-
-        Label errorLbl = new Label("");
-        errorLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
-
-        content.getChildren().addAll(headerRow, infoBox, cardVisual, errorLbl);
-        dp.setContent(content);
-
-        ButtonType upgradeType = new ButtonType("\uD83D\uDCB3 Confirmer le passage en Carte", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelType = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
-        dp.getButtonTypes().addAll(upgradeType, cancelType);
-
-        Button upgradeBtn = (Button) dp.lookupButton(upgradeType);
-        upgradeBtn.setStyle("-fx-background-color: linear-gradient(to right, #64B5F6, #42A5F5); -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 8; -fx-font-size: 12;");
-
-        upgradeBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
-            String cardNum = cardNumField.getText().trim().replaceAll("\\s", "");
-            String holder = holderField.getText().trim();
-            String expiry = expiryField.getText().trim();
-            String cvv = cvvField.getText().trim();
-            if (cardNum.length() < 13 || cardNum.length() > 19) {
-                errorLbl.setText("Numero de carte invalide (13-19 chiffres)"); event.consume(); return;
-            }
-            if (holder.isEmpty()) {
-                errorLbl.setText("Veuillez saisir le nom du titulaire"); event.consume(); return;
-            }
-            if (!expiry.matches("\\d{2}/\\d{2}")) {
-                errorLbl.setText("Format de date invalide (MM/AA)"); event.consume(); return;
-            }
-            if (cvv.length() < 3 || cvv.length() > 4) {
-                errorLbl.setText("CVV invalide (3-4 chiffres)"); event.consume(); return;
-            }
-
-            // Upgrade to card
-            r.setModePaiement("Carte Bancaire");
-            if (reservationService.modifier(r)) {
-                // Award loyalty points
-                if (currentUser != null) {
-                    userService.addLoyaltyPoints(currentUser.getId(), pointsToEarn);
-                    currentUser.setLoyaltyPoints(currentUser.getLoyaltyPoints() + pointsToEarn);
-                }
-                // Send confirmation email
-                if (currentUser != null && currentUser.getEmail() != null) {
-                    new Thread(() -> {
-                        String name = currentUser.getPrenom() + " " + currentUser.getNom();
-                        int totalPts = userService.getLoyaltyPoints(currentUser.getId());
-                        emailService.sendPaymentConfirmationEmail(currentUser.getEmail(), name,
-                            r.getNomEtablissement(), r.getCodeConfirmation(), r.getMontantTotal(),
-                            "Carte Bancaire (upgrade)", pointsToEarn, totalPts);
-                    }).start();
-                }
-                showMessage("\u2705 Paiement passe en Carte Bancaire ! +" + pointsToEarn + " points gagnes \u2B50", true);
-                loadData();
-            } else {
-                errorLbl.setText("\u274C Echec de la mise a jour."); event.consume();
-            }
+        payBtn.setOnAction(e -> {
+            payBtn.setDisable(true);
+            payBtn.setText("\u23F3 Generation du lien...");
+            new Thread(() -> {
+                com.esprit.services.FlouciPaymentService.PaymentResult result = flouciSvc.generatePayment(
+                    r.getMontantTotal(), "TABAANI_UPGRADE_" + r.getCodeConfirmation());
+                javafx.application.Platform.runLater(() -> {
+                    if (result.isSuccess() && result.getPaymentLink() != null) {
+                        paymentIdHolder[0] = result.getPaymentId();
+                        try {
+                            java.awt.Desktop.getDesktop().browse(new java.net.URI(result.getPaymentLink()));
+                            statusLbl.setText("\u2705 Lien ouvert. Completez le paiement puis cliquez 'Verifier'.");
+                            statusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
+                        } catch (Exception ex) {
+                            statusLbl.setText("\uD83D\uDD17 " + result.getPaymentLink());
+                            statusLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 9;");
+                        }
+                        verifyBtn.setDisable(false);
+                        payBtn.setText("\uD83D\uDD17 Lien envoye");
+                    } else {
+                        statusLbl.setText("\u274C " + result.getMessage());
+                        statusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+                        payBtn.setDisable(false);
+                        payBtn.setText("\uD83D\uDCF1 Reessayer");
+                    }
+                });
+            }).start();
         });
+
+        verifyBtn.setOnAction(e -> {
+            if (paymentIdHolder[0] == null) return;
+            verifyBtn.setDisable(true);
+            verifyBtn.setText("\u23F3 Verification...");
+            new Thread(() -> {
+                com.esprit.services.FlouciPaymentService.PaymentResult result = flouciSvc.verifyPayment(paymentIdHolder[0]);
+                javafx.application.Platform.runLater(() -> {
+                    if (result.isSuccess()) {
+                        // Upgrade the reservation payment mode
+                        r.setModePaiement("Flouci");
+                        if (reservationService.modifier(r)) {
+                            if (currentUser != null) {
+                                userService.addLoyaltyPoints(currentUser.getId(), pointsToEarn);
+                                currentUser.setLoyaltyPoints(currentUser.getLoyaltyPoints() + pointsToEarn);
+                            }
+                            if (currentUser != null && currentUser.getEmail() != null) {
+                                new Thread(() -> {
+                                    String name = currentUser.getPrenom() + " " + currentUser.getNom();
+                                    int totalPts = userService.getLoyaltyPoints(currentUser.getId());
+                                    emailService.sendPaymentConfirmationEmail(currentUser.getEmail(), name,
+                                        r.getNomEtablissement(), r.getCodeConfirmation(), r.getMontantTotal(),
+                                        "Flouci (upgrade)", pointsToEarn, totalPts);
+                                }).start();
+                            }
+                            showMessage("\u2705 Paiement Flouci confirme ! +" + pointsToEarn + " points gagnes \u2B50", true);
+                            loadData();
+                            dialog.close();
+                        }
+                    } else {
+                        statusLbl.setText("\u23F3 " + result.getMessage());
+                        statusLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 11;");
+                        verifyBtn.setDisable(false);
+                        verifyBtn.setText("\u2705 Verifier le paiement");
+                    }
+                });
+            }).start();
+        });
+
+        content.getChildren().addAll(headerRow, infoBox, payBtn, verifyBtn, statusLbl);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE));
 
         dialog.setResultConverter(bt -> null);
         dialog.showAndWait();
@@ -674,7 +706,7 @@ public class ReservationController {
         Label editTitle = new Label("\u2728 Modifier le mode de paiement");
         editTitle.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 12; -fx-font-weight: bold;");
 
-        boolean isCurrentlyCard = "Carte Bancaire".equalsIgnoreCase(r.getModePaiement());
+        boolean isCurrentlyCard = "Flouci".equalsIgnoreCase(r.getModePaiement());
         boolean isCash = "Especes".equalsIgnoreCase(r.getModePaiement());
         VBox modeBox = new VBox(4);
         Label modeLbl = new Label("Mode de Paiement");
@@ -689,22 +721,22 @@ public class ReservationController {
             lockLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 9;");
             modeBox.getChildren().addAll(modeLbl, modeCombo, lockLbl);
         } else if (isCurrentlyCard) {
-            modeCombo.getItems().add("Carte Bancaire");
-            modeCombo.setValue("Carte Bancaire");
+            modeCombo.getItems().add("Flouci");
+            modeCombo.setValue("Flouci");
             modeCombo.setDisable(true);
-            Label lockLbl = new Label("\uD83D\uDD12 Le mode Carte ne peut pas etre change en Especes");
+            Label lockLbl = new Label("\uD83D\uDD12 Le mode Flouci ne peut pas etre change en Especes");
             lockLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 9;");
             modeBox.getChildren().addAll(modeLbl, modeCombo, lockLbl);
         } else if (isCash) {
-            modeCombo.getItems().addAll("Especes", "Carte Bancaire");
+            modeCombo.getItems().addAll("Especes", "Flouci");
             modeCombo.setValue("Especes");
             modeCombo.setMaxWidth(Double.MAX_VALUE);
             int pointsToEarn = (int)(r.getMontantTotal() * 10);
-            Label upgradeTip = new Label("\u2B50 Passez en Carte pour gagner " + pointsToEarn + " points de fidelite !");
+            Label upgradeTip = new Label("\u2B50 Passez en Flouci pour gagner " + pointsToEarn + " points de fidelite !");
             upgradeTip.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 9;");
             modeBox.getChildren().addAll(modeLbl, modeCombo, upgradeTip);
         } else {
-            modeCombo.getItems().addAll("Especes", "Carte Bancaire");
+            modeCombo.getItems().addAll("Especes", "Flouci");
             modeCombo.setValue(r.getModePaiement() != null ? r.getModePaiement() : "Especes");
             modeCombo.setMaxWidth(Double.MAX_VALUE);
             modeBox.getChildren().addAll(modeLbl, modeCombo);
@@ -747,7 +779,7 @@ public class ReservationController {
             }
 
             // Award points if upgrading from Especes to Carte
-            boolean upgrading = "Especes".equalsIgnoreCase(oldMode) && "Carte Bancaire".equalsIgnoreCase(newMode);
+            boolean upgrading = "Especes".equalsIgnoreCase(oldMode) && "Flouci".equalsIgnoreCase(newMode);
             if (upgrading && currentUser != null) {
                 int pts = (int)(r.getMontantTotal() * 10);
                 userService.addLoyaltyPoints(currentUser.getId(), pts);
@@ -835,7 +867,7 @@ public class ReservationController {
         addDetailRow(detailRows, "\u23F0 Temps", getTimeAgo(r), "#888");
 
         // Payment mode badge with lock info
-        boolean isCard = "Carte Bancaire".equalsIgnoreCase(r.getModePaiement());
+        boolean isCard = "Flouci".equalsIgnoreCase(r.getModePaiement());
         if (isCard) {
             HBox cardBadge = new HBox(8);
             cardBadge.setAlignment(Pos.CENTER);
@@ -1357,6 +1389,11 @@ public class ReservationController {
 
     @FXML public void handleMinimize() { ((Stage) titleBar.getScene().getWindow()).setIconified(true); }
     @FXML public void handleClose() { ((Stage) titleBar.getScene().getWindow()).close(); }
+    @FXML public void handleToggleFullscreen() {
+        Stage stage = (Stage) titleBar.getScene().getWindow();
+        stage.setFullScreen(!stage.isFullScreen());
+        if (fullscreenBtn != null) fullscreenBtn.setText(stage.isFullScreen() ? "\u29C9" : "\u26F6");
+    }
 
     @FXML public void handleLogout() {
         try {
@@ -1648,34 +1685,203 @@ public class ReservationController {
     }
 
     // ================================================================
-    // FEATURE #11: Calendar Export (ICS)
+    // FEATURE #11: In-App Calendar View
     // ================================================================
     private void exportToCalendar(Reservation r) {
-        try {
-            String name = r.getNomEtablissement() != null ? r.getNomEtablissement() : "Reservation TABAANI";
-            String location = name;
-            String desc = "Reservation " + (r.getTypeService() != null ? r.getTypeService() : "") + " - Code: " + r.getCodeConfirmation()
-                    + " - " + r.getNbPersonnes() + " personnes - " + String.format("%.2f DT", r.getMontantTotal());
+        showInAppCalendar(r);
+    }
 
-            java.time.LocalDateTime start = r.getDatePaiement() != null ? r.getDatePaiement() : java.time.LocalDateTime.now();
-            java.time.LocalDateTime end = start.plusHours(2);
+    private void showInAppCalendar(Reservation r) {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Calendrier - Reservation");
+        dialog.setHeaderText(null);
+        DialogPane dp = dialog.getDialogPane();
+        dp.setStyle("-fx-background-color: #1a1a1a;");
+        dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
-            String icsContent = com.esprit.services.CalendarService.generateICS(name, location, desc, start, end, r.getCodeConfirmation());
+        VBox content = new VBox(14);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #1a1a1a;");
+        content.setMinWidth(520);
+        content.setMinHeight(520);
 
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Exporter vers le calendrier");
-            fileChooser.setInitialFileName("reservation_" + r.getCodeConfirmation() + ".ics");
-            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("iCalendar", "*.ics"));
-            Stage stage = (Stage) titleBar.getScene().getWindow();
-            File file = fileChooser.showSaveDialog(stage);
+        // Title
+        Label title = new Label("\uD83D\uDCC5 Calendrier de Reservation");
+        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
 
-            if (file != null) {
-                com.esprit.services.CalendarService.saveICSFile(file, icsContent);
-                showMessage("\uD83D\uDCC5 Exporte! Ouvrez le fichier .ics pour ajouter a votre calendrier.", true);
-            }
-        } catch (Exception e) {
-            showMessage("\u274C Erreur lors de l'export: " + e.getMessage(), false);
+        // Reservation info card
+        HBox infoCard = new HBox(12);
+        infoCard.setAlignment(Pos.CENTER_LEFT);
+        infoCard.setStyle("-fx-background-color: rgba(255,215,0,0.06); -fx-padding: 12; -fx-background-radius: 10;");
+        Label infoIcon = new Label(getServiceIcon(r.getTypeService()));
+        infoIcon.setStyle("-fx-font-size: 20;");
+        VBox infoText = new VBox(2);
+        Label infoName = new Label(r.getNomEtablissement() != null ? r.getNomEtablissement() : "Reservation");
+        infoName.setStyle("-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;");
+        Label infoCode = new Label("\uD83D\uDD11 " + (r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "N/A"));
+        infoCode.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 10; -fx-font-family: 'Consolas';");
+        infoText.getChildren().addAll(infoName, infoCode);
+        infoCard.getChildren().addAll(infoIcon, infoText);
+
+        // Calendar month navigation
+        java.time.LocalDateTime eventDate = r.getDatePaiement() != null ? r.getDatePaiement() : java.time.LocalDateTime.now();
+        final java.time.YearMonth[] currentMonth = { java.time.YearMonth.from(eventDate) };
+
+        HBox monthNav = new HBox(12);
+        monthNav.setAlignment(Pos.CENTER);
+        Button prevMonth = new Button("\u25C0");
+        prevMonth.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 6 12; -fx-background-radius: 8; -fx-cursor: hand;");
+        Label monthLabel = new Label("");
+        monthLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14; -fx-font-weight: bold;");
+        Button nextMonth = new Button("\u25B6");
+        nextMonth.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 6 12; -fx-background-radius: 8; -fx-cursor: hand;");
+        monthNav.getChildren().addAll(prevMonth, monthLabel, nextMonth);
+
+        // Calendar grid container
+        VBox calendarContainer = new VBox(4);
+
+        // Day headers
+        HBox dayHeaders = new HBox(0);
+        dayHeaders.setAlignment(Pos.CENTER);
+        String[] days = {"Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"};
+        for (String d : days) {
+            Label dayLbl = new Label(d);
+            dayLbl.setPrefWidth(60);
+            dayLbl.setAlignment(Pos.CENTER);
+            dayLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 10; -fx-font-weight: bold; -fx-padding: 4;");
+            dayHeaders.getChildren().add(dayLbl);
         }
+        calendarContainer.getChildren().add(dayHeaders);
+
+        // Grid placeholder
+        GridPane calendarGrid = new GridPane();
+        calendarGrid.setAlignment(Pos.CENTER);
+        calendarGrid.setHgap(2);
+        calendarGrid.setVgap(2);
+        calendarContainer.getChildren().add(calendarGrid);
+
+        // Event details panel below calendar
+        VBox eventDetails = new VBox(6);
+        eventDetails.setStyle("-fx-background-color: rgba(81,207,102,0.06); -fx-padding: 12; -fx-background-radius: 8;");
+        eventDetails.setVisible(false);
+
+        // Collect all reservation dates for highlighting
+        java.util.Map<java.time.LocalDate, List<Reservation>> reservationDates = new java.util.HashMap<>();
+        if (reservations != null) {
+            for (Reservation res : reservations) {
+                if (res.getDatePaiement() != null) {
+                    java.time.LocalDate date = res.getDatePaiement().toLocalDate();
+                    reservationDates.computeIfAbsent(date, k -> new java.util.ArrayList<>()).add(res);
+                }
+            }
+        }
+
+        // Build calendar function
+        Runnable buildCalendar = () -> {
+            calendarGrid.getChildren().clear();
+            java.time.format.DateTimeFormatter monthFmt = java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy", java.util.Locale.FRENCH);
+            monthLabel.setText(currentMonth[0].format(monthFmt).substring(0, 1).toUpperCase() + currentMonth[0].format(monthFmt).substring(1));
+
+            java.time.LocalDate firstDay = currentMonth[0].atDay(1);
+            int startDow = firstDay.getDayOfWeek().getValue(); // 1=Mon, 7=Sun
+            int daysInMonth = currentMonth[0].lengthOfMonth();
+            java.time.LocalDate today = java.time.LocalDate.now();
+            java.time.LocalDate eventDay = eventDate.toLocalDate();
+
+            int row = 0;
+            int col = startDow - 1;
+            for (int day = 1; day <= daysInMonth; day++) {
+                java.time.LocalDate date = currentMonth[0].atDay(day);
+                Button dayBtn = new Button(String.valueOf(day));
+                dayBtn.setPrefSize(58, 38);
+                dayBtn.setMinSize(58, 38);
+
+                boolean isEvent = date.equals(eventDay);
+                boolean hasReservation = reservationDates.containsKey(date);
+                boolean isToday = date.equals(today);
+
+                String style = "-fx-background-radius: 8; -fx-font-size: 11; -fx-font-weight: bold; -fx-cursor: hand; ";
+                if (isEvent) {
+                    style += "-fx-background-color: linear-gradient(to bottom, #FFD700, #FF8C00); -fx-text-fill: black;";
+                } else if (hasReservation) {
+                    style += "-fx-background-color: rgba(81,207,102,0.25); -fx-text-fill: #51CF66;";
+                } else if (isToday) {
+                    style += "-fx-background-color: rgba(100,181,246,0.2); -fx-text-fill: #64B5F6;";
+                } else {
+                    style += "-fx-background-color: rgba(255,255,255,0.04); -fx-text-fill: #888;";
+                }
+                dayBtn.setStyle(style);
+
+                final java.time.LocalDate clickDate = date;
+                dayBtn.setOnAction(ev -> {
+                    eventDetails.getChildren().clear();
+                    if (reservationDates.containsKey(clickDate)) {
+                        eventDetails.setVisible(true);
+                        Label detailTitle = new Label("\uD83D\uDCC5 Reservations du " + clickDate.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                        detailTitle.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;");
+                        eventDetails.getChildren().add(detailTitle);
+                        for (Reservation res : reservationDates.get(clickDate)) {
+                            HBox detailRow = new HBox(8);
+                            detailRow.setAlignment(Pos.CENTER_LEFT);
+                            Label dot = new Label("\u25CF");
+                            dot.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 8;");
+                            Label detailLbl = new Label((res.getNomEtablissement() != null ? res.getNomEtablissement() : "Reservation") +
+                                " | " + (res.getCodeConfirmation() != null ? res.getCodeConfirmation() : "") +
+                                " | " + String.format("%.2f DT", res.getMontantTotal()));
+                            detailLbl.setStyle("-fx-text-fill: #ccc; -fx-font-size: 10;");
+                            detailRow.getChildren().addAll(dot, detailLbl);
+                            eventDetails.getChildren().add(detailRow);
+                        }
+                    } else if (clickDate.equals(today)) {
+                        eventDetails.setVisible(true);
+                        Label todayLbl = new Label("\uD83D\uDCC6 Aujourd'hui - Aucune reservation");
+                        todayLbl.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 11;");
+                        eventDetails.getChildren().add(todayLbl);
+                    } else {
+                        eventDetails.setVisible(false);
+                    }
+                });
+
+                calendarGrid.add(dayBtn, col, row);
+                col++;
+                if (col > 6) {
+                    col = 0;
+                    row++;
+                }
+            }
+        };
+
+        buildCalendar.run();
+
+        prevMonth.setOnAction(e -> { currentMonth[0] = currentMonth[0].minusMonths(1); buildCalendar.run(); eventDetails.setVisible(false); });
+        nextMonth.setOnAction(e -> { currentMonth[0] = currentMonth[0].plusMonths(1); buildCalendar.run(); eventDetails.setVisible(false); });
+
+        // Legend
+        HBox legend = new HBox(16);
+        legend.setAlignment(Pos.CENTER);
+        legend.getChildren().addAll(
+            buildLegendItem("#FFD700", "Cette reservation"),
+            buildLegendItem("#51CF66", "Autres reservations"),
+            buildLegendItem("#64B5F6", "Aujourd'hui")
+        );
+
+        content.getChildren().addAll(title, infoCard, monthNav, calendarContainer, eventDetails, legend);
+        dp.setContent(content);
+        dp.getButtonTypes().add(new ButtonType("Fermer", ButtonBar.ButtonData.CANCEL_CLOSE));
+
+        dialog.showAndWait();
+    }
+
+    private HBox buildLegendItem(String color, String text) {
+        HBox item = new HBox(6);
+        item.setAlignment(Pos.CENTER_LEFT);
+        Region dot = new Region();
+        dot.setPrefSize(10, 10);
+        dot.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 5;");
+        Label lbl = new Label(text);
+        lbl.setStyle("-fx-text-fill: #888; -fx-font-size: 9;");
+        item.getChildren().addAll(dot, lbl);
+        return item;
     }
 
     // ================================================================
@@ -1825,7 +2031,7 @@ public class ReservationController {
         // Quick stats
         double totalSpent = reservations.stream().mapToDouble(Reservation::getMontantTotal).sum();
         double avgSpent = totalSpent / reservations.size();
-        long cardPayments = reservations.stream().filter(rv -> "Carte Bancaire".equalsIgnoreCase(rv.getModePaiement())).count();
+        long cardPayments = reservations.stream().filter(rv -> "Flouci".equalsIgnoreCase(rv.getModePaiement())).count();
 
         HBox statsRow = new HBox(12);
         statsRow.setAlignment(Pos.CENTER);

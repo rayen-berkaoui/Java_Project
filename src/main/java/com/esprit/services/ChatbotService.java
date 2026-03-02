@@ -39,7 +39,7 @@ public class ChatbotService {
         2. PANIER & RESERVATIONS: Aider a comprendre le systeme de panier, les prix, les promotions
         3. BUDGET: Donner des conseils pour optimiser le budget voyage
         4. CODES PROMO: SMART10=-10%, TRAVEL20=-20%, VIP15=-15%, GOLD25=-25%, WELCOME5=-5%
-        5. POINTS FIDELITE: 10pts/DT avec carte bancaire, 100pts=5%, 200pts=10%, 500pts=20%
+        5. POINTS FIDELITE: 10pts/DT avec Flouci, 100pts=5%, 200pts=10%, 500pts=20%
         Reponds TOUJOURS en francais. Sois concis (max 150 mots). Utilise des emojis.
         """;
 
@@ -161,8 +161,8 @@ public class ChatbotService {
                 "2. Cliquez 'Reserver' pour ajouter au panier\n" +
                 "3. Choisissez dates + nombre de personnes\n" +
                 "4. Appliquez un code promo (optionnel)\n" +
-                "5. Validez et payez par carte ou Stripe\n\n" +
-                "💳 Paiement securise par Stripe\n" +
+                "5. Validez et payez par Flouci ou en especes\n\n" +
+                "\uD83D\uDCF1 Paiement securise par Flouci\n" +
                 "📄 Facture PDF generee automatiquement\n" +
                 "✅ Confirmation par email instantanee",
 
@@ -175,19 +175,19 @@ public class ChatbotService {
                 "📥 Telechargez votre facture depuis la page reservations."
             });
 
-        KNOWLEDGE_BASE.put("paiement|payer|carte|stripe|bancaire|transaction|facture",
+        KNOWLEDGE_BASE.put("paiement|payer|carte|flouci|bancaire|transaction|facture",
             new String[]{
-                "💳 Paiement sur TABAANI :\n\n" +
-                "🔒 **Methodes acceptees :**\n" +
-                "• Carte bancaire (Visa, Mastercard)\n" +
-                "• Paiement securise via **Stripe**\n\n" +
-                "📋 **Processus :**\n" +
+                "\uD83D\uDCB3 Paiement sur TABAANI :\n\n" +
+                "\uD83D\uDD12 **Methodes acceptees :**\n" +
+                "\u2022 Especes (paiement en boutique)\n" +
+                "\u2022 Paiement en ligne via **Flouci**\n\n" +
+                "\uD83D\uDCCB **Processus Flouci :**\n" +
                 "1. Validez votre panier\n" +
-                "2. Entrez vos informations de carte\n" +
-                "3. Confirmez le paiement\n" +
+                "2. Cliquez sur Flouci pour ouvrir le lien de paiement\n" +
+                "3. Payez avec votre wallet Flouci ou carte bancaire\n" +
                 "4. Recevez votre confirmation + facture PDF\n\n" +
-                "🎁 Chaque paiement vous rapporte **10 points/DT** !\n" +
-                "🔐 Vos donnees sont 100% securisees (chiffrement SSL)."
+                "\uD83C\uDF81 Chaque paiement Flouci vous rapporte **10 points/DT** !\n" +
+                "\uD83D\uDD10 Vos donnees sont 100% securisees."
             });
 
         KNOWLEDGE_BASE.put("restaurant|manger|cuisine|gastronomie|plat|nourriture",
