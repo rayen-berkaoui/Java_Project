@@ -39,7 +39,8 @@ public class KonnectPaymentService {
     private static final String API_KEY;
     private static final String WALLET_ID;
 
-    // Redirect URLs — Konnect redirects here after success/fail
+    // Redirect URLs — used by WebView to detect success/fail
+    // NOTE: successUrl/failUrl are deprecated in Konnect API v2 but still useful for WebView redirect detection
     public static final String SUCCESS_URL = "https://tabaani.tn/payment/success";
     public static final String FAIL_URL = "https://tabaani.tn/payment/fail";
 
@@ -144,6 +145,17 @@ public class KonnectPaymentService {
      * @return PaymentResult with payUrl to open in WebView
      */
     public PaymentResult initPayment(double amountInDT, String description) {
+        return initPayment(amountInDT, description, null, null, null, null);
+    }
+
+    /**
+     * Initiate a Konnect payment with optional customer pre-fill fields.
+     * Per Konnect API docs: amount is in Millimes (1 DT = 1000 millimes).
+     * Pre-filling firstName/lastName/email/phoneNumber skips the checkout form entry.
+     */
+    public PaymentResult initPayment(double amountInDT, String description,
+                                      String firstName, String lastName,
+                                      String email, String phoneNumber) {
         try {
             if (API_KEY.startsWith("YOUR_")) {
                 return new PaymentResult(false,
@@ -154,30 +166,46 @@ public class KonnectPaymentService {
             // Convert DT to millimes (1 DT = 1000 millimes)
             int amountInMillimes = (int) Math.round(amountInDT * 1000);
 
-            // Build JSON request body per Konnect API spec
+            // Build JSON request body per Konnect API docs exactly:
+            // https://docs.konnect.network/docs/en/api-integration/endpoints/initiate-payment
             JsonObject body = new JsonObject();
             body.addProperty("receiverWalletId", WALLET_ID);
             body.addProperty("amount", amountInMillimes);
             body.addProperty("token", "TND");
             body.addProperty("type", "immediate");
 
-            // Accepted payment methods
+            // Accepted payment methods (bank_card and e-DINAR available in sandbox)
             JsonArray methods = new JsonArray();
             methods.add("bank_card");
-            methods.add("wallet");
             methods.add("e-DINAR");
             body.add("acceptedPaymentMethods", methods);
 
             // Description / order ID
             if (description != null && !description.isEmpty()) {
                 body.addProperty("orderId", sanitizeOrderId(description));
+                body.addProperty("description", description);
             }
 
-            // Redirect URLs
+            // Pre-fill customer contact info (skips manual entry on Konnect checkout form)
+            if (firstName != null && !firstName.isEmpty()) body.addProperty("firstName", firstName);
+            if (lastName != null && !lastName.isEmpty()) body.addProperty("lastName", lastName);
+            if (email != null && !email.isEmpty()) body.addProperty("email", email);
+            if (phoneNumber != null && !phoneNumber.isEmpty()) body.addProperty("phoneNumber", phoneNumber);
+
+            // successUrl/failUrl are deprecated but needed for WebView redirect detection
             body.addProperty("successUrl", SUCCESS_URL);
             body.addProperty("failUrl", FAIL_URL);
 
-            // Theme
+            // Payment session lifespan in minutes
+            body.addProperty("lifespan", 20);
+
+            // Enable Konnect checkout form (true = Konnect shows its own form)
+            body.addProperty("checkoutForm", true);
+
+            // Add payment fees to payer amount
+            body.addProperty("addPaymentFeesToAmount", true);
+
+            // Theme: dark to match our app
             body.addProperty("theme", "dark");
 
             System.out.println("[KONNECT] Initiating payment for " + amountInDT + " DT (" + amountInMillimes + " millimes)");

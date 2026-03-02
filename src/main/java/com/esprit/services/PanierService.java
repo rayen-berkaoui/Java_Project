@@ -40,7 +40,28 @@ public class PanierService {
     }
 
     // =====================================================
-    // GET ALL PANIER ITEMS
+    // GET PANIER ITEM BY ID
+    // =====================================================
+    public Panier getById(int idPanier) {
+        String sql = "SELECT p.*, u.nom AS nom_client, u.prenom AS prenom_client " +
+                     "FROM panier p " +
+                     "LEFT JOIN utilisateur u ON p.id_client = u.id " +
+                     "WHERE p.id_panier = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, idPanier);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return mapPanier(rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    // =====================================================
+    // GET ALL PANIER ITEMS (all clients)
     // =====================================================
     public List<Panier> getAll() {
         List<Panier> list = new ArrayList<>();

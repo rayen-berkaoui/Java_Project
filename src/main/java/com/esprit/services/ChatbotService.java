@@ -396,6 +396,107 @@ public class ChatbotService {
         return chat("Donne-moi les informations essentielles sur " + destination);
     }
 
+    /**
+     * Generate a standalone AI review — uses a fresh API call without chatbot history.
+     * This avoids the travel assistant system prompt polluting the review output.
+     */
+    public String generateReview(String prompt) {
+        if (API_KEY == null || API_KEY.isBlank()) {
+            return "⚠️ Service IA indisponible. Veuillez rediger votre avis manuellement.";
+        }
+        try {
+            // Build a clean two-turn conversation (system-like instruction + actual request)
+            // Gemini requires alternating user/model roles
+            JsonObject requestBody = new JsonObject();
+            JsonArray contents = new JsonArray();
+
+            // Turn 1: user gives system instruction
+            JsonObject sysMsg = new JsonObject();
+            sysMsg.addProperty("role", "user");
+            JsonArray sysParts = new JsonArray();
+            JsonObject sysText = new JsonObject();
+            sysText.addProperty("text", "Tu es un redacteur d'avis clients en francais. Tu ecris des avis authentiques, "
+                + "naturels et personnels comme un vrai voyageur. Tu ne mentionnes jamais que tu es une IA. "
+                + "Tu reponds UNIQUEMENT avec l'avis demande, sans introduction ni commentaire supplementaire.");
+            sysParts.add(sysText);
+            sysMsg.add("parts", sysParts);
+            contents.add(sysMsg);
+
+            // Turn 2: model acknowledges
+            JsonObject ackMsg = new JsonObject();
+            ackMsg.addProperty("role", "model");
+            JsonArray ackParts = new JsonArray();
+            JsonObject ackText = new JsonObject();
+            ackText.addProperty("text", "Compris, je vais rediger l'avis demande.");
+            ackParts.add(ackText);
+            ackMsg.add("parts", ackParts);
+            contents.add(ackMsg);
+
+            // Turn 3: user gives the actual review request
+            JsonObject userMsg = new JsonObject();
+            userMsg.addProperty("role", "user");
+            JsonArray userParts = new JsonArray();
+            JsonObject userText = new JsonObject();
+            userText.addProperty("text", prompt);
+            userParts.add(userText);
+            userMsg.add("parts", userParts);
+            contents.add(userMsg);
+
+            requestBody.add("contents", contents);
+
+            JsonObject genConfig = new JsonObject();
+            genConfig.addProperty("temperature", 0.9);
+            genConfig.addProperty("maxOutputTokens", 400);
+            genConfig.addProperty("topP", 0.95);
+            requestBody.add("generationConfig", genConfig);
+
+            System.out.println("[AI REVIEW] Sending request to Gemini...");
+            String response = sendRequest(requestBody.toString());
+            System.out.println("[AI REVIEW] Response: " + response.substring(0, Math.min(response.length(), 500)));
+
+            JsonObject responseJson = gson.fromJson(response, JsonObject.class);
+
+            if (responseJson.has("candidates")) {
+                JsonArray candidates = responseJson.getAsJsonArray("candidates");
+                if (candidates.size() > 0) {
+                    JsonObject candidate = candidates.get(0).getAsJsonObject();
+                    if (candidate.has("content")) {
+                        return candidate.getAsJsonObject("content")
+                            .getAsJsonArray("parts").get(0).getAsJsonObject()
+                            .get("text").getAsString();
+                    }
+                    // Candidate exists but was blocked by safety filters
+                    if (candidate.has("finishReason")) {
+                        String reason = candidate.get("finishReason").getAsString();
+                        System.err.println("[AI REVIEW] Blocked: finishReason=" + reason);
+                    }
+                }
+            }
+            // Check for API error field
+            if (responseJson.has("error")) {
+                String errorMsg = responseJson.getAsJsonObject("error").has("message")
+                    ? responseJson.getAsJsonObject("error").get("message").getAsString()
+                    : "Unknown API error";
+                System.err.println("[AI REVIEW] API Error: " + errorMsg);
+                // Fall through to use chat() as fallback
+            }
+
+            // Fallback: use the regular chat() method which is known to work
+            System.out.println("[AI REVIEW] Standalone call failed, falling back to chat()...");
+            return chat(prompt);
+
+        } catch (Exception e) {
+            System.err.println("[AI REVIEW] Exception: " + e.getMessage());
+            e.printStackTrace();
+            // Fallback: use the regular chat() method
+            try {
+                return chat(prompt);
+            } catch (Exception ex) {
+                return "⚠️ Erreur de connexion a l'IA: " + e.getMessage();
+            }
+        }
+    }
+
     public void clearHistory() {
         conversationHistory.clear();
         conversationHistory.add(new ChatMessage("user", SYSTEM_PROMPT));

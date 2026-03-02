@@ -223,6 +223,88 @@ public class EmailService {
     }
 
     /**
+     * Send cash reservation email — "reserved, awaiting admin approval"
+     */
+    public boolean sendCashReservationEmail(String toEmail, String customerName,
+            String serviceName, String confirmationCode, double amount) {
+        try {
+            Session session = getMailSession();
+            MimeMessage message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(EMAIL_FROM, "Tabaani - SmartTravel"));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("\u23F3 Tabaani - Reservation en attente #" + confirmationCode);
+
+            MimeMultipart multipart = new MimeMultipart("related");
+            MimeBodyPart htmlPart = new MimeBodyPart();
+            htmlPart.setContent(buildCashReservationHtml(customerName, serviceName, confirmationCode, amount),
+                    "text/html; charset=UTF-8");
+            multipart.addBodyPart(htmlPart);
+
+            byte[] logoBytes = getLogoBytes();
+            if (logoBytes != null) {
+                MimeBodyPart logoPart = new MimeBodyPart();
+                DataSource logoDs = new ByteArrayDataSource(logoBytes, "image/png");
+                logoPart.setDataHandler(new DataHandler(logoDs));
+                logoPart.setHeader("Content-ID", "<tabaani-logo>");
+                logoPart.setFileName("tabaani_logo.png");
+                logoPart.setDisposition(MimeBodyPart.INLINE);
+                multipart.addBodyPart(logoPart);
+            }
+
+            message.setContent(multipart);
+            Transport.send(message);
+            System.out.println("\u2705 Cash reservation email sent to: " + toEmail);
+            return true;
+        } catch (Exception e) {
+            System.out.println("\u274C Failed to send cash reservation email: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private String buildCashReservationHtml(String customerName, String serviceName, String code, double amount) {
+        return "<!DOCTYPE html>\n<html lang=\"fr\">\n" +
+            "<head><meta charset=\"UTF-8\"></head>\n" +
+            "<body style=\"margin:0;padding:0;background-color:#0a0a0a;font-family:'Segoe UI',Arial,sans-serif;\">\n" +
+            "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color:#0a0a0a;\">\n" +
+            "  <tr><td align=\"center\" style=\"padding:40px 20px;\">\n" +
+            "    <table role=\"presentation\" width=\"520\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color:#111111;border-radius:16px;border:1px solid rgba(100,181,246,0.3);\">\n" +
+            "      <tr><td align=\"center\" style=\"padding:30px 40px 15px;\"><img src=\"cid:tabaani-logo\" alt=\"Tabaani\" width=\"100\" style=\"border-radius:10px;\"/></td></tr>\n" +
+            "      <tr><td style=\"padding:0 60px;\"><div style=\"height:2px;background:linear-gradient(90deg,transparent,#64B5F6,transparent);\"></div></td></tr>\n" +
+            "      <tr><td align=\"center\" style=\"padding:24px 40px 8px;\"><h1 style=\"margin:0;color:#64B5F6;font-size:22px;\">\u23F3 Reservation En Attente</h1></td></tr>\n" +
+            "      <tr><td align=\"center\" style=\"padding:0 40px 20px;\"><p style=\"margin:0;color:#aaa;font-size:14px;\">Bonjour " + customerName + ",<br>Votre reservation a \u00e9t\u00e9 enregistr\u00e9e avec succ\u00e8s.<br><strong style=\"color:#FFA726;\">Elle est en attente d'approbation par l'administrateur.</strong></p></td></tr>\n" +
+            "      <tr><td align=\"center\" style=\"padding:0 40px 20px;\">\n" +
+            "        <table cellspacing=\"0\" cellpadding=\"0\"><tr><td style=\"background-color:#0a0a0a;border:2px solid #FFD700;border-radius:14px;padding:16px 40px;\">\n" +
+            "          <span style=\"font-size:28px;font-weight:800;color:#FFD700;letter-spacing:6px;font-family:'Courier New',monospace;\">" + code + "</span>\n" +
+            "        </td></tr></table>\n" +
+            "      </td></tr>\n" +
+            "      <tr><td style=\"padding:0 40px 20px;\">\n" +
+            "        <table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color:rgba(255,255,255,0.03);border-radius:12px;border:1px solid rgba(255,255,255,0.06);\">\n" +
+            "          <tr><td style=\"padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.04);\">\n" +
+            "            <span style=\"color:#888;font-size:12px;\">Service</span><br/><span style=\"color:white;font-size:14px;font-weight:600;\">" + serviceName + "</span></td></tr>\n" +
+            "          <tr><td style=\"padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.04);\">\n" +
+            "            <span style=\"color:#888;font-size:12px;\">Mode de paiement</span><br/><span style=\"color:white;font-size:14px;font-weight:600;\">Esp\u00e8ces (en attente)</span></td></tr>\n" +
+            "          <tr><td style=\"padding:14px 20px;\">\n" +
+            "            <span style=\"color:#888;font-size:12px;\">Montant \u00e0 payer</span><br/><span style=\"color:#FFD700;font-size:20px;font-weight:800;\">" + String.format("%.2f DT", amount) + "</span></td></tr>\n" +
+            "        </table>\n" +
+            "      </td></tr>\n" +
+            "      <tr><td style=\"padding:0 40px 16px;\">\n" +
+            "        <table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background-color:rgba(255,167,38,0.06);border:1px solid rgba(255,167,38,0.15);border-radius:12px;\">\n" +
+            "          <tr><td style=\"padding:16px 24px;\">\n" +
+            "            <p style=\"margin:0;color:#FFA726;font-size:13px;font-weight:700;\">\u26A0 Action requise</p>\n" +
+            "            <p style=\"margin:6px 0 0 0;color:#aaa;font-size:12px;\">Votre paiement en esp\u00e8ces doit \u00eatre approuv\u00e9 par un administrateur. Vous recevrez un email de confirmation une fois le paiement valid\u00e9.</p>\n" +
+            "          </td></tr>\n" +
+            "        </table>\n" +
+            "      </td></tr>\n" +
+            "      <tr><td style=\"padding:0 40px;\"><div style=\"height:1px;background-color:rgba(255,255,255,0.06);\"></div></td></tr>\n" +
+            "      <tr><td align=\"center\" style=\"padding:16px 40px;background-color:#0a0a0a;border-top:1px solid rgba(100,181,246,0.08);border-radius:0 0 16px 16px;\">\n" +
+            "        <p style=\"margin:0;color:#444;font-size:11px;\">\u00A9 2026 Tabaani \u2014 SmartTravel</p>\n" +
+            "      </td></tr>\n" +
+            "    </table>\n" +
+            "  </td></tr>\n</table>\n</body>\n</html>";
+    }
+
+    /**
      * Send payment confirmation email with receipt details
      */
     public boolean sendPaymentConfirmationEmail(String toEmail, String customerName,

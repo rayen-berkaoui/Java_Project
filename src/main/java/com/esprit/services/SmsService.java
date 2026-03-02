@@ -165,6 +165,21 @@ public class SmsService {
     }
 
     /**
+     * Send a cash reservation SMS — "reserved, awaiting admin approval"
+     */
+    public SmsResult sendCashReservationSms(String phoneNumber, String customerName,
+            String serviceName, String confirmationCode, double amount) {
+        String msg = "TABAANI SmartTravel\n"
+            + "Bonjour " + customerName + "!\n"
+            + "Reservation enregistree: " + String.format("%.2f DT", amount) + "\n"
+            + "Service: " + serviceName + "\n"
+            + "Code: " + confirmationCode + "\n"
+            + "En attente d'approbation admin.\n"
+            + "Vous serez notifie une fois approuvee.";
+        return sendSms(phoneNumber, msg);
+    }
+
+    /**
      * Send an OTP code via SMS.
      */
     public SmsResult sendOTP(String phoneNumber, String otpCode) {

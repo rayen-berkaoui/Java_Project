@@ -83,6 +83,83 @@ public class PanierController {
     private String appliedPromo = null;
     private double discountPercent = 0;
 
+    /**
+     * Apply premium Konnect-style theming to any Dialog:
+     *  - Undecorated (no system chrome)
+     *  - Gradient top accent bar with title, icon and draggable close button
+     *  - Rounded corners, drop shadow, consistent button styling
+     */
+    private void styleDialog(Dialog<?> dialog, String icon, String title, String accentColor) {
+        DialogPane dp = dialog.getDialogPane();
+
+        dialog.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+
+        dp.setStyle("-fx-background-color: #1a1a1a; -fx-background-radius: 16; -fx-border-radius: 16; "
+                + "-fx-border-color: #333; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 24, 0, 0, 8);");
+
+        dp.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+                final double[] dragDelta = {0, 0};
+                dp.setOnMousePressed(e -> {
+                    if (e.getY() < 52) { dragDelta[0] = e.getSceneX(); dragDelta[1] = e.getSceneY(); }
+                });
+                dp.setOnMouseDragged(e -> {
+                    if (e.getY() < 52 || dragDelta[0] != 0) {
+                        Stage s = (Stage) dp.getScene().getWindow();
+                        s.setX(e.getScreenX() - dragDelta[0]);
+                        s.setY(e.getScreenY() - dragDelta[1]);
+                    }
+                });
+                dp.setOnMouseReleased(e -> { dragDelta[0] = 0; dragDelta[1] = 0; });
+            }
+        });
+
+        HBox topBar = new HBox(10);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(10, 16, 10, 16));
+        topBar.setStyle("-fx-background-color: linear-gradient(to right, #111, #1a1a1a); "
+                + "-fx-background-radius: 16 16 0 0; -fx-border-color: " + accentColor + "; -fx-border-width: 0 0 1 0;");
+
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle("-fx-font-size: 18;");
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle("-fx-text-fill: " + accentColor + "; -fx-font-size: 14; -fx-font-weight: bold;");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button closeBtn = new Button("\u2715");
+        closeBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-font-size: 13; "
+                + "-fx-background-radius: 20; -fx-padding: 4 10; -fx-cursor: hand;");
+        closeBtn.setOnMouseEntered(e -> closeBtn.setStyle("-fx-background-color: rgba(255,107,107,0.3); -fx-text-fill: #FF6B6B; -fx-font-size: 13; -fx-background-radius: 20; -fx-padding: 4 10; -fx-cursor: hand;"));
+        closeBtn.setOnMouseExited(e -> closeBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-font-size: 13; -fx-background-radius: 20; -fx-padding: 4 10; -fx-cursor: hand;"));
+        closeBtn.setOnAction(e -> {
+            if (dp.getButtonTypes().isEmpty()) {
+                dp.getButtonTypes().add(ButtonType.CANCEL);
+            }
+            ((Stage) dp.getScene().getWindow()).close();
+        });
+        topBar.getChildren().addAll(iconLbl, titleLbl, spacer, closeBtn);
+        dp.setHeader(topBar);
+
+        dp.getButtonTypes().addListener((javafx.collections.ListChangeListener<ButtonType>) c -> styleDialogButtons(dp, accentColor));
+        javafx.application.Platform.runLater(() -> styleDialogButtons(dp, accentColor));
+    }
+
+    private void styleDialogButtons(DialogPane dp, String accentColor) {
+        for (ButtonType bt : dp.getButtonTypes()) {
+            Button b = (Button) dp.lookupButton(bt);
+            if (b == null) continue;
+            if (bt.getButtonData() == ButtonBar.ButtonData.OK_DONE || bt.getButtonData() == ButtonBar.ButtonData.APPLY) {
+                b.setStyle("-fx-background-color: linear-gradient(to right, " + accentColor + ", #FF8C00); "
+                        + "-fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 10 28; -fx-background-radius: 10; -fx-font-size: 13; -fx-cursor: hand;");
+            } else {
+                b.setStyle("-fx-background-color: rgba(255,255,255,0.06); -fx-text-fill: #aaa; "
+                        + "-fx-padding: 10 22; -fx-background-radius: 10; -fx-font-size: 12; -fx-cursor: hand;");
+            }
+        }
+        dp.lookupAll(".button-bar").forEach(node -> node.setStyle("-fx-background-color: transparent; -fx-padding: 8 16 16 16;"));
+    }
+
     @FXML
     public void initialize() {
         if (titleBar != null) {
@@ -415,15 +492,11 @@ public class PanierController {
         duplicateBtn.setStyle("-fx-background-color: rgba(41,182,246,0.12); -fx-text-fill: #29B6F6; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         duplicateBtn.setOnAction(e -> duplicatePanierItem(p));
 
-        Button shareBtn = new Button("\uD83D\uDCE4 Partager");
-        shareBtn.setStyle("-fx-background-color: rgba(178,102,255,0.12); -fx-text-fill: #B266FF; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
-        shareBtn.setOnAction(e -> sharePanierItem(p));
-
         Button compareBtn = new Button("\uD83D\uDCCA Comparer");
         compareBtn.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         compareBtn.setOnAction(e -> showPriceComparisonDialog(p));
 
-        extraButtons.getChildren().addAll(duplicateBtn, shareBtn, compareBtn);
+        extraButtons.getChildren().addAll(duplicateBtn, compareBtn);
 
         // Split payment info
         if (!isRestoItem && p.getNbPersonnes() > 1 && p.getPrixEstime() > 0) {
@@ -495,9 +568,9 @@ public class PanierController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Modifier l'article");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\u270F", "Modifier l'Article du Panier", "#FFA726");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -539,6 +612,16 @@ public class PanierController {
         debutLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
         DatePicker debutPicker = new DatePicker(p.getDateDebut() != null ? p.getDateDebut().toLocalDate() : LocalDate.now().plusDays(3));
         debutPicker.setStyle("-fx-background-color: #222;");
+        // Prevent selecting past dates (like Booking.com, Expedia, all real travel sites)
+        debutPicker.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+            @Override public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (date.isBefore(LocalDate.now())) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: rgba(255,107,107,0.15); -fx-text-fill: #555;");
+                }
+            }
+        });
         debutBox.getChildren().addAll(debutLbl, debutPicker);
 
         VBox finBox = new VBox(4);
@@ -547,7 +630,24 @@ public class PanierController {
         finLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
         DatePicker finPicker = new DatePicker(p.getDateFin() != null ? p.getDateFin().toLocalDate() : LocalDate.now().plusDays(4));
         finPicker.setStyle("-fx-background-color: #222;");
+        // End date must be at least 1 day after start date (minimum 1 night, like all hotel sites)
+        finPicker.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+            @Override public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                LocalDate minEnd = debutPicker.getValue() != null ? debutPicker.getValue().plusDays(1) : LocalDate.now().plusDays(1);
+                if (date.isBefore(minEnd)) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: rgba(255,107,107,0.15); -fx-text-fill: #555;");
+                }
+            }
+        });
         finBox.getChildren().addAll(finLbl, finPicker);
+        // Auto-adjust end date when start date changes (like Booking.com, Airbnb)
+        debutPicker.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && finPicker.getValue() != null && !finPicker.getValue().isAfter(newVal)) {
+                finPicker.setValue(newVal.plusDays(1));
+            }
+        });
         dateRow.getChildren().addAll(debutBox, finBox);
         dateSection.getChildren().addAll(dateSectionTitle, dateRow);
 
@@ -650,8 +750,13 @@ public class PanierController {
                 errorLbl.setText("\u274C Veuillez selectionner les dates");
                 event.consume(); return;
             }
-            if (endDate.isBefore(startDate)) {
-                errorLbl.setText("\u274C La date de fin doit etre apres la date de debut");
+            // Prevent past dates (standard on Booking.com, Expedia, all real travel sites)
+            if (startDate.isBefore(LocalDate.now())) {
+                errorLbl.setText("\u274C La date de debut ne peut pas etre dans le passe");
+                event.consume(); return;
+            }
+            if (endDate.isBefore(startDate) || endDate.isEqual(startDate)) {
+                errorLbl.setText("\u274C La date de fin doit etre au moins 1 jour apres le debut (minimum 1 nuit)");
                 event.consume(); return;
             }
 
@@ -686,9 +791,9 @@ public class PanierController {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Code Promo");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\uD83C\uDF89", "Code Promotionnel", "#B266FF");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -816,9 +921,9 @@ public class PanierController {
         Dialog<String> dialog = new Dialog<>();
         dialog.setTitle("Mode de Paiement");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\uD83D\uDCB3", "Choisir le mode de paiement", "#FFD700");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(20);
@@ -841,6 +946,30 @@ public class PanierController {
 
         VBox priceSection = new VBox(4);
         priceSection.setAlignment(Pos.CENTER);
+        priceSection.setStyle("-fx-background-color: rgba(255,215,0,0.04); -fx-padding: 14; -fx-background-radius: 10;");
+
+        // Price breakdown (like Booking.com, Expedia — show per-person and per-night)
+        VBox breakdownBox = new VBox(4);
+        breakdownBox.setStyle("-fx-padding: 0 0 6 0;");
+        long nights = 1;
+        if (p.getDateDebut() != null && p.getDateFin() != null) {
+            nights = Math.max(1, java.time.temporal.ChronoUnit.DAYS.between(p.getDateDebut().toLocalDate(), p.getDateFin().toLocalDate()));
+        }
+        if (p.getNbPersonnes() > 1) {
+            Label perPersonLbl = new Label(String.format("\uD83D\uDC65 %d personnes x %.2f DT", p.getNbPersonnes(), p.getPrixEstime() / p.getNbPersonnes()));
+            perPersonLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
+            breakdownBox.getChildren().add(perPersonLbl);
+        }
+        boolean isHotelType = p.getTypeService() != null && (p.getTypeService().toLowerCase().contains("hotel") || p.getTypeService().toLowerCase().contains("voyage"));
+        if (isHotelType && nights > 1) {
+            Label perNightLbl = new Label(String.format("\uD83C\uDF19 %d nuit%s x %.2f DT/nuit", nights, nights > 1 ? "s" : "", p.getPrixEstime() / nights));
+            perNightLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
+            breakdownBox.getChildren().add(perNightLbl);
+        }
+        if (!breakdownBox.getChildren().isEmpty()) {
+            priceSection.getChildren().add(breakdownBox);
+        }
+
         if (appliedPromo != null && discountPercent > 0) {
             Label origPriceLbl = new Label(String.format("Prix original: %.2f DT", p.getPrixEstime()));
             origPriceLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 12; -fx-strikethrough: true;");
@@ -877,7 +1006,7 @@ public class PanierController {
         cashIcon.setStyle("-fx-font-size: 36;");
         Label cashLbl = new Label("Especes");
         cashLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 14; -fx-font-weight: bold;");
-        Label cashDesc = new Label("Paiement immediat\nPas de points bonus");
+        Label cashDesc = new Label("Reserve en attente\nApprobation admin requise");
         cashDesc.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
         cashDesc.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
         cashBox.getChildren().addAll(cashIcon, cashLbl, cashDesc);
@@ -931,13 +1060,14 @@ public class PanierController {
         r.setDatePaiement(LocalDateTime.now());
         r.setMontantTotal(finalPrice);
         r.setModePaiement("Especes");
+        // Cash payment = booking reserved, awaiting admin approval before it's confirmed
         r.setStatutPaiement("En cours de paiement");
 
         if (reservationService.ajouter(r)) {
             panierService.modifier(updatePanierStatut(p, "confirme"));
-            // Send confirmation email (no loyalty points for cash)
-            sendConfirmationEmail(p, r, finalPrice, 0);
-            showPaymentSuccessOverlay(p, r, finalPrice, 0);
+            // Send "reserved, awaiting payment" email (no loyalty points for cash)
+            sendCashReservationEmail(p, r, finalPrice);
+            showCashReservationSuccessOverlay(p, r, finalPrice);
             loadData();
         } else {
             showMessage("Echec du paiement.", false);
@@ -1138,8 +1268,15 @@ public class PanierController {
 
             String description = "TABAANI_" + (p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService());
 
+            // Pre-fill customer info for Konnect checkout form
+            String custFirst = currentUser != null ? currentUser.getPrenom() : null;
+            String custLast = currentUser != null ? currentUser.getNom() : null;
+            String custEmail = currentUser != null ? currentUser.getEmail() : null;
+            String custPhone = currentUser != null ? String.valueOf(currentUser.getNumTel()) : null;
+
             new Thread(() -> {
-                KonnectPaymentService.PaymentResult result = konnectService.initPayment(finalPrice, description);
+                KonnectPaymentService.PaymentResult result = konnectService.initPayment(
+                    finalPrice, description, custFirst, custLast, custEmail, custPhone);
 
                 javafx.application.Platform.runLater(() -> {
                     if (result.isSuccess() && result.getPaymentLink() != null) {
@@ -1151,6 +1288,27 @@ public class PanierController {
                         paymentStage.setWidth(750);
                         paymentStage.setHeight(680);
                         paymentStage.centerOnScreen();
+
+                        // Start payment status polling every 5 seconds as fallback
+                        // In case URL redirect detection fails (sandbox/bank card issues)
+                        javafx.animation.Timeline poller = new javafx.animation.Timeline(
+                            new javafx.animation.KeyFrame(Duration.seconds(5), ev -> {
+                                if (paymentId[0] != null) {
+                                    new Thread(() -> {
+                                        KonnectPaymentService.PaymentResult pollResult = konnectService.verifyPayment(paymentId[0]);
+                                        if (pollResult.isSuccess() && "completed".equalsIgnoreCase(pollResult.getStatus())) {
+                                            javafx.application.Platform.runLater(() -> {
+                                                processKonnectPaymentSuccess(p, finalPrice, pointsToEarn, paymentId[0]);
+                                                paymentStage.close();
+                                            });
+                                        }
+                                    }).start();
+                                }
+                            })
+                        );
+                        poller.setCycleCount(60); // Poll for up to 5 minutes
+                        poller.play();
+                        paymentStage.setOnHidden(ev -> poller.stop());
                     } else {
                         statusLbl.setText("\u274C " + result.getMessage());
                         statusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
@@ -1283,6 +1441,163 @@ public class PanierController {
                 System.err.println("[SMS] Could not send SMS: " + e.getMessage());
             }
         }).start();
+    }
+
+    // ================================================================
+    // CASH RESERVATION EMAIL (reserved, awaiting admin approval)
+    // ================================================================
+    private void sendCashReservationEmail(Panier p, Reservation r, double finalPrice) {
+        if (currentUser == null || currentUser.getEmail() == null) return;
+        new Thread(() -> {
+            String customerName = currentUser.getPrenom() + " " + currentUser.getNom();
+            String serviceName = p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService();
+            // Send a "reserved, awaiting payment" email instead of a "payment confirmed" email
+            emailService.sendCashReservationEmail(
+                currentUser.getEmail(), customerName, serviceName,
+                r.getCodeConfirmation(), finalPrice
+            );
+            // Also send SMS notification with "awaiting" message
+            try {
+                int numTel = currentUser.getNumTel();
+                if (numTel > 0) {
+                    String phoneStr = String.valueOf(numTel);
+                    smsService.sendCashReservationSms(
+                        phoneStr, customerName, serviceName,
+                        r.getCodeConfirmation(), finalPrice);
+                }
+            } catch (Exception e) {
+                System.err.println("[SMS] Could not send SMS: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    // ================================================================
+    // CASH RESERVATION SUCCESS OVERLAY (different from payment success)
+    // ================================================================
+    private void showCashReservationSuccessOverlay(Panier p, Reservation r, double finalPrice) {
+        Stage stage = (Stage) titleBar.getScene().getWindow();
+        StackPane rootPane = findRootStackPane(stage);
+        if (rootPane == null) {
+            showMessage("\u23F3 Reservation en attente ! Code: " + r.getCodeConfirmation(), true);
+            return;
+        }
+
+        StackPane overlay = new StackPane();
+        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.85);");
+        overlay.setOpacity(0);
+
+        VBox successCard = new VBox(14);
+        successCard.setMaxWidth(440);
+        successCard.setAlignment(Pos.CENTER);
+        successCard.setPadding(new Insets(36, 32, 32, 32));
+        successCard.setStyle("-fx-background-color: rgba(15,15,15,0.98); -fx-background-radius: 20; " +
+                "-fx-border-color: rgba(100,181,246,0.3); -fx-border-radius: 20; -fx-border-width: 2;");
+
+        StackPane iconCircle = new StackPane();
+        iconCircle.setPrefSize(80, 80);
+        iconCircle.setMaxSize(80, 80);
+        iconCircle.setStyle("-fx-background-color: rgba(100,181,246,0.15); -fx-background-radius: 40;");
+        Label hourglassIcon = new Label("\u23F3");
+        hourglassIcon.setStyle("-fx-font-size: 40;");
+        iconCircle.getChildren().add(hourglassIcon);
+        iconCircle.setScaleX(0);
+        iconCircle.setScaleY(0);
+
+        Label successTitle = new Label("Reservation Enregistree !");
+        successTitle.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 22; -fx-font-weight: bold;");
+        successTitle.setOpacity(0);
+
+        Label successDesc = new Label("Votre reservation est en attente d'approbation par l'administrateur.\nVous recevrez un email de confirmation une fois approuvee.");
+        successDesc.setStyle("-fx-text-fill: #aaa; -fx-font-size: 12;");
+        successDesc.setWrapText(true);
+        successDesc.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        successDesc.setOpacity(0);
+
+        VBox receipt = new VBox(8);
+        receipt.setStyle("-fx-background-color: rgba(100,181,246,0.04); -fx-padding: 16; -fx-background-radius: 12; -fx-border-color: rgba(100,181,246,0.1); -fx-border-radius: 12; -fx-border-width: 1;");
+        receipt.setOpacity(0);
+        String itemName = p.getNomEtablissement() != null ? p.getNomEtablissement() : p.getTypeService();
+        addReceiptRow(receipt, "\uD83C\uDFAF Service", itemName);
+        addReceiptRow(receipt, "\uD83D\uDC65 Personnes", String.valueOf(p.getNbPersonnes()));
+        addReceiptRow(receipt, "\uD83D\uDCB3 Mode", "Especes");
+        addReceiptRow(receipt, "\uD83D\uDCCA Statut", "En attente d'approbation");
+        Region divider = new Region();
+        divider.setPrefHeight(1);
+        divider.setStyle("-fx-background-color: rgba(100,181,246,0.15);");
+        receipt.getChildren().add(divider);
+        HBox totalRow = new HBox();
+        totalRow.setAlignment(Pos.CENTER_LEFT);
+        Label totalLblLeft = new Label("Montant a Payer");
+        totalLblLeft.setStyle("-fx-text-fill: #aaa; -fx-font-size: 12;");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Label totalLblRight = new Label(String.format("%.2f DT", finalPrice));
+        totalLblRight.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;");
+        totalRow.getChildren().addAll(totalLblLeft, spacer, totalLblRight);
+        receipt.getChildren().add(totalRow);
+
+        HBox codeBadge = new HBox(8);
+        codeBadge.setAlignment(Pos.CENTER);
+        codeBadge.setStyle("-fx-background-color: rgba(255,215,0,0.08); -fx-padding: 12 20; -fx-background-radius: 10;");
+        codeBadge.setOpacity(0);
+        Label codeIcon = new Label("\uD83D\uDD11");
+        codeIcon.setStyle("-fx-font-size: 14;");
+        Label codeLbl = new Label(r.getCodeConfirmation());
+        codeLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold; -fx-font-family: 'Consolas';");
+        codeBadge.getChildren().addAll(codeIcon, codeLbl);
+
+        Label emailNotif = new Label("\uD83D\uDCE7 Un email de confirmation vous sera envoye apres approbation");
+        emailNotif.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
+        emailNotif.setOpacity(0);
+
+        Label upgradeTip = new Label("\u2B50 Passez en Konnect depuis 'Modifier' pour un paiement immediat et gagner des points !");
+        upgradeTip.setStyle("-fx-text-fill: #B266FF; -fx-font-size: 10; -fx-background-color: rgba(178,102,255,0.06); -fx-padding: 8 12; -fx-background-radius: 8;");
+        upgradeTip.setWrapText(true);
+        upgradeTip.setOpacity(0);
+
+        Button closeBtn = new Button("\u2714 Fermer");
+        closeBtn.setStyle("-fx-background-color: linear-gradient(to right, #64B5F6, #42A5F5); -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12 40; -fx-background-radius: 10; -fx-font-size: 14; -fx-cursor: hand;");
+        closeBtn.setOpacity(0);
+
+        successCard.getChildren().addAll(iconCircle, successTitle, successDesc, receipt, codeBadge, emailNotif, upgradeTip, closeBtn);
+        overlay.getChildren().add(successCard);
+
+        closeBtn.setOnAction(e -> {
+            FadeTransition fade = new FadeTransition(Duration.millis(300), overlay);
+            fade.setToValue(0);
+            fade.setOnFinished(ev -> rootPane.getChildren().remove(overlay));
+            fade.play();
+        });
+
+        rootPane.getChildren().add(overlay);
+
+        // Animations
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(400), overlay);
+        fadeIn.setToValue(1);
+        fadeIn.play();
+
+        ScaleTransition scale = new ScaleTransition(Duration.millis(500), iconCircle);
+        scale.setFromX(0);
+        scale.setFromY(0);
+        scale.setToX(1);
+        scale.setToY(1);
+        scale.setDelay(Duration.millis(200));
+        scale.play();
+
+        FadeTransition[] fades = {
+            new FadeTransition(Duration.millis(400), successTitle),
+            new FadeTransition(Duration.millis(400), successDesc),
+            new FadeTransition(Duration.millis(400), receipt),
+            new FadeTransition(Duration.millis(400), codeBadge),
+            new FadeTransition(Duration.millis(400), emailNotif),
+            new FadeTransition(Duration.millis(400), upgradeTip),
+            new FadeTransition(Duration.millis(400), closeBtn)
+        };
+        for (int i = 0; i < fades.length; i++) {
+            fades[i].setToValue(1);
+            fades[i].setDelay(Duration.millis(400 + i * 100));
+            fades[i].play();
+        }
     }
 
     // ================================================================
@@ -1521,9 +1836,9 @@ public class PanierController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Dupliquer l'article");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\uD83D\uDCCB", "Dupliquer cet article", "#29B6F6");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -1622,9 +1937,9 @@ public class PanierController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Comparateur de Prix");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\uD83D\uDCCA", "Comparateur de Prix", "#FFD700");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -1751,9 +2066,9 @@ public class PanierController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Supprimer l'article");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\u26A0", "Supprimer cet article", "#FF6B6B");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -2196,8 +2511,9 @@ public class PanierController {
     private void showCurrencyConverterDialog(double amountDT) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Convertisseur de devises");
+        styleDialog(dialog, "\uD83D\uDCB1", "Convertisseur de Devises", "#51CF66");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(12);
@@ -2299,8 +2615,9 @@ public class PanierController {
         }
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("AI Smart Trip Planner");
+        styleDialog(dialog, "\uD83E\uDDE0", "AI Smart Trip Planner", "#B266FF");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(14);
@@ -2364,8 +2681,9 @@ public class PanierController {
         }
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("AI Budget Optimizer");
+        styleDialog(dialog, "\uD83D\uDCB0", "AI Budget Optimizer", "#51CF66");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(14);
@@ -2418,8 +2736,9 @@ public class PanierController {
     private void showAIRecommendationsDialog(Panier paidItem) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Recommendations pour vous");
+        styleDialog(dialog, "\u2728", "Recommendations personnalisees", "#FFD700");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(14);
@@ -2464,8 +2783,9 @@ public class PanierController {
     private void showNotificationCenter() {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Centre de Notifications");
+        styleDialog(dialog, "\uD83D\uDD14", "Centre de Notifications", "#FFA726");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(10);

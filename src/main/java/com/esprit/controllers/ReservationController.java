@@ -21,20 +21,25 @@ import javafx.concurrent.Worker;
 
 import com.esprit.entities.Reservation;
 import com.esprit.entities.Etablissement;
+import com.esprit.entities.Panier;
 import com.esprit.entities.utilisateur;
 import com.esprit.services.ReservationService;
 import com.esprit.services.EtablissementService;
+import com.esprit.services.PanierService;
 import com.esprit.services.EmailService;
 import com.esprit.services.utilisateurServices;
 import com.esprit.services.ChatbotService;
 import com.esprit.utils.ThemeManager;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.PrintWriter;
 import javafx.stage.FileChooser;
 
@@ -56,6 +61,7 @@ public class ReservationController {
     private utilisateur currentUser;
     private final ReservationService reservationService = new ReservationService();
     private final EtablissementService etabService = new EtablissementService();
+    private final PanierService panierService = new PanierService();
     private final EmailService emailService = new EmailService();
     private final utilisateurServices userService = new utilisateurServices();
     private final ChatbotService chatbotService = new ChatbotService();
@@ -69,6 +75,91 @@ public class ReservationController {
         "rgba(255,215,0,0.08)", "rgba(81,207,102,0.08)", "rgba(100,181,246,0.08)",
         "rgba(255,107,107,0.08)", "rgba(178,102,255,0.08)", "rgba(255,167,38,0.08)"
     };
+
+    /**
+     * Apply premium Konnect-style theming to any Dialog:
+     *  - Undecorated (no system chrome)
+     *  - Gradient top accent bar with title, icon and draggable close button
+     *  - Rounded corners, drop shadow, consistent button styling
+     */
+    private void styleDialog(Dialog<?> dialog, String icon, String title, String accentColor) {
+        DialogPane dp = dialog.getDialogPane();
+
+        // Remove system chrome
+        dialog.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+
+        // Master style for the dialog pane
+        dp.setStyle("-fx-background-color: #1a1a1a; -fx-background-radius: 16; -fx-border-radius: 16; "
+                + "-fx-border-color: #333; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 24, 0, 0, 8);");
+
+        // Scene with transparent fill for rounded corners
+        dp.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+                // Draggable by top bar
+                final double[] dragDelta = {0, 0};
+                dp.setOnMousePressed(e -> {
+                    if (e.getY() < 52) { dragDelta[0] = e.getSceneX(); dragDelta[1] = e.getSceneY(); }
+                });
+                dp.setOnMouseDragged(e -> {
+                    if (e.getY() < 52 || dragDelta[0] != 0) {
+                        Stage s = (Stage) dp.getScene().getWindow();
+                        s.setX(e.getScreenX() - dragDelta[0]);
+                        s.setY(e.getScreenY() - dragDelta[1]);
+                    }
+                });
+                dp.setOnMouseReleased(e -> { dragDelta[0] = 0; dragDelta[1] = 0; });
+            }
+        });
+
+        // Build the custom header bar
+        HBox topBar = new HBox(10);
+        topBar.setAlignment(Pos.CENTER_LEFT);
+        topBar.setPadding(new Insets(10, 16, 10, 16));
+        topBar.setStyle("-fx-background-color: linear-gradient(to right, #111, #1a1a1a); "
+                + "-fx-background-radius: 16 16 0 0; -fx-border-color: " + accentColor + "; -fx-border-width: 0 0 1 0;");
+
+        Label iconLbl = new Label(icon);
+        iconLbl.setStyle("-fx-font-size: 18;");
+        Label titleLbl = new Label(title);
+        titleLbl.setStyle("-fx-text-fill: " + accentColor + "; -fx-font-size: 14; -fx-font-weight: bold;");
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        Button closeBtn = new Button("\u2715");
+        closeBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-font-size: 13; "
+                + "-fx-background-radius: 20; -fx-padding: 4 10; -fx-cursor: hand;");
+        closeBtn.setOnMouseEntered(e -> closeBtn.setStyle("-fx-background-color: rgba(255,107,107,0.3); -fx-text-fill: #FF6B6B; -fx-font-size: 13; -fx-background-radius: 20; -fx-padding: 4 10; -fx-cursor: hand;"));
+        closeBtn.setOnMouseExited(e -> closeBtn.setStyle("-fx-background-color: rgba(255,107,107,0.12); -fx-text-fill: #FF6B6B; -fx-font-size: 13; -fx-background-radius: 20; -fx-padding: 4 10; -fx-cursor: hand;"));
+        closeBtn.setOnAction(e -> {
+            // Add a hidden cancel button if needed, then close
+            if (dp.getButtonTypes().isEmpty()) {
+                dp.getButtonTypes().add(ButtonType.CANCEL);
+            }
+            ((Stage) dp.getScene().getWindow()).close();
+        });
+        topBar.getChildren().addAll(iconLbl, titleLbl, spacer, closeBtn);
+        dp.setHeader(topBar);
+
+        // Style all buttons in the button bar
+        dp.getButtonTypes().addListener((javafx.collections.ListChangeListener<ButtonType>) c -> styleDialogButtons(dp, accentColor));
+        javafx.application.Platform.runLater(() -> styleDialogButtons(dp, accentColor));
+    }
+
+    private void styleDialogButtons(DialogPane dp, String accentColor) {
+        for (ButtonType bt : dp.getButtonTypes()) {
+            Button b = (Button) dp.lookupButton(bt);
+            if (b == null) continue;
+            if (bt.getButtonData() == ButtonBar.ButtonData.OK_DONE || bt.getButtonData() == ButtonBar.ButtonData.APPLY) {
+                b.setStyle("-fx-background-color: linear-gradient(to right, " + accentColor + ", #FF8C00); "
+                        + "-fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 10 28; -fx-background-radius: 10; -fx-font-size: 13; -fx-cursor: hand;");
+            } else {
+                b.setStyle("-fx-background-color: rgba(255,255,255,0.06); -fx-text-fill: #aaa; "
+                        + "-fx-padding: 10 22; -fx-background-radius: 10; -fx-font-size: 12; -fx-cursor: hand;");
+            }
+        }
+        // Style the button bar itself
+        dp.lookupAll(".button-bar").forEach(node -> node.setStyle("-fx-background-color: transparent; -fx-padding: 8 16 16 16;"));
+    }
 
     @FXML
     public void initialize() {
@@ -338,10 +429,6 @@ public class ReservationController {
         HBox featureRow1 = new HBox(6);
         featureRow1.setAlignment(Pos.CENTER);
 
-        Button shareBtn = new Button("\uD83D\uDCE4 Partager");
-        shareBtn.setStyle("-fx-background-color: rgba(41,182,246,0.12); -fx-text-fill: #29B6F6; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
-        shareBtn.setOnAction(e -> shareReservation(r));
-
         Button countdownBtn = new Button("\u23F0 Countdown");
         countdownBtn.setStyle("-fx-background-color: rgba(255,167,38,0.12); -fx-text-fill: #FFA726; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         countdownBtn.setOnAction(e -> showCountdownDialog(r));
@@ -350,7 +437,7 @@ public class ReservationController {
         ratingBtn.setStyle("-fx-background-color: rgba(255,215,0,0.12); -fx-text-fill: #FFD700; -fx-padding: 6 10; -fx-background-radius: 8; -fx-font-size: 9; -fx-font-weight: bold; -fx-cursor: hand;");
         ratingBtn.setOnAction(e -> showRatingDialog(r));
 
-        featureRow1.getChildren().addAll(shareBtn, countdownBtn, ratingBtn);
+        featureRow1.getChildren().addAll(countdownBtn, ratingBtn);
 
         // Feature buttons row 2
         HBox featureRow2 = new HBox(6);
@@ -427,8 +514,8 @@ public class ReservationController {
         String statut = r.getStatutPaiement() != null ? r.getStatutPaiement().toLowerCase() : "";
         int step = 0;
         if (statut.contains("cours")) step = 1;
-        else if (statut.contains("pay")) step = 2;
-        else if (statut.contains("rembours")) step = -1;
+        else if (statut.contains("pay")) step = 3; // Payé = fully completed (Ajouté → En cours → Payé → Terminé)
+        else if (statut.contains("rembours")) step = -1; // Refunded/Cancelled
 
         String[] labels = {"Ajout\u00e9", "En cours", "Pay\u00e9", "Termin\u00e9"};
         String[] icons = {"\uD83D\uDED2", "\u23F3", "\u2705", "\uD83C\uDF1F"};
@@ -660,9 +747,17 @@ public class ReservationController {
         payBtn.setOnAction(e -> {
             payBtn.setDisable(true);
             payBtn.setText("\u23F3 Connexion a Konnect...");
+
+            // Pre-fill customer info for Konnect checkout form
+            String custFirst = currentUser != null ? currentUser.getPrenom() : null;
+            String custLast = currentUser != null ? currentUser.getNom() : null;
+            String custEmail = currentUser != null ? currentUser.getEmail() : null;
+            String custPhone = currentUser != null ? String.valueOf(currentUser.getNumTel()) : null;
+
             new Thread(() -> {
                 com.esprit.services.KonnectPaymentService.PaymentResult result = konnectSvc.initPayment(
-                    r.getMontantTotal(), "TABAANI_UPGRADE_" + r.getCodeConfirmation());
+                    r.getMontantTotal(), "TABAANI_UPGRADE_" + r.getCodeConfirmation(),
+                    custFirst, custLast, custEmail, custPhone);
                 javafx.application.Platform.runLater(() -> {
                     if (result.isSuccess() && result.getPaymentLink() != null) {
                         paymentIdHolder[0] = result.getPaymentId();
@@ -671,6 +766,24 @@ public class ReservationController {
                         paymentStage.setWidth(750);
                         paymentStage.setHeight(680);
                         paymentStage.centerOnScreen();
+
+                        // Start payment status polling (every 5s, up to 5 min)
+                        final Timeline poller = new Timeline(new KeyFrame(javafx.util.Duration.seconds(5), ev -> {
+                            if (paymentIdHolder[0] != null) {
+                                new Thread(() -> {
+                                    com.esprit.services.KonnectPaymentService.PaymentResult verifyResult = konnectSvc.verifyPayment(paymentIdHolder[0]);
+                                    if (verifyResult.isSuccess() && "completed".equalsIgnoreCase(verifyResult.getStatus())) {
+                                        javafx.application.Platform.runLater(() -> {
+                                            paymentStage.close();
+                                            processUpgradeSuccess(r, pointsToEarn);
+                                        });
+                                    }
+                                }).start();
+                            }
+                        }));
+                        poller.setCycleCount(60);
+                        poller.play();
+                        paymentStage.setOnHidden(ev -> poller.stop());
                     } else {
                         statusLbl.setText("\u274C " + result.getMessage());
                         statusLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
@@ -778,9 +891,9 @@ public class ReservationController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Modifier la Reservation");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\u270F", "Modifier la Reservation", "#FFA726");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(18);
@@ -897,13 +1010,13 @@ public class ReservationController {
                 return;
             }
 
-            // Award points if upgrading from Especes to Carte
+            // If upgrading from Especes to Konnect, launch the Konnect payment flow
             boolean upgrading = "Especes".equalsIgnoreCase(oldMode) && "Konnect".equalsIgnoreCase(newMode);
-            if (upgrading && currentUser != null) {
-                int pts = (int)(r.getMontantTotal() * 10);
-                userService.addLoyaltyPoints(currentUser.getId(), pts);
-                currentUser.setLoyaltyPoints(currentUser.getLoyaltyPoints() + pts);
-                showMessage("\u2B50 +" + pts + " points de fidelite pour le passage en carte !", true);
+            if (upgrading && !isRestoReservation) {
+                event.consume(); // prevent dialog from closing
+                dialog.close();  // close the modify dialog
+                showUpgradeToCardDialog(r); // launch Konnect payment WebView
+                return;
             }
 
             r.setModePaiement(newMode);
@@ -941,9 +1054,9 @@ public class ReservationController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Detail de la Reservation");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\uD83D\uDCCB", "Detail de la Reservation", "#FFD700");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -1061,92 +1174,184 @@ public class ReservationController {
     }
 
     // ================================================================
-    // INVOICE GENERATION
+    // INVOICE GENERATION (PDF using OpenPDF)
     // ================================================================
     private void generateInvoice(Reservation r) {
         boolean isResto = isRestoOrCafeType(r.getTypeService());
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Enregistrer la Facture");
-        fileChooser.setInitialFileName("Facture_" + (r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "RES") + ".html");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier HTML", "*.html"));
+        fileChooser.setTitle("Enregistrer la Facture PDF");
+        fileChooser.setInitialFileName("Facture_" + (r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "RES") + ".pdf");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Fichier PDF", "*.pdf"));
         Stage stage = (Stage) titleBar.getScene().getWindow();
         File file = fileChooser.showSaveDialog(stage);
         if (file == null) return;
 
-        try (PrintWriter pw = new PrintWriter(new FileWriter(file))) {
+        try {
             String clientName = currentUser != null ? (currentUser.getNom() + " " + currentUser.getPrenom()) : "Client";
             String datePaiement = r.getDatePaiement() != null ? r.getDatePaiement().format(DTF) : "N/A";
-            String serviceIcon = getServiceIcon(r.getTypeService());
             String montantDisplay = isResto ? "Paiement sur place" : String.format("%.2f DT", r.getMontantTotal());
             String statutDisplay = r.getStatutPaiement() != null ? r.getStatutPaiement() : "N/A";
             String modeDisplay = r.getModePaiement() != null ? r.getModePaiement() : "N/A";
+            String etabName = r.getNomEtablissement() != null ? r.getNomEtablissement() : "N/A";
+            String svcType = r.getTypeService() != null ? r.getTypeService() : "N/A";
+            String codeConf = r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "N/A";
 
-            pw.println("<!DOCTYPE html><html lang='fr'><head><meta charset='UTF-8'>");
-            pw.println("<title>Facture - " + (r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "") + "</title>");
-            pw.println("<style>");
-            pw.println("* { margin: 0; padding: 0; box-sizing: border-box; }");
-            pw.println("body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0a0a0a; color: #ddd; padding: 40px; }");
-            pw.println(".invoice { max-width: 700px; margin: 0 auto; background: #111; border: 1px solid rgba(255,215,0,0.2); border-radius: 16px; overflow: hidden; }");
-            pw.println(".header { background: linear-gradient(135deg, #1a1a1a, #0f0f0f); padding: 32px; text-align: center; border-bottom: 2px solid #FFD700; }");
-            pw.println(".header h1 { color: #FFD700; font-size: 28px; margin-bottom: 4px; }");
-            pw.println(".header p { color: #888; font-size: 12px; }");
-            pw.println(".body { padding: 32px; }");
-            pw.println(".info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }");
-            pw.println(".info-box { background: rgba(255,255,255,0.03); padding: 16px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.08); }");
-            pw.println(".info-box .label { color: #888; font-size: 11px; text-transform: uppercase; margin-bottom: 6px; }");
-            pw.println(".info-box .value { color: white; font-size: 15px; font-weight: 600; }");
-            pw.println(".total-section { background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,140,0,0.06)); padding: 24px; border-radius: 12px; text-align: center; margin: 24px 0; border: 1px solid rgba(255,215,0,0.15); }");
-            pw.println(".total-section .amount { color: #FFD700; font-size: 32px; font-weight: bold; }");
-            pw.println(".total-section .label { color: #aaa; font-size: 12px; margin-bottom: 8px; }");
-            pw.println(".footer { background: #0a0a0a; padding: 20px 32px; text-align: center; border-top: 1px solid rgba(255,215,0,0.1); }");
-            pw.println(".footer p { color: #555; font-size: 11px; }");
-            pw.println(".badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: bold; }");
-            pw.println(".badge-gold { background: rgba(255,215,0,0.12); color: #FFD700; }");
-            pw.println(".badge-green { background: rgba(81,207,102,0.12); color: #51CF66; }");
-            pw.println("</style></head><body>");
-            pw.println("<div class='invoice'>");
-            pw.println("<div class='header'>");
-            pw.println("<h1>\u2728 SmartTravel</h1>");
-            pw.println("<p>FACTURE DE RESERVATION</p>");
-            pw.println("<p style='margin-top:8px;color:#FFD700;font-size:14px;'>" + serviceIcon + " " + (r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "N/A") + "</p>");
-            pw.println("</div>");
-            pw.println("<div class='body'>");
-            pw.println("<div class='info-grid'>");
-            pw.println("<div class='info-box'><div class='label'>\uD83D\uDC64 Client</div><div class='value'>" + clientName + "</div></div>");
-            pw.println("<div class='info-box'><div class='label'>\uD83D\uDCC5 Date</div><div class='value'>" + datePaiement + "</div></div>");
-            pw.println("<div class='info-box'><div class='label'>\uD83C\uDFE8 Etablissement</div><div class='value'>" + (r.getNomEtablissement() != null ? r.getNomEtablissement() : "N/A") + "</div></div>");
-            pw.println("<div class='info-box'><div class='label'>\uD83C\uDFAF Type de Service</div><div class='value'>" + (r.getTypeService() != null ? r.getTypeService() : "N/A") + "</div></div>");
-            pw.println("<div class='info-box'><div class='label'>\uD83D\uDC65 Personnes</div><div class='value'>" + r.getNbPersonnes() + " personne(s)</div></div>");
-            pw.println("<div class='info-box'><div class='label'>\uD83D\uDCB3 Mode de Paiement</div><div class='value'>" + modeDisplay + "</div></div>");
-            pw.println("</div>");
-            pw.println("<div class='total-section'>");
-            pw.println("<div class='label'>MONTANT TOTAL</div>");
-            pw.println("<div class='amount'>" + montantDisplay + "</div>");
-            pw.println("<div style='margin-top:10px;'><span class='badge " + (statutDisplay.toLowerCase().contains("pay") ? "badge-green" : "badge-gold") + "'>" + getStatutIcon(statutDisplay) + " " + statutDisplay + "</span></div>");
-            pw.println("</div>");
+            // Create PDF using OpenPDF
+            com.lowagie.text.Document document = new com.lowagie.text.Document(com.lowagie.text.PageSize.A4, 50, 50, 40, 40);
+            com.lowagie.text.pdf.PdfWriter.getInstance(document, new FileOutputStream(file));
+            document.open();
+
+            // Colors
+            java.awt.Color goldColor = new java.awt.Color(255, 215, 0);
+            java.awt.Color darkBg = new java.awt.Color(17, 17, 17);
+            java.awt.Color grayText = new java.awt.Color(170, 170, 170);
+            java.awt.Color whiteText = new java.awt.Color(240, 240, 240);
+            java.awt.Color greenColor = new java.awt.Color(81, 207, 102);
+
+            // Fonts
+            com.lowagie.text.Font titleFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 28, com.lowagie.text.Font.BOLD, goldColor);
+            com.lowagie.text.Font subtitleFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 11, com.lowagie.text.Font.NORMAL, grayText);
+            com.lowagie.text.Font sectionFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 12, com.lowagie.text.Font.BOLD, goldColor);
+            com.lowagie.text.Font labelFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 9, com.lowagie.text.Font.NORMAL, grayText);
+            com.lowagie.text.Font valueFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 12, com.lowagie.text.Font.BOLD, whiteText);
+            com.lowagie.text.Font amountFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 28, com.lowagie.text.Font.BOLD, goldColor);
+            com.lowagie.text.Font codeFont = new com.lowagie.text.Font(com.lowagie.text.Font.COURIER, 18, com.lowagie.text.Font.BOLD, goldColor);
+            com.lowagie.text.Font footerFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 9, com.lowagie.text.Font.NORMAL, grayText);
+            com.lowagie.text.Font statutFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 11, com.lowagie.text.Font.BOLD,
+                    statutDisplay.toLowerCase().contains("pay") ? greenColor : goldColor);
+
+            // Background rectangle (simulated by a table cell)
+            com.lowagie.text.pdf.PdfPTable mainTable = new com.lowagie.text.pdf.PdfPTable(1);
+            mainTable.setWidthPercentage(100);
+
+            // === HEADER ===
+            com.lowagie.text.pdf.PdfPCell headerCell = new com.lowagie.text.pdf.PdfPCell();
+            headerCell.setBackgroundColor(new java.awt.Color(26, 26, 26));
+            headerCell.setPadding(24);
+            headerCell.setBorderWidth(0);
+            headerCell.setBorderWidthBottom(2);
+            headerCell.setBorderColorBottom(goldColor);
+            headerCell.setHorizontalAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+
+            com.lowagie.text.Paragraph headerTitle = new com.lowagie.text.Paragraph("TABAANI SmartTravel", titleFont);
+            headerTitle.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            headerCell.addElement(headerTitle);
+
+            com.lowagie.text.Paragraph headerSub = new com.lowagie.text.Paragraph("FACTURE DE RESERVATION", subtitleFont);
+            headerSub.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            headerSub.setSpacingBefore(6);
+            headerCell.addElement(headerSub);
+
+            com.lowagie.text.Paragraph codeP = new com.lowagie.text.Paragraph(codeConf, codeFont);
+            codeP.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            codeP.setSpacingBefore(10);
+            headerCell.addElement(codeP);
+
+            mainTable.addCell(headerCell);
+
+            // === INFO GRID ===
+            com.lowagie.text.pdf.PdfPTable infoGrid = new com.lowagie.text.pdf.PdfPTable(2);
+            infoGrid.setWidthPercentage(100);
+            infoGrid.setSpacingBefore(16);
+
+            addInvoiceInfoCell(infoGrid, "Client", clientName, labelFont, valueFont, darkBg);
+            addInvoiceInfoCell(infoGrid, "Date", datePaiement, labelFont, valueFont, darkBg);
+            addInvoiceInfoCell(infoGrid, "Etablissement", etabName, labelFont, valueFont, darkBg);
+            addInvoiceInfoCell(infoGrid, "Type de Service", svcType, labelFont, valueFont, darkBg);
+            addInvoiceInfoCell(infoGrid, "Personnes", r.getNbPersonnes() + " personne(s)", labelFont, valueFont, darkBg);
+            addInvoiceInfoCell(infoGrid, "Mode de Paiement", modeDisplay, labelFont, valueFont, darkBg);
+
+            com.lowagie.text.pdf.PdfPCell gridWrap = new com.lowagie.text.pdf.PdfPCell(infoGrid);
+            gridWrap.setBorderWidth(0);
+            gridWrap.setPadding(16);
+            gridWrap.setBackgroundColor(darkBg);
+            mainTable.addCell(gridWrap);
+
+            // === TOTAL SECTION ===
+            com.lowagie.text.pdf.PdfPCell totalCell = new com.lowagie.text.pdf.PdfPCell();
+            totalCell.setBackgroundColor(new java.awt.Color(20, 20, 15));
+            totalCell.setPadding(24);
+            totalCell.setBorderWidth(0);
+            totalCell.setBorderWidthTop(1);
+            totalCell.setBorderColorTop(new java.awt.Color(255, 215, 0, 40));
+            totalCell.setHorizontalAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+
+            com.lowagie.text.Paragraph totalLabel = new com.lowagie.text.Paragraph("MONTANT TOTAL", sectionFont);
+            totalLabel.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            totalCell.addElement(totalLabel);
+
+            com.lowagie.text.Paragraph totalAmount = new com.lowagie.text.Paragraph(montantDisplay, amountFont);
+            totalAmount.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            totalAmount.setSpacingBefore(8);
+            totalCell.addElement(totalAmount);
+
+            com.lowagie.text.Paragraph statutP = new com.lowagie.text.Paragraph(getStatutIcon(statutDisplay) + " " + statutDisplay, statutFont);
+            statutP.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            statutP.setSpacingBefore(10);
+            totalCell.addElement(statutP);
+
             if (isResto) {
-                pw.println("<div style='background:rgba(81,207,102,0.06);padding:14px;border-radius:10px;text-align:center;border:1px solid rgba(81,207,102,0.15);'>");
-                pw.println("<p style='color:#51CF66;font-size:13px;font-weight:bold;'>\uD83C\uDF7D Le paiement s'effectue directement a l'etablissement</p>");
-                pw.println("</div>");
+                com.lowagie.text.Font restoFont = new com.lowagie.text.Font(com.lowagie.text.Font.HELVETICA, 11, com.lowagie.text.Font.BOLD, greenColor);
+                com.lowagie.text.Paragraph restoP = new com.lowagie.text.Paragraph("Le paiement s'effectue directement a l'etablissement", restoFont);
+                restoP.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+                restoP.setSpacingBefore(12);
+                totalCell.addElement(restoP);
             }
-            pw.println("</div>");
-            pw.println("<div class='footer'>");
-            pw.println("<p>Merci pour votre confiance ! \u2764 SmartTravel &copy; 2025</p>");
-            pw.println("<p style='margin-top:4px;'>Ce document fait office de facture pour votre reservation.</p>");
-            pw.println("</div></div></body></html>");
 
-            // Show success and open the file
-            showMessage("\u2705 Facture generee: " + file.getName(), true);
+            mainTable.addCell(totalCell);
+
+            // === FOOTER ===
+            com.lowagie.text.pdf.PdfPCell footerCell = new com.lowagie.text.pdf.PdfPCell();
+            footerCell.setBackgroundColor(new java.awt.Color(10, 10, 10));
+            footerCell.setPadding(16);
+            footerCell.setBorderWidth(0);
+            footerCell.setHorizontalAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+
+            com.lowagie.text.Paragraph footerP = new com.lowagie.text.Paragraph("Merci pour votre confiance ! SmartTravel (c) 2025", footerFont);
+            footerP.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            footerCell.addElement(footerP);
+
+            com.lowagie.text.Paragraph footerP2 = new com.lowagie.text.Paragraph("Ce document fait office de facture pour votre reservation.", footerFont);
+            footerP2.setAlignment(com.lowagie.text.Element.ALIGN_CENTER);
+            footerP2.setSpacingBefore(4);
+            footerCell.addElement(footerP2);
+
+            mainTable.addCell(footerCell);
+
+            document.add(mainTable);
+            document.close();
+
+            showMessage("\u2705 Facture PDF generee: " + file.getName(), true);
             try {
-                java.awt.Desktop.getDesktop().browse(file.toURI());
+                java.awt.Desktop.getDesktop().open(file);
             } catch (Exception ex) {
-                // If can't open browser, just show success message
+                // If can't open PDF viewer, just show success message
             }
         } catch (Exception e) {
-            showMessage("\u274C Erreur lors de la generation de la facture.", false);
+            showMessage("\u274C Erreur lors de la generation de la facture PDF.", false);
             e.printStackTrace();
         }
+    }
+
+    /** Helper to add a labeled info cell to the PDF invoice grid */
+    private void addInvoiceInfoCell(com.lowagie.text.pdf.PdfPTable table, String label, String value,
+                                      com.lowagie.text.Font labelFont, com.lowagie.text.Font valueFont,
+                                      java.awt.Color bgColor) {
+        com.lowagie.text.pdf.PdfPCell cell = new com.lowagie.text.pdf.PdfPCell();
+        cell.setBackgroundColor(new java.awt.Color(25, 25, 25));
+        cell.setPadding(12);
+        cell.setBorderWidth(1);
+        cell.setBorderColor(new java.awt.Color(50, 50, 50));
+
+        com.lowagie.text.Paragraph lbl = new com.lowagie.text.Paragraph(label, labelFont);
+        cell.addElement(lbl);
+
+        com.lowagie.text.Paragraph val = new com.lowagie.text.Paragraph(value, valueFont);
+        val.setSpacingBefore(4);
+        cell.addElement(val);
+
+        table.addCell(cell);
     }
 
     // ================================================================
@@ -1188,9 +1393,9 @@ public class ReservationController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Compte a Rebours");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\u23F0", "Compte a Rebours", "#FFD700");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -1213,49 +1418,95 @@ public class ReservationController {
         Label subtitleLbl = new Label(getServiceIcon(r.getTypeService()) + " " + etabName);
         subtitleLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 13;");
 
-        // Calculate countdown
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
-        java.time.LocalDateTime target = r.getDatePaiement();
+        // Get dateDebut from the associated Panier for the real countdown target
+        Panier panier = panierService.getById(r.getIdPanier());
+        java.time.LocalDateTime target = (panier != null && panier.getDateDebut() != null) ? panier.getDateDebut() : null;
 
         VBox countdownBox = new VBox(8);
         countdownBox.setAlignment(Pos.CENTER);
         countdownBox.setStyle("-fx-background-color: rgba(255,215,0,0.06); -fx-padding: 20; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.12); -fx-border-radius: 12; -fx-border-width: 1;");
 
-        if (target != null && target.isAfter(now)) {
-            long totalMinutes = ChronoUnit.MINUTES.between(now, target);
-            long days = totalMinutes / (24 * 60);
-            long hours = (totalMinutes % (24 * 60)) / 60;
-            long minutes = totalMinutes % 60;
+        if (target != null) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            // Show the trip date info
+            Label tripDateLbl = new Label("\uD83D\uDCC5 Date du voyage: " + target.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            tripDateLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;");
+            countdownBox.getChildren().add(tripDateLbl);
 
-            HBox timerRow = new HBox(16);
-            timerRow.setAlignment(Pos.CENTER);
+            if (target.isAfter(now)) {
+                long totalSeconds = java.time.Duration.between(now, target).getSeconds();
+                long days = totalSeconds / (24 * 3600);
+                long hours = (totalSeconds % (24 * 3600)) / 3600;
+                long minutes = (totalSeconds % 3600) / 60;
+                long seconds = totalSeconds % 60;
 
-            VBox daysBox = buildTimerUnit(String.valueOf(days), "JOURS");
-            VBox hoursBox = buildTimerUnit(String.valueOf(hours), "HEURES");
-            VBox minsBox = buildTimerUnit(String.valueOf(minutes), "MIN");
+                HBox timerRow = new HBox(12);
+                timerRow.setAlignment(Pos.CENTER);
 
-            Label sep1 = new Label(":");
-            sep1.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 28; -fx-font-weight: bold;");
-            Label sep2 = new Label(":");
-            sep2.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 28; -fx-font-weight: bold;");
+                VBox daysBox = buildTimerUnit(String.valueOf(days), "JOURS");
+                VBox hoursBox = buildTimerUnit(String.valueOf(hours), "HEURES");
+                VBox minsBox = buildTimerUnit(String.valueOf(minutes), "MIN");
+                VBox secsBox = buildTimerUnit(String.valueOf(seconds), "SEC");
 
-            timerRow.getChildren().addAll(daysBox, sep1, hoursBox, sep2, minsBox);
-            countdownBox.getChildren().add(timerRow);
+                Label sep1 = new Label(":");
+                sep1.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 28; -fx-font-weight: bold;");
+                Label sep2 = new Label(":");
+                sep2.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 28; -fx-font-weight: bold;");
+                Label sep3 = new Label(":");
+                sep3.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 28; -fx-font-weight: bold;");
 
-            Label statusLbl = new Label("\u2705 Votre reservation approche !");
-            statusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;");
-            countdownBox.getChildren().add(statusLbl);
-        } else {
-            Label passedLbl = new Label("\uD83C\uDFC1 Reservation deja passee !");
-            passedLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 16; -fx-font-weight: bold;");
-            if (target != null) {
+                timerRow.getChildren().addAll(daysBox, sep1, hoursBox, sep2, minsBox, sep3, secsBox);
+                countdownBox.getChildren().add(timerRow);
+
+                // Live countdown timer
+                javafx.animation.Timeline countdown = new javafx.animation.Timeline(
+                    new javafx.animation.KeyFrame(Duration.seconds(1), ev -> {
+                        java.time.LocalDateTime nowUpdate = java.time.LocalDateTime.now();
+                        if (target.isAfter(nowUpdate)) {
+                            long secs = java.time.Duration.between(nowUpdate, target).getSeconds();
+                            long d = secs / (24 * 3600);
+                            long h = (secs % (24 * 3600)) / 3600;
+                            long m = (secs % 3600) / 60;
+                            long s = secs % 60;
+                            ((Label) daysBox.getChildren().get(0)).setText(String.valueOf(d));
+                            ((Label) hoursBox.getChildren().get(0)).setText(String.valueOf(h));
+                            ((Label) minsBox.getChildren().get(0)).setText(String.valueOf(m));
+                            ((Label) secsBox.getChildren().get(0)).setText(String.valueOf(s));
+                        }
+                    })
+                );
+                countdown.setCycleCount(javafx.animation.Animation.INDEFINITE);
+                countdown.play();
+                // Stop the timer when dialog closes
+                dialog.setOnHidden(ev -> countdown.stop());
+
+                Label statusLbl = new Label("\u2705 Votre voyage approche !");
+                statusLbl.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;");
+                countdownBox.getChildren().add(statusLbl);
+
+                // Show panier date range if available
+                if (panier != null && panier.getDateFin() != null) {
+                    long nights = java.time.temporal.ChronoUnit.DAYS.between(panier.getDateDebut().toLocalDate(), panier.getDateFin().toLocalDate());
+                    Label nightsLbl = new Label("\uD83C\uDF19 " + nights + " nuit(s) — du " +
+                        panier.getDateDebut().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")) + " au " +
+                        panier.getDateFin().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+                    nightsLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+                    countdownBox.getChildren().add(nightsLbl);
+                }
+            } else {
+                Label passedLbl = new Label("\uD83C\uDFC1 Voyage deja passe !");
+                passedLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 16; -fx-font-weight: bold;");
                 long daysAgo = ChronoUnit.DAYS.between(target, now);
                 Label agoLbl = new Label("Il y a " + daysAgo + " jour(s)");
                 agoLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 12;");
                 countdownBox.getChildren().addAll(passedLbl, agoLbl);
-            } else {
-                countdownBox.getChildren().add(passedLbl);
             }
+        } else {
+            Label noDateLbl = new Label("\uD83D\uDCC5 Aucune date de voyage trouvee");
+            noDateLbl.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 14; -fx-font-weight: bold;");
+            Label hintLbl = new Label("La date de debut n'est pas definie pour cette reservation.");
+            hintLbl.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
+            countdownBox.getChildren().addAll(noDateLbl, hintLbl);
         }
 
         content.getChildren().addAll(timerIcon, titleLbl, subtitleLbl, countdownBox);
@@ -1283,9 +1534,9 @@ public class ReservationController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Evaluer la Reservation");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\u2B50", "Evaluer Votre Experience", "#FFD700");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -1414,11 +1665,11 @@ public class ReservationController {
     // ================================================================
     private void deleteReservation(Reservation r) {
         Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Supprimer la Reservation");
+        dialog.setTitle("Annuler la Reservation");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\u26A0", "Annuler la Reservation", "#FF6B6B");
 
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(16);
@@ -1433,10 +1684,10 @@ public class ReservationController {
         wIcon.setStyle("-fx-font-size: 28;");
         warnIcon.getChildren().add(wIcon);
 
-        Label warnTitle = new Label("Supprimer cette reservation ?");
+        Label warnTitle = new Label("Annuler cette reservation ?");
         warnTitle.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 16; -fx-font-weight: bold;");
 
-        Label warnDesc = new Label("Cette action est irreversible. La reservation sera definitivement supprimee.");
+        Label warnDesc = new Label("Cette action est irreversible. La reservation sera definitivement annulee.");
         warnDesc.setStyle("-fx-text-fill: #888; -fx-font-size: 12;");
         warnDesc.setWrapText(true);
 
@@ -1445,11 +1696,41 @@ public class ReservationController {
         addDetailRow(infoBox, "\uD83D\uDD11 Code", r.getCodeConfirmation() != null ? r.getCodeConfirmation() : "N/A", "#FFD700");
         addDetailRow(infoBox, "\uD83D\uDCB0 Montant", String.format("%.2f DT", r.getMontantTotal()), "#FF6B6B");
 
-        content.getChildren().addAll(warnIcon, warnTitle, warnDesc, infoBox);
+        // Cancellation policy info (like Booking.com, TUI, Expedia)
+        boolean isKonnectPaid = "Konnect".equalsIgnoreCase(r.getModePaiement());
+        boolean isPaid = r.getStatutPaiement() != null && r.getStatutPaiement().toLowerCase().contains("pay");
+        boolean isRestoRes = isRestoOrCafeType(r.getTypeService());
+
+        VBox policyBox = new VBox(6);
+        policyBox.setStyle("-fx-background-color: rgba(255,167,38,0.06); -fx-padding: 12; -fx-background-radius: 8; -fx-border-color: rgba(255,167,38,0.15); -fx-border-radius: 8; -fx-border-width: 1;");
+        Label policyTitle = new Label("\uD83D\uDCCB Politique d'annulation");
+        policyTitle.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 12; -fx-font-weight: bold;");
+        policyBox.getChildren().add(policyTitle);
+
+        if (isRestoRes) {
+            Label policyDesc = new Label("\u2705 Annulation gratuite — Aucun frais (reservation gratuite)");
+            policyDesc.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 10;");
+            policyDesc.setWrapText(true);
+            policyBox.getChildren().add(policyDesc);
+        } else if (isKonnectPaid && isPaid) {
+            Label policyDesc = new Label("\u26A0 Paiement effectue par Konnect — Le remboursement sera traite sous 5-7 jours ouvrables");
+            policyDesc.setStyle("-fx-text-fill: #FFA726; -fx-font-size: 10;");
+            policyDesc.setWrapText(true);
+            Label refundNote = new Label("\uD83D\uDCB3 Montant a rembourser: " + String.format("%.2f DT", r.getMontantTotal()));
+            refundNote.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 10; -fx-font-weight: bold;");
+            policyBox.getChildren().addAll(policyDesc, refundNote);
+        } else if (isPaid) {
+            Label policyDesc = new Label("\uD83D\uDCB5 Paiement en especes — Aucun remboursement automatique");
+            policyDesc.setStyle("-fx-text-fill: #888; -fx-font-size: 10;");
+            policyDesc.setWrapText(true);
+            policyBox.getChildren().add(policyDesc);
+        }
+
+        content.getChildren().addAll(warnIcon, warnTitle, warnDesc, infoBox, policyBox);
         dp.setContent(content);
 
-        ButtonType deleteType = new ButtonType("\uD83D\uDDD1 Supprimer", ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancelType = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType deleteType = new ButtonType("\u274C Annuler la reservation", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelType = new ButtonType("Retour", ButtonBar.ButtonData.CANCEL_CLOSE);
         dp.getButtonTypes().addAll(deleteType, cancelType);
 
         Button delBtn = (Button) dp.lookupButton(deleteType);
@@ -1457,11 +1738,32 @@ public class ReservationController {
 
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isPresent() && result.get() == deleteType) {
-            if (reservationService.supprimer(r.getIdReservation())) {
-                showMessage("\u2705 Reservation supprimee.", true);
-                loadData();
+            // Update status to "Remboursé" for paid Konnect reservations instead of hard-deleting
+            if (isKonnectPaid && isPaid && !isRestoRes) {
+                r.setStatutPaiement("Remboursé");
+                if (reservationService.modifier(r)) {
+                    // Send cancellation email
+                    if (currentUser != null && currentUser.getEmail() != null) {
+                        new Thread(() -> {
+                            String name = currentUser.getPrenom() + " " + currentUser.getNom();
+                            emailService.sendPaymentConfirmationEmail(currentUser.getEmail(), name,
+                                r.getNomEtablissement(), r.getCodeConfirmation(), r.getMontantTotal(),
+                                "Annulation/Remboursement", 0, userService.getLoyaltyPoints(currentUser.getId()));
+                        }).start();
+                    }
+                    showMessage("\u2705 Reservation annulee — Remboursement en cours (5-7 jours ouvrables)", true);
+                    loadData();
+                } else {
+                    showMessage("\u274C Echec de l'annulation.", false);
+                }
             } else {
-                showMessage("\u274C Echec de la suppression.", false);
+                // For cash payments or restaurant bookings, simply delete
+                if (reservationService.supprimer(r.getIdReservation())) {
+                    showMessage("\u2705 Reservation annulee avec succes.", true);
+                    loadData();
+                } else {
+                    showMessage("\u274C Echec de l'annulation.", false);
+                }
             }
         }
     }
@@ -1814,8 +2116,9 @@ public class ReservationController {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Calendrier - Reservation");
         dialog.setHeaderText(null);
+        styleDialog(dialog, "\uD83D\uDCC5", "Calendrier de Reservation", "#FFD700");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(14);
@@ -2009,8 +2312,9 @@ public class ReservationController {
     private void showAIReviewGenerator(Reservation r) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("AI Review Generator");
+        styleDialog(dialog, "\uD83E\uDD16", "Generateur d'Avis Intelligent", "#B266FF");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(14);
@@ -2047,11 +2351,51 @@ public class ReservationController {
         generateBtn.setOnAction(e -> {
             reviewArea.setText("\u23F3 Generation en cours...");
             String tone = toneCombo.getValue().split(" ")[0];
-            String ctx = "Genere un avis " + tone + " en francais pour: " + (r.getNomEtablissement() != null ? r.getNomEtablissement() : "service")
-                    + " (" + r.getTypeService() + "), " + r.getNbPersonnes() + " personnes, " + String.format("%.2f DT", r.getMontantTotal())
-                    + ". L'avis doit etre realiste, 3-5 phrases, avec des details specifiques.";
+
+            // Build a detailed prompt that clearly instructs the AI about tone and reservation details
+            String etablissement = r.getNomEtablissement() != null ? r.getNomEtablissement() : "l'etablissement";
+            String typeService = r.getTypeService() != null ? r.getTypeService() : "service";
+            int nbPersonnes = r.getNbPersonnes();
+            String montant = String.format("%.2f DT", r.getMontantTotal());
+
+            // Tone-specific instruction
+            String toneInstruction;
+            switch (tone) {
+                case "Positif":
+                    toneInstruction = "L'avis doit etre TRES POSITIF et elogieux. Mets en avant les points forts, la qualite du service, et exprime une grande satisfaction. Utilise des mots comme 'excellent', 'remarquable', 'je recommande vivement'.";
+                    break;
+                case "Neutre":
+                    toneInstruction = "L'avis doit etre NEUTRE et objectif. Presente les faits sans exageration, mentionne a la fois les points positifs et les points a ameliorer de maniere equilibree et factuelle.";
+                    break;
+                case "Critique":
+                    toneInstruction = "L'avis doit etre une CRITIQUE CONSTRUCTIVE. Identifie des points a ameliorer tout en restant respectueux. Propose des suggestions concretes et mentionne aussi un point positif.";
+                    break;
+                case "Enthousiaste":
+                    toneInstruction = "L'avis doit etre EXTREMEMENT ENTHOUSIASTE et passione! Utilise des superlatifs, des exclamations, montre un grand enthousiasme. L'experience doit paraitre inoubliable et extraordinaire!";
+                    break;
+                default:
+                    toneInstruction = "L'avis doit correspondre au ton: " + tone + ".";
+            }
+
+            // Random elements to ensure uniqueness
+            String[] aspects = {"le service client", "l'ambiance et la decoration", "le rapport qualite-prix", "la proprete des lieux", "l'emplacement geographique", "la qualite de la nourriture", "le confort general", "l'accueil du personnel", "les equipements disponibles", "la vue et le cadre"};
+            String[] perspectives = {"en tant que voyageur frequent", "en tant que famille", "pour une premiere visite", "en tant que professionnel en deplacement", "en tant qu'amateur de decouvertes", "pour un evenement special"};
+            java.util.Random rng = new java.util.Random();
+            String aspect1 = aspects[rng.nextInt(aspects.length)];
+            String aspect2 = aspects[rng.nextInt(aspects.length)];
+            while (aspect2.equals(aspect1)) aspect2 = aspects[rng.nextInt(aspects.length)];
+            String perspective = perspectives[rng.nextInt(perspectives.length)];
+            int seed = rng.nextInt(100000);
+
+            String ctx = "Tu es un client qui a visite '" + etablissement + "' (type: " + typeService + ") "
+                    + perspective + " avec " + nbPersonnes + " personnes, pour un total de " + montant + ".\n\n"
+                    + "CONSIGNE IMPORTANTE - TON DE L'AVIS: " + toneInstruction + "\n\n"
+                    + "Ecris un avis en francais de 3 a 5 phrases. Parle specifiquement de " + aspect1 + " et " + aspect2 + ". "
+                    + "L'avis doit sembler authentique et personnel, comme un vrai avis client. "
+                    + "Ne mentionne pas que tu es une IA. Ne commence pas par 'En tant que'. Seed:" + seed;
+
             new Thread(() -> {
-                String response = chatbotService.chat(ctx);
+                String response = chatbotService.generateReview(ctx);
                 javafx.application.Platform.runLater(() -> reviewArea.setText(response));
             }).start();
         });
@@ -2080,8 +2424,9 @@ public class ReservationController {
     private void rebookReservation(Reservation r) {
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Re-book");
+        styleDialog(dialog, "\uD83D\uDD01", "Re-book: " + (r.getNomEtablissement() != null ? r.getNomEtablissement() : "Reservation"), "#64B5F6");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(14);
@@ -2092,7 +2437,7 @@ public class ReservationController {
         Label title = new Label("\uD83D\uDD01 Re-book: " + (r.getNomEtablissement() != null ? r.getNomEtablissement() : "Reservation"));
         title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;");
 
-        Label desc = new Label("Reservez a nouveau avec les memes parametres ou modifiez les dates.");
+        Label desc = new Label("Un nouvel article identique sera ajoute a votre panier avec des dates futures. Vous pourrez le modifier ensuite.");
         desc.setStyle("-fx-text-fill: #888; -fx-font-size: 11;");
         desc.setWrapText(true);
 
@@ -2107,22 +2452,108 @@ public class ReservationController {
         priceLbl.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12;");
         infoBox.getChildren().addAll(svcLbl, pplLbl, priceLbl);
 
-        content.getChildren().addAll(title, desc, infoBox);
+        // New dates section (like Booking.com "Book again" with fresh dates)
+        VBox dateBox = new VBox(8);
+        dateBox.setStyle("-fx-background-color: rgba(100,181,246,0.04); -fx-padding: 12; -fx-background-radius: 8;");
+        Label dateTitle = new Label("\uD83D\uDCC5 Nouvelles dates");
+        dateTitle.setStyle("-fx-text-fill: #64B5F6; -fx-font-size: 12; -fx-font-weight: bold;");
+        HBox dateRow = new HBox(12);
+        dateRow.setAlignment(Pos.CENTER);
+        VBox startBox = new VBox(2);
+        Label startLbl = new Label("Debut");
+        startLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        DatePicker startPicker = new DatePicker(LocalDate.now().plusDays(7));
+        startPicker.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+            @Override public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                if (date.isBefore(LocalDate.now())) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: rgba(255,107,107,0.15);");
+                }
+            }
+        });
+        startBox.getChildren().addAll(startLbl, startPicker);
+        VBox endBox = new VBox(2);
+        Label endLbl = new Label("Fin");
+        endLbl.setStyle("-fx-text-fill: #aaa; -fx-font-size: 10;");
+        DatePicker endPicker = new DatePicker(LocalDate.now().plusDays(10));
+        endPicker.setDayCellFactory(picker -> new javafx.scene.control.DateCell() {
+            @Override public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+                LocalDate minEnd = startPicker.getValue() != null ? startPicker.getValue().plusDays(1) : LocalDate.now().plusDays(1);
+                if (date.isBefore(minEnd)) {
+                    setDisable(true);
+                    setStyle("-fx-background-color: rgba(255,107,107,0.15);");
+                }
+            }
+        });
+        endBox.getChildren().addAll(endLbl, endPicker);
+        dateRow.getChildren().addAll(startBox, endBox);
+        dateBox.getChildren().addAll(dateTitle, dateRow);
+
+        Label errorLbl = new Label("");
+        errorLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
+
+        content.getChildren().addAll(title, desc, infoBox, dateBox, errorLbl);
         dp.setContent(content);
 
-        ButtonType rebookType = new ButtonType("\uD83D\uDD01 Re-book maintenant", ButtonBar.ButtonData.OK_DONE);
+        ButtonType rebookType = new ButtonType("\uD83D\uDED2 Ajouter au Panier", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelType = new ButtonType("Annuler", ButtonBar.ButtonData.CANCEL_CLOSE);
         dp.getButtonTypes().addAll(rebookType, cancelType);
 
         Button rebookBtn = (Button) dp.lookupButton(rebookType);
         rebookBtn.setStyle("-fx-background-color: linear-gradient(to right, #FFD700, #FF8C00); -fx-text-fill: black; -fx-font-weight: bold; -fx-padding: 10 24; -fx-background-radius: 8;");
 
-        Optional<ButtonType> result = dialog.showAndWait();
-        if (result.isPresent() && result.get() == rebookType) {
-            // Navigate back to main interface where user can book again
-            handleBackToMain();
-            showMessage("\uD83D\uDD01 Redirige vers les reservations. Cherchez: " + (r.getNomEtablissement() != null ? r.getNomEtablissement() : r.getTypeService()), true);
-        }
+        // Validate and create new panier item on confirm
+        rebookBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            LocalDate start = startPicker.getValue();
+            LocalDate end = endPicker.getValue();
+            if (start == null || end == null) {
+                errorLbl.setText("\u274C Veuillez selectionner les dates");
+                event.consume(); return;
+            }
+            if (start.isBefore(LocalDate.now())) {
+                errorLbl.setText("\u274C La date de debut ne peut pas etre dans le passe");
+                event.consume(); return;
+            }
+            if (end.isBefore(start) || end.isEqual(start)) {
+                errorLbl.setText("\u274C La date de fin doit etre au moins 1 jour apres le debut");
+                event.consume(); return;
+            }
+            if (currentUser == null) {
+                errorLbl.setText("\u274C Utilisateur non connecte");
+                event.consume(); return;
+            }
+
+            // Retrieve original panier to get establishment ID
+            List<Panier> userPanier = panierService.getPanierByClient(currentUser.getId());
+            Panier originalPanier = userPanier.stream()
+                    .filter(p -> p.getIdPanier() == r.getIdPanier())
+                    .findFirst().orElse(null);
+
+            Panier newItem = new Panier();
+            newItem.setIdClient(currentUser.getId());
+            newItem.setIdEtablissement(originalPanier != null ? originalPanier.getIdEtablissement() : 0);
+            newItem.setTypeService(r.getTypeService());
+            newItem.setDateDebut(start.atStartOfDay());
+            newItem.setDateFin(end.atStartOfDay());
+            newItem.setNbPersonnes(r.getNbPersonnes());
+            newItem.setPrixEstime(r.getMontantTotal());
+            newItem.setStatutItem("en_attente");
+            newItem.setNbAdultes(r.getNbPersonnes());
+            newItem.setNbEnfants(0);
+            newItem.setNbChambres(1);
+
+            if (panierService.ajouter(newItem)) {
+                showMessage("\u2705 Article ajoute au panier ! Allez au panier pour confirmer.", true);
+            } else {
+                errorLbl.setText("\u274C Echec de l'ajout au panier");
+                event.consume();
+            }
+        });
+
+        dialog.setResultConverter(bt -> null);
+        dialog.showAndWait();
     }
 
     // ================================================================
@@ -2135,8 +2566,9 @@ public class ReservationController {
         }
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("AI Spending Insights");
+        styleDialog(dialog, "\uD83D\uDCCA", "AI Spending Insights", "#B266FF");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(14);
@@ -2222,8 +2654,9 @@ public class ReservationController {
         }
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Analytics Dashboard");
+        styleDialog(dialog, "\uD83D\uDCC8", "Analytics Dashboard", "#51CF66");
+
         DialogPane dp = dialog.getDialogPane();
-        dp.setStyle("-fx-background-color: #1a1a1a;");
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
 
         VBox content = new VBox(14);
