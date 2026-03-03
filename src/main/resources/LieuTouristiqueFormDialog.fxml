@@ -41,8 +41,14 @@
 
                     <VBox spacing="4" styleClass="form-group">
                         <Label text="Description" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
-                        <TextField fx:id="tfDescription" promptText="Description détaillée..." styleClass="form-input" prefHeight="40"/>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <TextField fx:id="tfDescription" promptText="Description détaillée..." styleClass="form-input" prefHeight="40" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="btnAiDesc" text="✨ IA" onAction="#generateAiDescription" styleClass="btn-ai-generate" prefHeight="40" mnemonicParsing="false">
+                                <tooltip><Tooltip text="Générer une description avec l'IA Gemini"/></tooltip>
+                            </Button>
+                        </HBox>
                         <Label fx:id="lblErrDesc" text="" styleClass="error-label" visible="false" managed="false"/>
+                        <Label fx:id="lblAiStatus" text="" style="-fx-text-fill: rgba(191,162,0,0.85); -fx-font-size: 10px;" visible="false" managed="false"/>
                     </VBox>
 
                     <VBox spacing="4" styleClass="form-group">
@@ -81,25 +87,18 @@
                         <Label fx:id="lblErrAdr" text="" styleClass="error-label" visible="false" managed="false"/>
                     </VBox>
 
-                    <!-- Photo Gallery: Drag & Drop Zone -->
+                    <!-- Single Image Picker -->
                     <VBox spacing="8" styleClass="form-group">
                         <HBox alignment="CENTER_LEFT" spacing="8">
-                            <Label text="🖼️ Photos" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
+                            <Label text="🖼️ Image" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
                             <Region HBox.hgrow="ALWAYS"/>
-                            <Button fx:id="btnAddPhotos" text="+ Ajouter" styleClass="btn-browse" style="-fx-font-size: 11px; -fx-padding: 4 14;"/>
+                            <Button fx:id="btnBrowseImage" text="Parcourir..." styleClass="btn-browse" style="-fx-font-size: 11px; -fx-padding: 4 14;"/>
                         </HBox>
-                        <VBox fx:id="dropZone" alignment="CENTER" spacing="8" styleClass="gallery-drop-zone" minHeight="120" prefHeight="140">
-                            <Label fx:id="lblDropHint" text="📸 Glissez-déposez vos images ici" styleClass="gallery-drop-hint"/>
-                            <Label text="ou cliquez sur '+ Ajouter'" style="-fx-text-fill: rgba(200,200,200,0.35); -fx-font-size: 11px;"/>
-                        </VBox>
-                        <!-- Thumbnail gallery strip -->
-                        <ScrollPane fx:id="galleryScroll" styleClass="gallery-scroll" hbarPolicy="AS_NEEDED" vbarPolicy="NEVER"
-                                    fitToHeight="true" prefHeight="90" minHeight="0" maxHeight="100" visible="false" managed="false">
-                            <HBox fx:id="galleryStrip" spacing="8" alignment="CENTER_LEFT" styleClass="gallery-strip">
-                                <padding><Insets top="4" right="4" bottom="4" left="4"/></padding>
-                            </HBox>
-                        </ScrollPane>
-                        <Label fx:id="lblPhotoCount" text="" style="-fx-text-fill: rgba(191,162,0,0.6); -fx-font-size: 11px;"/>
+                        <StackPane fx:id="imagePreviewPane" alignment="CENTER" styleClass="gallery-drop-zone" minHeight="120" prefHeight="140">
+                            <Label fx:id="lblImageHint" text="📸 Aucune image sélectionnée" styleClass="gallery-drop-hint"/>
+                            <ImageView fx:id="ivPreview" fitWidth="200" fitHeight="130" preserveRatio="true" visible="false"/>
+                        </StackPane>
+                        <Label fx:id="lblImagePath" text="" style="-fx-text-fill: rgba(191,162,0,0.6); -fx-font-size: 11px;" wrapText="true"/>
                     </VBox>
                 </VBox>
 

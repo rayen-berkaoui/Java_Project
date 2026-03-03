@@ -13,65 +13,89 @@
     <VBox fx:id="dashboardRoot" spacing="24" styleClass="content-root, dashboard-root">
         <padding><Insets top="30" right="40" bottom="40" left="40"/></padding>
 
-        <!-- ===== PAGE HEADER ===== -->
-        <HBox styleClass="page-header-banner" alignment="CENTER_LEFT" spacing="0" maxHeight="120">
-            <!-- Icon Badge -->
+        <!-- ===== PAGE HEADER + DATE FILTERS ===== -->
+        <HBox styleClass="page-header-banner" alignment="CENTER_LEFT" spacing="0" maxHeight="130">
             <VBox alignment="CENTER" styleClass="header-icon-badge">
                 <Label text="📊" styleClass="header-icon-emoji"/>
             </VBox>
-            <!-- Title Block -->
-            <VBox spacing="4" styleClass="header-title-block" HBox.hgrow="ALWAYS">
-                <Label text="GESTION TOURISTIQUE" styleClass="header-tag"/>
+            <VBox spacing="4" styleClass="header-title-block">
+                <Label text="ANALYSE &amp; STATISTIQUES" styleClass="header-tag"/>
                 <Label text="Tableau de Bord" styleClass="header-main-title"/>
-                <Label text="Vue d'ensemble de vos lieux touristiques, catégories et adresses" styleClass="header-description"/>
+                <Label text="Vue d'ensemble dynamique avec filtres par période" styleClass="header-description"/>
+            </VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Date Period Filters -->
+            <VBox spacing="6" alignment="CENTER_RIGHT">
+                <HBox spacing="10" alignment="CENTER_RIGHT">
+                    <Label text="📅 Du" style="-fx-text-fill: rgba(255,255,255,0.7); -fx-font-size: 12px;"/>
+                    <DatePicker fx:id="dateFrom" prefWidth="150" promptText="Date début"/>
+                    <Label text="au" style="-fx-text-fill: rgba(255,255,255,0.7); -fx-font-size: 12px;"/>
+                    <DatePicker fx:id="dateTo" prefWidth="150" promptText="Date fin"/>
+                    <Button fx:id="btnApplyFilter" text="🔍 Filtrer" styleClass="action-button"
+                            onAction="#applyDateFilter" prefHeight="32" minWidth="100"/>
+                    <Button fx:id="btnResetFilter" text="↺ Tout" styleClass="action-button-outline"
+                            onAction="#resetFilter" prefHeight="32" minWidth="80"/>
+                </HBox>
+                <HBox spacing="8" alignment="CENTER_RIGHT">
+                    <Button text="7j" styleClass="period-chip" onAction="#filterLast7Days" prefHeight="26"/>
+                    <Button text="30j" styleClass="period-chip" onAction="#filterLast30Days" prefHeight="26"/>
+                    <Button text="90j" styleClass="period-chip" onAction="#filterLast90Days" prefHeight="26"/>
+                    <Button text="1 an" styleClass="period-chip" onAction="#filterLastYear" prefHeight="26"/>
+                    <Button text="Tout" styleClass="period-chip" onAction="#resetFilter" prefHeight="26"/>
+                    <Region prefWidth="10"/>
+                    <Button text="📄 PDF" styleClass="btn-export" onAction="#exportDashboardPdf" prefHeight="26"/>
+                    <Button text="📊 Excel" styleClass="btn-export" onAction="#exportDashboardExcel" prefHeight="26"/>
+                    <Label fx:id="lblFilterInfo" text="" style="-fx-text-fill: #BFA200; -fx-font-size: 11px; -fx-font-style: italic;"/>
+                </HBox>
             </VBox>
         </HBox>
 
-        <!-- ===== STAT CARDS ROW ===== -->
-        <HBox spacing="20" alignment="CENTER">
+        <!-- ===== KPI STAT CARDS ROW ===== -->
+        <HBox spacing="16" alignment="CENTER">
             <padding><Insets top="5" right="0" bottom="5" left="0"/></padding>
 
-            <!-- Total Lieux -->
-            <VBox spacing="6" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS">
-                <Label text="🏛️" style="-fx-font-size: 28px;"/>
+            <VBox spacing="4" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS" minHeight="100">
+                <Label text="🏛️" style="-fx-font-size: 26px;"/>
                 <Label fx:id="lblTotalLieux" text="0" styleClass="dashboard-stat-value"/>
                 <Label text="Lieux Touristiques" styleClass="dashboard-stat-label"/>
             </VBox>
-
-            <!-- Total Categories -->
-            <VBox spacing="6" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS">
-                <Label text="📂" style="-fx-font-size: 28px;"/>
+            <VBox spacing="4" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS" minHeight="100">
+                <Label text="📂" style="-fx-font-size: 26px;"/>
                 <Label fx:id="lblTotalCategories" text="0" styleClass="dashboard-stat-value"/>
                 <Label text="Catégories" styleClass="dashboard-stat-label"/>
             </VBox>
-
-            <!-- Total Adresses -->
-            <VBox spacing="6" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS">
-                <Label text="📍" style="-fx-font-size: 28px;"/>
-                <Label fx:id="lblTotalAdresses" text="0" styleClass="dashboard-stat-value"/>
-                <Label text="Adresses" styleClass="dashboard-stat-label"/>
+            <VBox spacing="4" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS" minHeight="100">
+                <Label text="💰" style="-fx-font-size: 26px;"/>
+                <Label fx:id="lblAvgPrice" text="0 TND" styleClass="stats-kpi-value"/>
+                <Label text="Prix Moyen" styleClass="dashboard-stat-label"/>
             </VBox>
-
-            <!-- Distinct Villes -->
-            <VBox spacing="6" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS">
-                <Label text="🌍" style="-fx-font-size: 28px;"/>
+            <VBox spacing="4" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS" minHeight="100">
+                <Label text="✅" style="-fx-font-size: 26px;"/>
+                <Label fx:id="lblActiveRate" text="0%" styleClass="stats-kpi-value"/>
+                <Label text="Taux d'Activité" styleClass="dashboard-stat-label"/>
+            </VBox>
+            <VBox spacing="4" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS" minHeight="100">
+                <Label text="🏙️" style="-fx-font-size: 26px;"/>
+                <Label fx:id="lblTopCity" text="-" styleClass="stats-kpi-value"/>
+                <Label text="Ville #1" styleClass="dashboard-stat-label"/>
+            </VBox>
+            <VBox spacing="4" alignment="CENTER" styleClass="dashboard-stat-card" HBox.hgrow="ALWAYS" minHeight="100">
+                <Label text="🌍" style="-fx-font-size: 26px;"/>
                 <Label fx:id="lblTotalVilles" text="0" styleClass="dashboard-stat-value"/>
                 <Label text="Villes" styleClass="dashboard-stat-label"/>
             </VBox>
         </HBox>
 
-        <!-- ===== CHARTS ROW 1: Category Pie + Ville Bar ===== -->
+        <!-- ===== CHARTS ROW 1: Category + Ville ===== -->
         <HBox spacing="20" VBox.vgrow="NEVER">
-            <!-- Lieux par Catégorie -->
-            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS">
+            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS" minHeight="340">
                 <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
                 <Label text="📂  Lieux par Catégorie" styleClass="dashboard-chart-title"/>
                 <Region styleClass="accent-line-thin"/>
                 <VBox fx:id="chartCategorieBox" VBox.vgrow="ALWAYS" alignment="CENTER"/>
             </VBox>
-
-            <!-- Lieux par Ville -->
-            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS">
+            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS" minHeight="340">
                 <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
                 <Label text="🏙️  Lieux par Ville (Top 10)" styleClass="dashboard-chart-title"/>
                 <Region styleClass="accent-line-thin"/>
@@ -79,24 +103,45 @@
             </VBox>
         </HBox>
 
-        <!-- ===== CHARTS ROW 2: Price Distribution + Statut ===== -->
+        <!-- ===== CHARTS ROW 2: Price Distribution + Avg Price by Category ===== -->
         <HBox spacing="20" VBox.vgrow="NEVER">
-            <!-- Price Distribution -->
-            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS">
+            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS" minHeight="340">
                 <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
                 <Label text="💰  Distribution des Prix" styleClass="dashboard-chart-title"/>
                 <Region styleClass="accent-line-thin"/>
                 <VBox fx:id="chartPriceBox" VBox.vgrow="ALWAYS" alignment="CENTER"/>
             </VBox>
-
-            <!-- Disponible vs Indisponible -->
-            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS">
+            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS" minHeight="340">
                 <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
-                <Label text="✅  Disponibilité des Lieux" styleClass="dashboard-chart-title"/>
+                <Label text="📊  Prix Moyen par Catégorie" styleClass="dashboard-chart-title"/>
+                <Region styleClass="accent-line-thin"/>
+                <VBox fx:id="chartAvgPriceCat" VBox.vgrow="ALWAYS" alignment="CENTER"/>
+            </VBox>
+        </HBox>
+
+        <!-- ===== CHARTS ROW 3: Status Donut + Category Timeline ===== -->
+        <HBox spacing="20" VBox.vgrow="NEVER">
+            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS" minHeight="340">
+                <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                <Label text="✅  Statut des Lieux (Actif vs Inactif)" styleClass="dashboard-chart-title"/>
                 <Region styleClass="accent-line-thin"/>
                 <VBox fx:id="chartStatutBox" VBox.vgrow="ALWAYS" alignment="CENTER"/>
             </VBox>
+            <VBox spacing="10" styleClass="dashboard-chart-card" HBox.hgrow="ALWAYS" minHeight="340">
+                <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+                <Label text="📅  Catégories par Date de Création" styleClass="dashboard-chart-title"/>
+                <Region styleClass="accent-line-thin"/>
+                <VBox fx:id="chartCatTimeline" VBox.vgrow="ALWAYS" alignment="CENTER"/>
+            </VBox>
         </HBox>
+
+        <!-- ===== TOP PLACES TABLE ===== -->
+        <VBox spacing="10" styleClass="dashboard-chart-card" VBox.vgrow="NEVER">
+            <padding><Insets top="18" right="18" bottom="18" left="18"/></padding>
+            <Label text="🏆  Top 5 Lieux les Plus Chers" styleClass="dashboard-chart-title"/>
+            <Region styleClass="accent-line-thin"/>
+            <VBox fx:id="topPlacesBox" spacing="8"/>
+        </VBox>
 
         <!-- ===== HEATMAP ===== -->
         <VBox spacing="10" styleClass="dashboard-chart-card" VBox.vgrow="ALWAYS">

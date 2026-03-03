@@ -44,6 +44,9 @@ public class AdresseFormDialogController {
     private boolean mapReady = false;
     private boolean isMapInputMode = false;
 
+    /** Strong reference to prevent garbage collection of the JS bridge */
+    private MapBridge mapBridge;
+
     // Data collected from map mode clicks
     private String mapRue = "", mapVille = "";
     private double mapLat = 0, mapLon = 0, mapAlt = 0;
@@ -62,7 +65,8 @@ public class AdresseFormDialogController {
             mapEngine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
                 if (newState == Worker.State.SUCCEEDED) {
                     JSObject window = (JSObject) mapEngine.executeScript("window");
-                    window.setMember("javaBridge", new MapBridge());
+                    mapBridge = new MapBridge();
+                    window.setMember("javaBridge", mapBridge);
                     mapEngine.executeScript("console.log = function(msg) { javaBridge.log(msg); };");
                     mapReady = true;
                 }

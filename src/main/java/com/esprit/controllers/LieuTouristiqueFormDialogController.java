@@ -4,41 +4,25 @@ import com.esprit.entities.Adresse;
 import com.esprit.entities.LieuTouristique;
 import com.esprit.entities.categorie;
 import com.esprit.services.AdresseServices;
+import com.esprit.services.GeminiService;
 import com.esprit.services.categorieServices;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
  * Controller for LieuTouristique form dialog.
- * Supports multi-image drag & drop with compression and thumbnail gallery.
+ * Single image picker that stores the image path in lieu_touristique.image.
  */
 public class LieuTouristiqueFormDialogController {
 
@@ -50,43 +34,41 @@ public class LieuTouristiqueFormDialogController {
     @FXML private ComboBox<categorie> cbCategorie;
     @FXML private ComboBox<Adresse> cbAdresse;
     @FXML private Label lblErrNom, lblErrDesc, lblErrVille, lblErrPrix, lblErrStatut, lblErrCat, lblErrAdr;
+    @FXML private Button btnAiDesc;
+    @FXML private Label lblAiStatus;
 
-    // Gallery fields
-    @FXML private Button btnAddPhotos;
-    @FXML private VBox dropZone;
-    @FXML private Label lblDropHint;
-    @FXML private ScrollPane galleryScroll;
-    @FXML private HBox galleryStrip;
-    @FXML private Label lblPhotoCount;
+    // Single image fields
+    @FXML private Button btnBrowseImage;
+    @FXML private StackPane imagePreviewPane;
+    @FXML private Label lblImageHint;
+    @FXML private ImageView ivPreview;
+    @FXML private Label lblImagePath;
 
     private String mode = "ADD";
     private categorieServices catService;
     private AdresseServices adrService;
+    private GeminiService geminiService;
 
-    /** List of image file paths currently in the gallery */
-    private final List<String> galleryImages = new ArrayList<>();
-
-    private static final int MAX_IMAGES = 20;
-    private static final int COMPRESS_MAX_WIDTH = 1200;
-    private static final int COMPRESS_MAX_HEIGHT = 900;
-    private static final float COMPRESS_QUALITY = 0.75f;
+    /** The selected image file path */
+    private String selectedImagePath = "";
 
     @FXML
     public void initialize() {
         try {
             catService = new categorieServices();
             adrService = new AdresseServices();
+            geminiService = new GeminiService();
             loadComboBoxData();
         } catch (Exception e) {
             System.err.println("❌ Error loading combo data: " + e.getMessage());
         }
 
-        // --- Gallery: Add button ---
-        if (btnAddPhotos != null) {
-            btnAddPhotos.setOnAction(e -> chooseMultipleImages());
+        // --- Browse image button ---
+        if (btnBrowseImage != null) {
+            btnBrowseImage.setOnAction(e -> chooseSingleImage());
         }
 
-        // --- Gallery: Drag & Drop ---
+        // --- Drag & Drop on preview pane ---
         setupDragAndDrop();
 
         // --- Validation listeners ---
@@ -106,290 +88,95 @@ public class LieuTouristiqueFormDialogController {
     // ==================== DRAG & DROP ====================
 
     private void setupDragAndDrop() {
-        if (dropZone == null) return;
+        if (imagePreviewPane == null) return;
 
-        dropZone.setOnDragOver(event -> {
-            if (event.getGestureSource() != dropZone && event.getDragboard().hasFiles()) {
-                event.acceptTransferModes(TransferMode.COPY);
+        imagePreviewPane.setOnDragOver(event -> {
+            if (event.getGestureSource() != imagePreviewPane && event.getDragboard().hasFiles()) {
+                event.acceptTransferModes(javafx.scene.input.TransferMode.COPY);
             }
             event.consume();
         });
 
-        dropZone.setOnDragEntered(event -> {
+        imagePreviewPane.setOnDragEntered(event -> {
             if (event.getDragboard().hasFiles()) {
-                dropZone.getStyleClass().add("gallery-drop-zone-active");
-                if (lblDropHint != null) lblDropHint.setText("📥 Relâchez pour ajouter");
+                imagePreviewPane.getStyleClass().add("gallery-drop-zone-active");
+                if (lblImageHint != null) lblImageHint.setText("📥 Relâchez pour sélectionner");
             }
             event.consume();
         });
 
-        dropZone.setOnDragExited(event -> {
-            dropZone.getStyleClass().remove("gallery-drop-zone-active");
-            if (lblDropHint != null) lblDropHint.setText("📸 Glissez-déposez vos images ici");
+        imagePreviewPane.setOnDragExited(event -> {
+            imagePreviewPane.getStyleClass().remove("gallery-drop-zone-active");
+            if (lblImageHint != null && selectedImagePath.isEmpty()) {
+                lblImageHint.setText("📸 Aucune image sélectionnée");
+            }
             event.consume();
         });
 
-        dropZone.setOnDragDropped(event -> {
-            Dragboard db = event.getDragboard();
+        imagePreviewPane.setOnDragDropped(event -> {
+            javafx.scene.input.Dragboard db = event.getDragboard();
             boolean success = false;
             if (db.hasFiles()) {
-                List<File> imageFiles = new ArrayList<>();
                 for (File f : db.getFiles()) {
-                    if (isImageFile(f)) imageFiles.add(f);
-                }
-                if (!imageFiles.isEmpty()) {
-                    addImagesToGallery(imageFiles);
-                    success = true;
+                    if (isImageFile(f)) {
+                        setImagePreview(f.getAbsolutePath());
+                        success = true;
+                        break; // Only take the first image
+                    }
                 }
             }
             event.setDropCompleted(success);
             event.consume();
-            dropZone.getStyleClass().remove("gallery-drop-zone-active");
-            if (lblDropHint != null) lblDropHint.setText("📸 Glissez-déposez vos images ici");
+            imagePreviewPane.getStyleClass().remove("gallery-drop-zone-active");
         });
     }
 
     // ==================== IMAGE HANDLING ====================
 
-    private void chooseMultipleImages() {
-        if (dropZone == null || dropZone.getScene() == null) return;
+    private void chooseSingleImage() {
+        if (imagePreviewPane == null || imagePreviewPane.getScene() == null) return;
         try {
             FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Sélectionner des images");
+            fileChooser.setTitle("Sélectionner une image");
             String userHome = System.getProperty("user.home");
             File initialDir = new File(userHome + File.separator + "Pictures");
             if (initialDir.exists()) fileChooser.setInitialDirectory(initialDir);
             fileChooser.getExtensionFilters().addAll(
                     new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.bmp", "*.webp"),
                     new FileChooser.ExtensionFilter("All Files", "*.*"));
-            Stage stage = (Stage) dropZone.getScene().getWindow();
-            List<File> selectedFiles = fileChooser.showOpenMultipleDialog(stage);
-            if (selectedFiles != null && !selectedFiles.isEmpty()) {
-                addImagesToGallery(selectedFiles);
+            Stage stage = (Stage) imagePreviewPane.getScene().getWindow();
+            File selectedFile = fileChooser.showOpenDialog(stage);
+            if (selectedFile != null) {
+                setImagePreview(selectedFile.getAbsolutePath());
             }
         } catch (Exception e) {
-            System.err.println("❌ Error selecting images: " + e.getMessage());
+            System.err.println("❌ Error selecting image: " + e.getMessage());
         }
     }
 
     /**
-     * Compress, add to list, and refresh the gallery strip.
+     * Set the selected image path and update the preview.
      */
-    private void addImagesToGallery(List<File> files) {
-        for (File file : files) {
-            if (galleryImages.size() >= MAX_IMAGES) {
-                System.out.println("⚠️ Maximum " + MAX_IMAGES + " images allowed");
-                break;
-            }
-            if (!isImageFile(file)) continue;
-
-            // Compress the image
-            String compressed = compressImage(file);
-            if (compressed != null) {
-                galleryImages.add(compressed);
-            } else {
-                galleryImages.add(file.getAbsolutePath());
+    private void setImagePreview(String path) {
+        selectedImagePath = path;
+        if (ivPreview != null) {
+            try {
+                File f = new File(path);
+                if (f.exists()) {
+                    ivPreview.setImage(new Image(f.toURI().toString(), 200, 130, true, true));
+                    ivPreview.setVisible(true);
+                }
+            } catch (Exception e) {
+                ivPreview.setVisible(false);
             }
         }
-        refreshGalleryStrip();
-    }
-
-    /**
-     * Compress image: resize if too large, JPEG quality reduction.
-     * Saves to a temp file and returns the path.
-     */
-    private String compressImage(File source) {
-        try {
-            BufferedImage original = ImageIO.read(source);
-            if (original == null) return null;
-
-            int origW = original.getWidth();
-            int origH = original.getHeight();
-
-            // Calculate new dimensions
-            int newW = origW;
-            int newH = origH;
-            if (origW > COMPRESS_MAX_WIDTH || origH > COMPRESS_MAX_HEIGHT) {
-                double ratioW = (double) COMPRESS_MAX_WIDTH / origW;
-                double ratioH = (double) COMPRESS_MAX_HEIGHT / origH;
-                double ratio = Math.min(ratioW, ratioH);
-                newW = (int) (origW * ratio);
-                newH = (int) (origH * ratio);
-            }
-
-            // If already small enough and JPEG, just use original
-            if (newW == origW && newH == origH && source.getName().toLowerCase().matches(".*\\.(jpg|jpeg)$") && source.length() < 500_000) {
-                return source.getAbsolutePath();
-            }
-
-            // Resize
-            BufferedImage resized = new BufferedImage(newW, newH, BufferedImage.TYPE_INT_RGB);
-            Graphics2D g = resized.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.drawImage(original, 0, 0, newW, newH, null);
-            g.dispose();
-
-            // Write compressed JPEG
-            File tempDir = new File(System.getProperty("java.io.tmpdir"), "lieu_images");
-            if (!tempDir.exists()) tempDir.mkdirs();
-            File output = new File(tempDir, "img_" + System.currentTimeMillis() + "_" + source.getName().replaceAll("[^a-zA-Z0-9.]", "_"));
-            if (!output.getName().toLowerCase().endsWith(".jpg") && !output.getName().toLowerCase().endsWith(".jpeg")) {
-                output = new File(output.getAbsolutePath() + ".jpg");
-            }
-
-            Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
-            if (writers.hasNext()) {
-                ImageWriter writer = writers.next();
-                ImageWriteParam param = writer.getDefaultWriteParam();
-                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                param.setCompressionQuality(COMPRESS_QUALITY);
-                ImageOutputStream ios = ImageIO.createImageOutputStream(output);
-                writer.setOutput(ios);
-                writer.write(null, new IIOImage(resized, null, null), param);
-                ios.close();
-                writer.dispose();
-            }
-
-            long savedKB = (source.length() - output.length()) / 1024;
-            if (savedKB > 0) {
-                System.out.println("✅ Compressed: " + source.getName() + " saved " + savedKB + "KB");
-            }
-            return output.getAbsolutePath();
-
-        } catch (IOException e) {
-            System.err.println("⚠️ Compression failed for " + source.getName() + ": " + e.getMessage());
-            return null;
+        if (lblImageHint != null) {
+            lblImageHint.setVisible(false);
+            lblImageHint.setManaged(false);
         }
-    }
-
-    /**
-     * Rebuild the thumbnail gallery strip from the galleryImages list.
-     */
-    private void refreshGalleryStrip() {
-        if (galleryStrip == null) return;
-        galleryStrip.getChildren().clear();
-
-        boolean hasImages = !galleryImages.isEmpty();
-
-        if (galleryScroll != null) {
-            galleryScroll.setVisible(hasImages);
-            galleryScroll.setManaged(hasImages);
-        }
-
-        // Update drop zone hint
-        if (hasImages && dropZone != null) {
-            dropZone.setMinHeight(60);
-            dropZone.setPrefHeight(60);
-        } else if (dropZone != null) {
-            dropZone.setMinHeight(120);
-            dropZone.setPrefHeight(140);
-        }
-
-        // Build thumbnails
-        for (int i = 0; i < galleryImages.size(); i++) {
-            final int index = i;
-            String path = galleryImages.get(i);
-            StackPane thumb = createThumbnail(path, index);
-            galleryStrip.getChildren().add(thumb);
-        }
-
-        // Update counter
-        if (lblPhotoCount != null) {
-            if (hasImages) {
-                lblPhotoCount.setText(galleryImages.size() + " photo" + (galleryImages.size() > 1 ? "s" : "") + " ajoutée" + (galleryImages.size() > 1 ? "s" : ""));
-            } else {
-                lblPhotoCount.setText("");
-            }
-        }
-    }
-
-    /**
-     * Create a single thumbnail card with delete button overlay.
-     */
-    private StackPane createThumbnail(String imagePath, int index) {
-        StackPane card = new StackPane();
-        card.setPrefSize(72, 72);
-        card.setMinSize(72, 72);
-        card.setMaxSize(72, 72);
-        card.getStyleClass().add("gallery-thumb-card");
-
-        // Clip
-        Rectangle clip = new Rectangle(72, 72);
-        clip.setArcWidth(12);
-        clip.setArcHeight(12);
-        card.setClip(clip);
-
-        // Image
-        ImageView iv = new ImageView();
-        iv.setFitWidth(72);
-        iv.setFitHeight(72);
-        iv.setPreserveRatio(false);
-        try {
-            File f = new File(imagePath);
-            if (f.exists()) {
-                iv.setImage(new Image(f.toURI().toString(), 72, 72, false, true));
-            }
-        } catch (Exception ignored) {}
-
-        // Delete button overlay
-        Label deleteBtn = new Label("✕");
-        deleteBtn.getStyleClass().add("gallery-thumb-delete");
-        deleteBtn.setOnMouseClicked(e -> {
-            galleryImages.remove(index);
-            refreshGalleryStrip();
-            e.consume();
-        });
-        StackPane.setAlignment(deleteBtn, Pos.TOP_RIGHT);
-        StackPane.setMargin(deleteBtn, new Insets(2, 2, 0, 0));
-        deleteBtn.setVisible(false);
-
-        card.setOnMouseEntered(e -> {
-            deleteBtn.setVisible(true);
-            card.setEffect(new DropShadow(8, Color.rgb(191, 162, 0, 0.5)));
-        });
-        card.setOnMouseExited(e -> {
-            deleteBtn.setVisible(false);
-            card.setEffect(null);
-        });
-
-        card.getChildren().addAll(iv, deleteBtn);
-        card.setCursor(javafx.scene.Cursor.HAND);
-
-        // Click to show full preview
-        card.setOnMouseClicked(e -> {
-            if (e.getPickResult().getIntersectedNode() == deleteBtn) return;
-            showImagePreviewPopup(imagePath);
-        });
-
-        return card;
-    }
-
-    /**
-     * Show a full-size image preview in a dialog.
-     */
-    private void showImagePreviewPopup(String imagePath) {
-        try {
-            File f = new File(imagePath);
-            if (!f.exists()) return;
-            Image img = new Image(f.toURI().toString(), 800, 600, true, true);
-            ImageView iv = new ImageView(img);
-            iv.setPreserveRatio(true);
-            iv.setFitWidth(700);
-            iv.setFitHeight(500);
-
-            Dialog<Void> preview = new Dialog<>();
-            preview.setTitle("Aperçu de l'image");
-            DialogPane dp = new DialogPane();
-            dp.setContent(new StackPane(iv));
-            dp.getButtonTypes().add(ButtonType.CLOSE);
-            dp.setStyle("-fx-background-color: #0a0a14;");
-            preview.setDialogPane(dp);
-            preview.setResizable(true);
-            preview.showAndWait();
-        } catch (Exception e) {
-            System.err.println("❌ Error showing preview: " + e.getMessage());
+        if (lblImagePath != null) {
+            String fileName = new File(path).getName();
+            lblImagePath.setText("📎 " + fileName);
         }
     }
 
@@ -475,36 +262,13 @@ public class LieuTouristiqueFormDialogController {
             }
         }
 
-        // Load the legacy single image into gallery if present
+        // Load existing image into preview if present
         if (l.getImage() != null && !l.getImage().trim().isEmpty()) {
             File imgFile = new File(l.getImage());
             if (imgFile.exists()) {
-                galleryImages.add(l.getImage());
+                setImagePreview(l.getImage());
             }
         }
-    }
-
-    /**
-     * Load existing gallery images from DB for an existing lieu.
-     */
-    public void loadExistingGalleryImages(List<String> existingPaths) {
-        if (existingPaths != null) {
-            for (String p : existingPaths) {
-                if (p != null && !p.trim().isEmpty()) {
-                    if (!galleryImages.contains(p)) {
-                        galleryImages.add(p);
-                    }
-                }
-            }
-        }
-        refreshGalleryStrip();
-    }
-
-    /**
-     * Get the list of gallery image paths.
-     */
-    public List<String> getGalleryImagePaths() {
-        return new ArrayList<>(galleryImages);
     }
 
     /**
@@ -572,12 +336,80 @@ public class LieuTouristiqueFormDialogController {
 
         if (!valid) return null;
 
-        // Use first gallery image as the main image (backward compatible)
-        String image = galleryImages.isEmpty() ? "" : galleryImages.get(0);
+        // Use the selected image path
+        String image = selectedImagePath;
         int idCategorie = selectedCat.getIdcategorie();
         int idAdresse = selectedAdr.getId_adresse();
 
         return new LieuTouristique(nom, description, ville, idAdresse, prix, image, statut, idCategorie);
+    }
+
+    // ==================== AI DESCRIPTION GENERATOR ====================
+
+    @FXML
+    private void generateAiDescription() {
+        String nom = tfNom.getText() != null ? tfNom.getText().trim() : "";
+        String ville = tfVille.getText() != null ? tfVille.getText().trim() : "";
+        categorie selectedCat = cbCategorie.getSelectionModel().getSelectedItem();
+
+        if (nom.isEmpty()) {
+            showAiStatus("⚠️ Entrez le nom du lieu d'abord", true);
+            return;
+        }
+        if (ville.isEmpty()) {
+            showAiStatus("⚠️ Entrez la ville d'abord", true);
+            return;
+        }
+
+        String catName = selectedCat != null ? selectedCat.getNomcategorie() : "Général";
+        double prix = 0;
+        try { prix = Double.parseDouble(tfPrix.getText().trim()); } catch (Exception ignored) {}
+
+        btnAiDesc.setDisable(true);
+        showAiStatus("✨ Génération IA en cours...", false);
+
+        double finalPrix = prix;
+        Thread aiThread = new Thread(() -> {
+            try {
+                String description = geminiService.generateDescription(nom, ville, catName, finalPrix);
+                Platform.runLater(() -> {
+                    tfDescription.setText(description);
+                    btnAiDesc.setDisable(false);
+                    showAiStatus("✅ Description générée par IA", false);
+                    // Auto-hide status after 3 seconds
+                    new Thread(() -> {
+                        try { Thread.sleep(3000); } catch (Exception ignored) {}
+                        Platform.runLater(this::hideAiStatus);
+                    }).start();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    btnAiDesc.setDisable(false);
+                    showAiStatus("❌ " + e.getMessage(), true);
+                });
+            }
+        });
+        aiThread.setDaemon(true);
+        aiThread.setName("gemini-description");
+        aiThread.start();
+    }
+
+    private void showAiStatus(String text, boolean isError) {
+        if (lblAiStatus != null) {
+            lblAiStatus.setText(text);
+            lblAiStatus.setStyle(isError
+                    ? "-fx-text-fill: #e74c3c; -fx-font-size: 10px;"
+                    : "-fx-text-fill: rgba(191,162,0,0.85); -fx-font-size: 10px;");
+            lblAiStatus.setVisible(true);
+            lblAiStatus.setManaged(true);
+        }
+    }
+
+    private void hideAiStatus() {
+        if (lblAiStatus != null) {
+            lblAiStatus.setVisible(false);
+            lblAiStatus.setManaged(false);
+        }
     }
 
     // ==================== REAL-TIME VALIDATORS ====================

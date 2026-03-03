@@ -397,6 +397,34 @@
     -fx-background-color: #cc2233;
 }
 
+/* ===== EXPORT BUTTONS (PDF / Excel) ===== */
+.btn-export {
+    -fx-background-color: linear-gradient(to bottom right, rgba(191,162,0,0.25), rgba(191,162,0,0.12));
+    -fx-text-fill: #BFA200;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 8 18;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(191,162,0,0.4);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.15), 8, 0.3, 0, 2);
+}
+.btn-export:hover {
+    -fx-background-color: linear-gradient(to bottom right, rgba(191,162,0,0.5), rgba(191,162,0,0.3));
+    -fx-text-fill: white;
+    -fx-border-color: #BFA200;
+    -fx-scaleX: 1.05;
+    -fx-scaleY: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.5), 16, 0.5, 0, 3);
+}
+.btn-export:pressed {
+    -fx-scaleX: 0.95;
+    -fx-scaleY: 0.95;
+    -fx-background-color: rgba(191,162,0,0.4);
+}
+
 /* Generic button */
 .button {
     -fx-cursor: hand;
@@ -980,6 +1008,49 @@ GridPane {
     -fx-background-color: rgba(191, 162, 0, 0.4);
     -fx-scaleX: 0.92;
     -fx-scaleY: 0.92;
+}
+
+/* =================================================================
+   VOICE RECOGNITION MIC BUTTON
+   ================================================================= */
+.btn-mic {
+    -fx-background-color: rgba(191, 162, 0, 0.12);
+    -fx-text-fill: #BFA200;
+    -fx-font-size: 17px;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(191, 162, 0, 0.3);
+    -fx-border-radius: 10;
+    -fx-border-width: 1.5;
+    -fx-cursor: hand;
+    -fx-min-width: 44;
+    -fx-min-height: 44;
+    -fx-max-width: 44;
+    -fx-max-height: 44;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.15), 6, 0.3, 0, 1);
+}
+
+.btn-mic:hover {
+    -fx-background-color: rgba(191, 162, 0, 0.25);
+    -fx-border-color: rgba(191, 162, 0, 0.5);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.35), 10, 0.5, 0, 2);
+}
+
+.btn-mic:pressed {
+    -fx-background-color: rgba(191, 162, 0, 0.35);
+    -fx-scaleX: 0.92;
+    -fx-scaleY: 0.92;
+}
+
+.btn-mic-recording {
+    -fx-background-color: rgba(220, 50, 50, 0.2);
+    -fx-border-color: rgba(220, 50, 50, 0.6);
+    -fx-text-fill: #DC3232;
+    -fx-effect: dropshadow(gaussian, rgba(220, 50, 50, 0.4), 12, 0.5, 0, 0);
+}
+
+.btn-mic-recording:hover {
+    -fx-background-color: rgba(220, 50, 50, 0.35);
+    -fx-border-color: rgba(220, 50, 50, 0.8);
 }
 
 /* Dialog Labels */
@@ -1593,3 +1664,357 @@ GridPane {
     -fx-background-color: #e63946;
     -fx-effect: dropshadow(gaussian, rgba(230,57,70,0.5), 4, 0, 0, 0);
 }
+
+/* =================================================================
+   AI CHATBOT STYLES
+   ================================================================= */
+
+/* Floating Action Button */
+.chatbot-fab {
+    -fx-background-color: linear-gradient(to bottom right, #BFA200, #8B7500);
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+    -fx-background-radius: 50;
+    -fx-min-width: 60;
+    -fx-min-height: 60;
+    -fx-max-width: 60;
+    -fx-max-height: 60;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 16, 0.4, 0, 4);
+}
+
+.chatbot-fab:hover {
+    -fx-background-color: linear-gradient(to bottom right, #D4B300, #9E8500);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.65), 20, 0.5, 0, 5);
+    -fx-scaleX: 1.08;
+    -fx-scaleY: 1.08;
+}
+
+.chatbot-fab:pressed {
+    -fx-scaleX: 0.95;
+    -fx-scaleY: 0.95;
+}
+
+/* Chat Panel */
+.chatbot-panel {
+    -fx-background-color: #1a1a2e;
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(191, 162, 0, 0.3);
+    -fx-border-radius: 16;
+    -fx-border-width: 1.5;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 25, 0.3, -5, 5);
+}
+
+/* Chat Header */
+.chatbot-header {
+    -fx-background-color: rgba(191, 162, 0, 0.08);
+    -fx-background-radius: 16 16 0 0;
+}
+
+.chatbot-title {
+    -fx-text-fill: #BFA200;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.chatbot-status {
+    -fx-text-fill: rgba(255, 255, 255, 0.45);
+    -fx-font-size: 10px;
+}
+
+.chatbot-clear-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255, 255, 255, 0.4);
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-padding: 6;
+}
+
+.chatbot-clear-btn:hover {
+    -fx-background-color: rgba(220, 50, 50, 0.15);
+    -fx-text-fill: #e74c3c;
+}
+
+/* Messages Area */
+.chatbot-scroll {
+    -fx-background: transparent;
+    -fx-background-color: transparent;
+}
+
+.chatbot-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.chatbot-scroll .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
+.chatbot-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(191, 162, 0, 0.3);
+    -fx-background-radius: 4;
+}
+
+.chatbot-messages {
+    -fx-background-color: transparent;
+}
+
+/* Chat Bubbles */
+.chat-bubble-user {
+    -fx-background-color: linear-gradient(to bottom right, rgba(191, 162, 0, 0.25), rgba(191, 162, 0, 0.12));
+    -fx-background-radius: 14 14 4 14;
+    -fx-border-color: rgba(191, 162, 0, 0.2);
+    -fx-border-radius: 14 14 4 14;
+    -fx-border-width: 1;
+}
+
+.chat-bubble-bot {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-background-radius: 14 14 14 4;
+    -fx-border-color: rgba(255, 255, 255, 0.08);
+    -fx-border-radius: 14 14 14 4;
+    -fx-border-width: 1;
+}
+
+.chat-text-user {
+    -fx-fill: #d8d8d8;
+    -fx-font-size: 13px;
+}
+
+.chat-text-bot {
+    -fx-fill: #c8c8c8;
+    -fx-font-size: 13px;
+}
+
+.chat-typing {
+    -fx-text-fill: rgba(191, 162, 0, 0.5);
+    -fx-font-size: 16px;
+    -fx-background-color: rgba(255, 255, 255, 0.05);
+    -fx-background-radius: 12;
+}
+
+/* Input Bar */
+.chatbot-input-bar {
+    -fx-background-color: rgba(255, 255, 255, 0.04);
+    -fx-background-radius: 0 0 16 16;
+    -fx-border-color: rgba(255, 255, 255, 0.06) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.chatbot-input {
+    -fx-background-color: rgba(255, 255, 255, 0.07);
+    -fx-text-fill: #d8d8d8;
+    -fx-prompt-text-fill: rgba(255, 255, 255, 0.3);
+    -fx-border-color: rgba(191, 162, 0, 0.2);
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-font-size: 13px;
+    -fx-padding: 8 14;
+}
+
+.chatbot-input:focused {
+    -fx-border-color: #BFA200;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.2), 8, 0.3, 0, 0);
+}
+
+.chatbot-send-btn {
+    -fx-background-color: linear-gradient(to bottom, #BFA200, #8B7500);
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+    -fx-min-width: 42;
+    -fx-min-height: 40;
+}
+
+.chatbot-send-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #D4B300, #9E8500);
+}
+
+.chatbot-send-btn:pressed {
+    -fx-scaleX: 0.92;
+    -fx-scaleY: 0.92;
+}
+
+/* Suggestion Chips */
+.chatbot-suggestions {
+    -fx-background-color: rgba(255, 255, 255, 0.02);
+    -fx-border-color: rgba(255, 255, 255, 0.04) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.chatbot-chip {
+    -fx-background-color: rgba(191, 162, 0, 0.1);
+    -fx-text-fill: rgba(191, 162, 0, 0.8);
+    -fx-font-size: 11px;
+    -fx-background-radius: 20;
+    -fx-border-color: rgba(191, 162, 0, 0.2);
+    -fx-border-radius: 20;
+    -fx-border-width: 1;
+    -fx-padding: 5 12;
+    -fx-cursor: hand;
+}
+
+.chatbot-chip:hover {
+    -fx-background-color: rgba(191, 162, 0, 0.2);
+    -fx-text-fill: #BFA200;
+    -fx-border-color: rgba(191, 162, 0, 0.4);
+}
+
+/* =================================================================
+   AI DESCRIPTION GENERATE BUTTON
+   ================================================================= */
+.btn-ai-generate {
+    -fx-background-color: linear-gradient(to right, rgba(191, 162, 0, 0.15), rgba(191, 162, 0, 0.25));
+    -fx-text-fill: #BFA200;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(191, 162, 0, 0.35);
+    -fx-border-radius: 8;
+    -fx-border-width: 1.5;
+    -fx-cursor: hand;
+    -fx-padding: 6 14;
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.15), 6, 0.3, 0, 1);
+}
+
+.btn-ai-generate:hover {
+    -fx-background-color: linear-gradient(to right, rgba(191, 162, 0, 0.25), rgba(191, 162, 0, 0.35));
+    -fx-border-color: rgba(191, 162, 0, 0.5);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.3), 10, 0.5, 0, 2);
+}
+
+.btn-ai-generate:pressed {
+    -fx-scaleX: 0.95;
+    -fx-scaleY: 0.95;
+}
+
+/* =================================================================
+   STATISTICS & ANALYTICS STYLES
+   ================================================================= */
+
+.stats-kpi-value {
+    -fx-text-fill: #BFA200;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.stats-kpi-card {
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 16;
+}
+
+.stats-kpi-card:hover .stats-kpi-value {
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.5), 6, 0.5, 0, 0);
+}
+
+/* ===== LINE CHART STYLES ===== */
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines {
+    -fx-stroke: rgba(255, 255, 255, 0.05);
+}
+
+.chart-horizontal-grid-lines {
+    -fx-stroke: rgba(255, 255, 255, 0.05);
+}
+
+.chart-alternative-row-fill {
+    -fx-fill: transparent;
+    -fx-stroke: transparent;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+}
+
+.chart-legend-item-text {
+    -fx-text-fill: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== QR CODE BUTTON ===== */
+.qr-btn {
+    -fx-background-color: rgba(191, 162, 0, 0.85);
+    -fx-text-fill: #0a0a0a;
+    -fx-font-size: 14px;
+    -fx-padding: 4 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.qr-btn:hover {
+    -fx-background-color: rgba(212, 181, 48, 1);
+    -fx-effect: dropshadow(gaussian, rgba(191, 162, 0, 0.4), 8, 0.5, 0, 0);
+}
+
+/* ===== THEME TOGGLE ===== */
+.theme-toggle-btn {
+    -fx-font-size: 18px;
+    -fx-padding: 4 8;
+}
+
+/* ===== PERIOD CHIPS (Date Filter Buttons) ===== */
+.period-chip {
+    -fx-background-color: rgba(191, 162, 0, 0.12);
+    -fx-text-fill: #BFA200;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 14;
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(191, 162, 0, 0.35);
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+}
+
+.period-chip:hover {
+    -fx-background-color: rgba(191, 162, 0, 0.3);
+    -fx-text-fill: white;
+    -fx-border-color: #BFA200;
+}
+
+/* ===== ACTION BUTTON OUTLINE (Filter reset) ===== */
+.action-button-outline {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(255, 255, 255, 0.7);
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 16;
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.25);
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+}
+
+.action-button-outline:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.08);
+    -fx-text-fill: white;
+    -fx-border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== DATE PICKER STYLING ===== */
+.date-picker {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-border-color: rgba(191, 162, 0, 0.3);
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.date-picker .text-field {
+    -fx-text-fill: white;
+    -fx-background-color: transparent;
+    -fx-font-size: 12px;
+}
+
+.date-picker .arrow-button {
+    -fx-background-color: rgba(191, 162, 0, 0.15);
+}
+
+.date-picker .arrow-button .arrow {
+    -fx-background-color: #BFA200;
+}
+

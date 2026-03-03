@@ -71,4 +71,25 @@ public class AdresseServices implements ICrud<Adresse> {
         }
         return adresses;
     }
+
+    /**
+     * Get a single adresse by its ID.
+     */
+    public Adresse getById(int id) throws SQLException {
+        String sql = "SELECT * FROM adresse WHERE id_adresse=?";
+        PreparedStatement ps = con.prepareStatement(sql);
+        ps.setInt(1, id);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            return new Adresse(
+                    rs.getInt("id_adresse"),
+                    rs.getString("rue"),
+                    rs.getString("ville"),
+                    rs.getDouble("latitude"),
+                    rs.getDouble("longitude"),
+                    rs.getDouble("altitude")
+            );
+        }
+        return null;
+    }
 }

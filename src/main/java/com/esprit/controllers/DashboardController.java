@@ -6,6 +6,8 @@ import com.esprit.entities.categorie;
 import com.esprit.services.AdresseServices;
 import com.esprit.services.LieuTouristiqueServices;
 import com.esprit.services.categorieServices;
+import com.esprit.services.PdfExportService;
+import com.esprit.services.ExcelExportService;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
@@ -14,24 +16,38 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.chart.*;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.io.File;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class DashboardController {
 
-    @FXML private Label lblTotalLieux, lblTotalCategories, lblTotalAdresses, lblTotalVilles;
-    @FXML private VBox chartCategorieBox, chartVilleBox, chartPriceBox, chartStatutBox;
+    // ===== Date Filters =====
+    @FXML private DatePicker dateFrom, dateTo;
+    @FXML private Label lblFilterInfo;
+
+    // ===== KPI Cards =====
+    @FXML private Label lblTotalLieux, lblTotalCategories, lblAvgPrice, lblActiveRate, lblTopCity, lblTotalVilles;
+
+    // ===== Chart Containers =====
+    @FXML private VBox chartCategorieBox, chartVilleBox, chartPriceBox;
+    @FXML private VBox chartAvgPriceCat, chartStatutBox, chartCatTimeline;
+    @FXML private VBox topPlacesBox;
+
+    // ===== Heatmap =====
     @FXML private WebView heatmapWebView;
     @FXML private VBox dashboardRoot;
 
@@ -39,9 +55,14 @@ public class DashboardController {
     private categorieServices catServices;
     private AdresseServices adresseServices;
 
+    // Full data (no filter)
+    private List<LieuTouristique> allLieux = new ArrayList<>();
+    private List<categorie> allCategories = new ArrayList<>();
+    private List<Adresse> allAdresses = new ArrayList<>();
+
+    // Filtered data (currently displayed)
     private List<LieuTouristique> lieux = new ArrayList<>();
     private List<categorie> categories = new ArrayList<>();
-    private List<Adresse> adresses = new ArrayList<>();
 
     @FXML
     public void initialize() {
@@ -55,6 +76,7 @@ public class DashboardController {
 
         Platform.runLater(() -> {
             loadData();
+            applyFilter(null, null); // show all
             buildDashboard();
             playEntranceAnimation();
         });
@@ -62,29 +84,160 @@ public class DashboardController {
 
     private void loadData() {
         try {
-            lieux = lieuServices.afficher();
-            categories = catServices.afficher();
-            adresses = adresseServices.afficher();
+            allLieux = lieuServices.afficher();
+            allCategories = catServices.afficher();
+            allAdresses = adresseServices.afficher();
         } catch (SQLException e) {
             System.err.println("❌ Dashboard: Error loading data: " + e.getMessage());
         }
     }
 
+    // ==================== DATE FILTERING ====================
+
+    private void applyFilter(LocalDate from, LocalDate to) {
+        if (from == null && to == null) {
+            // No filter — show all
+            categories = new ArrayList<>(allCategories);
+            lieux = new ArrayList<>(allLieux);
+            if (lblFilterInfo != null) lblFilterInfo.setText("");
+        } else {
+            // Filter categories by date_creation
+            categories = allCategories.stream()
+                    .filter(c -> {
+                        LocalDate d = c.getDateCreation();
+                        if (d == null) return false;
+                        if (from != null && d.isBefore(from)) return false;
+                        if (to != null && d.isAfter(to)) return false;
+                        return true;
+                    })
+                    .collect(Collectors.toList());
+
+            // Get IDs of filtered categories
+            Set<Integer> catIds = categories.stream()
+                    .map(categorie::getIdcategorie)
+                    .collect(Collectors.toSet());
+
+            // Filter lieux to only those in filtered categories
+            lieux = allLieux.stream()
+                    .filter(l -> catIds.contains(l.getId_categorie()))
+                    .collect(Collectors.toList());
+
+            // Update info label
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            String info = "🔍 Filtre actif : ";
+            if (from != null && to != null) info += from.format(fmt) + " → " + to.format(fmt);
+            else if (from != null) info += "depuis " + from.format(fmt);
+            else info += "jusqu'au " + to.format(fmt);
+            info += " | " + categories.size() + " catég. | " + lieux.size() + " lieux";
+            if (lblFilterInfo != null) lblFilterInfo.setText(info);
+        }
+    }
+
+    @FXML
+    public void applyDateFilter() {
+        LocalDate from = dateFrom != null ? dateFrom.getValue() : null;
+        LocalDate to = dateTo != null ? dateTo.getValue() : null;
+        applyFilter(from, to);
+        rebuildAll();
+    }
+
+    @FXML
+    public void resetFilter() {
+        if (dateFrom != null) dateFrom.setValue(null);
+        if (dateTo != null) dateTo.setValue(null);
+        applyFilter(null, null);
+        rebuildAll();
+    }
+
+    @FXML
+    public void filterLast7Days() {
+        setFilterPeriod(7);
+    }
+
+    @FXML
+    public void filterLast30Days() {
+        setFilterPeriod(30);
+    }
+
+    @FXML
+    public void filterLast90Days() {
+        setFilterPeriod(90);
+    }
+
+    @FXML
+    public void filterLastYear() {
+        setFilterPeriod(365);
+    }
+
+    private void setFilterPeriod(int days) {
+        LocalDate to = LocalDate.now();
+        LocalDate from = to.minusDays(days);
+        if (dateFrom != null) dateFrom.setValue(from);
+        if (dateTo != null) dateTo.setValue(to);
+        applyFilter(from, to);
+        rebuildAll();
+    }
+
+    private void rebuildAll() {
+        buildDashboard();
+    }
+
+    // ==================== BUILD ALL ====================
+
     private void buildDashboard() {
-        updateStatCards();
+        updateKPIs();
         buildCategoryPieChart();
         buildVilleBarChart();
         buildPriceDistributionChart();
+        buildAvgPriceByCategoryChart();
         buildStatutPieChart();
+        buildCategoryTimelineChart();
+        buildTopPlacesTable();
         buildHeatmap();
     }
 
-    // ==================== STAT CARDS ====================
+    // ==================== KPI CARDS ====================
 
-    private void updateStatCards() {
+    private void updateKPIs() {
         if (lblTotalLieux != null) lblTotalLieux.setText(String.valueOf(lieux.size()));
         if (lblTotalCategories != null) lblTotalCategories.setText(String.valueOf(categories.size()));
-        if (lblTotalAdresses != null) lblTotalAdresses.setText(String.valueOf(adresses.size()));
+
+        if (lieux.isEmpty()) {
+            if (lblAvgPrice != null) lblAvgPrice.setText("N/A");
+            if (lblActiveRate != null) lblActiveRate.setText("N/A");
+            if (lblTopCity != null) lblTopCity.setText("-");
+            if (lblTotalVilles != null) lblTotalVilles.setText("0");
+            return;
+        }
+
+        double avg = lieux.stream().mapToDouble(LieuTouristique::getPrix).average().orElse(0);
+        if (lblAvgPrice != null) {
+            lblAvgPrice.setText(String.format("%.0f TND", avg));
+            animateLabel(lblAvgPrice);
+        }
+
+        long active = lieux.stream().filter(l -> l.getStatut() == 1).count();
+        double rate = (double) active / lieux.size() * 100;
+        if (lblActiveRate != null) {
+            lblActiveRate.setText(String.format("%.0f%%", rate));
+            animateLabel(lblActiveRate);
+        }
+
+        // Top city
+        Map<String, Long> cityCount = lieux.stream()
+                .filter(l -> l.getVille() != null && !l.getVille().isEmpty())
+                .collect(Collectors.groupingBy(l -> l.getVille().trim(), Collectors.counting()));
+        if (lblTopCity != null) {
+            cityCount.entrySet().stream()
+                    .max(Map.Entry.comparingByValue())
+                    .ifPresentOrElse(
+                            e -> lblTopCity.setText(e.getKey()),
+                            () -> lblTopCity.setText("-")
+                    );
+            animateLabel(lblTopCity);
+        }
+
+        // Total distinct cities
         if (lblTotalVilles != null) {
             long distinctVilles = lieux.stream()
                     .map(LieuTouristique::getVille)
@@ -96,17 +249,29 @@ public class DashboardController {
         }
     }
 
-    // ==================== CHART: Lieux per Catégorie (PieChart) ====================
+    private void animateLabel(Label label) {
+        if (label == null) return;
+        label.setOpacity(0);
+        label.setTranslateY(10);
+        FadeTransition fade = new FadeTransition(Duration.millis(500), label);
+        fade.setFromValue(0);
+        fade.setToValue(1);
+        TranslateTransition slide = new TranslateTransition(Duration.millis(500), label);
+        slide.setFromY(10);
+        slide.setToY(0);
+        slide.setInterpolator(Interpolator.EASE_OUT);
+        new ParallelTransition(fade, slide).play();
+    }
+
+    // ==================== CHART: Category Pie ====================
 
     private void buildCategoryPieChart() {
         if (chartCategorieBox == null) return;
         chartCategorieBox.getChildren().clear();
 
-        // Map category id -> name
         Map<Integer, String> catNames = new HashMap<>();
         for (categorie c : categories) catNames.put(c.getIdcategorie(), c.getNomcategorie());
 
-        // Count lieux per category
         Map<String, Integer> catCounts = new LinkedHashMap<>();
         for (LieuTouristique l : lieux) {
             String name = catNames.getOrDefault(l.getId_categorie(), "Inconnue");
@@ -119,7 +284,6 @@ public class DashboardController {
         }
 
         PieChart pieChart = new PieChart();
-        pieChart.setTitle(null);
         pieChart.setLegendVisible(true);
         pieChart.setLabelsVisible(true);
         pieChart.setStartAngle(90);
@@ -128,28 +292,32 @@ public class DashboardController {
         pieChart.setMaxHeight(350);
 
         for (Map.Entry<String, Integer> entry : catCounts.entrySet()) {
-            PieChart.Data data = new PieChart.Data(entry.getKey() + " (" + entry.getValue() + ")", entry.getValue());
-            pieChart.getData().add(data);
+            pieChart.getData().add(new PieChart.Data(entry.getKey() + " (" + entry.getValue() + ")", entry.getValue()));
         }
 
         pieChart.getStyleClass().add("dashboard-pie-chart");
         chartCategorieBox.getChildren().add(pieChart);
 
-        // Tooltips
         Platform.runLater(() -> {
+            String[] colors = {"#BFA200", "#D4B530", "#8a7000", "#e8dfa0", "#6b5800", "#c9a800", "#a89000", "#f0e6a0"};
+            int i = 0;
             int total = catCounts.values().stream().mapToInt(Integer::intValue).sum();
             for (PieChart.Data d : pieChart.getData()) {
-                double pct = (d.getPieValue() / total) * 100.0;
-                Tooltip tooltip = new Tooltip(d.getName() + "\n" + String.format("%.1f%%", pct));
-                tooltip.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
-                Tooltip.install(d.getNode(), tooltip);
-                d.getNode().setOnMouseEntered(e -> d.getNode().setStyle("-fx-opacity: 0.8; -fx-cursor: hand;"));
-                d.getNode().setOnMouseExited(e -> d.getNode().setStyle("-fx-opacity: 1;"));
+                if (d.getNode() != null) {
+                    d.getNode().setStyle("-fx-pie-color: " + colors[i % colors.length] + ";");
+                    double pct = (d.getPieValue() / total) * 100.0;
+                    Tooltip tooltip = new Tooltip(d.getName() + "\n" + String.format("%.1f%%", pct));
+                    tooltip.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+                    Tooltip.install(d.getNode(), tooltip);
+                    d.getNode().setOnMouseEntered(e -> d.getNode().setStyle("-fx-opacity: 0.8; -fx-cursor: hand;"));
+                    d.getNode().setOnMouseExited(e -> d.getNode().setStyle("-fx-opacity: 1;"));
+                }
+                i++;
             }
         });
     }
 
-    // ==================== CHART: Lieux per Ville (BarChart) ====================
+    // ==================== CHART: Ville Bar ====================
 
     private void buildVilleBarChart() {
         if (chartVilleBox == null) return;
@@ -166,7 +334,6 @@ public class DashboardController {
             return;
         }
 
-        // Sort by count descending, take top 10
         List<Map.Entry<String, Integer>> sorted = villeCounts.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(10)
@@ -176,10 +343,9 @@ public class DashboardController {
         xAxis.setLabel("Ville");
         NumberAxis yAxis = new NumberAxis();
         yAxis.setLabel("Nombre de lieux");
-        yAxis.setMinorTickVisible(false);
+        styleAxis(xAxis, yAxis);
 
         BarChart<String, Number> barChart = new BarChart<>(xAxis, yAxis);
-        barChart.setTitle(null);
         barChart.setLegendVisible(false);
         barChart.setCategoryGap(15);
         barChart.setBarGap(3);
@@ -187,9 +353,9 @@ public class DashboardController {
         barChart.setPrefHeight(320);
         barChart.setMaxHeight(350);
         barChart.setAnimated(true);
+        barChart.setStyle("-fx-background-color: transparent;");
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Lieux");
         for (Map.Entry<String, Integer> entry : sorted) {
             series.getData().add(new XYChart.Data<>(entry.getKey(), entry.getValue()));
         }
@@ -197,21 +363,10 @@ public class DashboardController {
         barChart.getStyleClass().add("dashboard-bar-chart");
         chartVilleBox.getChildren().add(barChart);
 
-        // Tooltips for bars
-        Platform.runLater(() -> {
-            for (XYChart.Data<String, Number> d : series.getData()) {
-                if (d.getNode() != null) {
-                    Tooltip tooltip = new Tooltip(d.getXValue() + ": " + d.getYValue() + " lieux");
-                    tooltip.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
-                    Tooltip.install(d.getNode(), tooltip);
-                    d.getNode().setOnMouseEntered(e -> d.getNode().setStyle("-fx-opacity: 0.75;"));
-                    d.getNode().setOnMouseExited(e -> d.getNode().setStyle("-fx-opacity: 1;"));
-                }
-            }
-        });
+        Platform.runLater(() -> colorBarsGold(barChart));
     }
 
-    // ==================== CHART: Price Distribution (BarChart) ====================
+    // ==================== CHART: Price Distribution ====================
 
     private void buildPriceDistributionChart() {
         if (chartPriceBox == null) return;
@@ -222,7 +377,6 @@ public class DashboardController {
             return;
         }
 
-        // Define price ranges
         String[] rangeLabels = {"Gratuit", "1-50", "50-100", "100-200", "200-500", "500+"};
         int[] rangeCounts = new int[6];
 
@@ -237,13 +391,12 @@ public class DashboardController {
         }
 
         CategoryAxis xAxis = new CategoryAxis();
-        xAxis.setLabel("Tranche de prix");
+        xAxis.setLabel("Tranche de prix (TND)");
         NumberAxis yAxis = new NumberAxis();
         yAxis.setLabel("Nombre de lieux");
-        yAxis.setMinorTickVisible(false);
+        styleAxis(xAxis, yAxis);
 
         BarChart<String, Number> barChart = new BarChart<>(xAxis, yAxis);
-        barChart.setTitle(null);
         barChart.setLegendVisible(false);
         barChart.setCategoryGap(12);
         barChart.setBarGap(2);
@@ -251,9 +404,9 @@ public class DashboardController {
         barChart.setPrefHeight(320);
         barChart.setMaxHeight(350);
         barChart.setAnimated(true);
+        barChart.setStyle("-fx-background-color: transparent;");
 
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Prix");
         for (int i = 0; i < rangeLabels.length; i++) {
             series.getData().add(new XYChart.Data<>(rangeLabels[i], rangeCounts[i]));
         }
@@ -261,40 +414,73 @@ public class DashboardController {
         barChart.getStyleClass().add("dashboard-bar-chart");
         chartPriceBox.getChildren().add(barChart);
 
-        // Tooltips
-        Platform.runLater(() -> {
-            for (XYChart.Data<String, Number> d : series.getData()) {
-                if (d.getNode() != null) {
-                    Tooltip tooltip = new Tooltip(d.getXValue() + ": " + d.getYValue() + " lieux");
-                    tooltip.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
-                    Tooltip.install(d.getNode(), tooltip);
-                }
-            }
-        });
+        Platform.runLater(() -> colorBarsGold(barChart));
     }
 
-    // ==================== CHART: Disponible vs Indisponible (PieChart) ====================
+    // ==================== CHART: Avg Price by Category ====================
+
+    private void buildAvgPriceByCategoryChart() {
+        if (chartAvgPriceCat == null) return;
+        chartAvgPriceCat.getChildren().clear();
+
+        if (categories.isEmpty() || lieux.isEmpty()) {
+            chartAvgPriceCat.getChildren().add(createEmptyLabel("Aucune donnée"));
+            return;
+        }
+
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        xAxis.setLabel("Catégorie");
+        yAxis.setLabel("Prix moyen (TND)");
+        styleAxis(xAxis, yAxis);
+
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setLegendVisible(false);
+        chart.setAnimated(true);
+        chart.setPrefHeight(280);
+        chart.setStyle("-fx-background-color: transparent;");
+        chart.setMinHeight(300);
+        chart.setMaxHeight(350);
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+
+        Map<Integer, String> catNames = categories.stream()
+                .collect(Collectors.toMap(categorie::getIdcategorie, categorie::getNomcategorie));
+
+        Map<Integer, Double> avgPrices = lieux.stream()
+                .collect(Collectors.groupingBy(LieuTouristique::getId_categorie,
+                        Collectors.averagingDouble(LieuTouristique::getPrix)));
+
+        avgPrices.entrySet().stream()
+                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                .forEach(e -> {
+                    String name = catNames.getOrDefault(e.getKey(), "ID:" + e.getKey());
+                    if (name.length() > 15) name = name.substring(0, 12) + "...";
+                    series.getData().add(new XYChart.Data<>(name, e.getValue()));
+                });
+
+        chart.getData().add(series);
+        chartAvgPriceCat.getChildren().add(chart);
+        VBox.setVgrow(chart, Priority.ALWAYS);
+
+        Platform.runLater(() -> colorBarsGold(chart));
+    }
+
+    // ==================== CHART: Status Donut ====================
 
     private void buildStatutPieChart() {
         if (chartStatutBox == null) return;
         chartStatutBox.getChildren().clear();
-
-        final int available, unavailable;
-        int av = 0, unav = 0;
-        for (LieuTouristique l : lieux) {
-            if (l.getStatut() == 1) av++;
-            else unav++;
-        }
-        available = av;
-        unavailable = unav;
 
         if (lieux.isEmpty()) {
             chartStatutBox.getChildren().add(createEmptyLabel("Aucune donnée disponible"));
             return;
         }
 
+        long active = lieux.stream().filter(l -> l.getStatut() == 1).count();
+        long inactive = lieux.size() - active;
+
         PieChart pieChart = new PieChart();
-        pieChart.setTitle(null);
         pieChart.setLegendVisible(true);
         pieChart.setLabelsVisible(true);
         pieChart.setStartAngle(90);
@@ -302,35 +488,183 @@ public class DashboardController {
         pieChart.setPrefHeight(320);
         pieChart.setMaxHeight(350);
 
-        PieChart.Data avail = new PieChart.Data("Disponible (" + available + ")", available);
-        PieChart.Data unavail = new PieChart.Data("Indisponible (" + unavailable + ")", unavailable);
-        pieChart.getData().addAll(avail, unavail);
+        pieChart.getData().add(new PieChart.Data("Actif (" + active + ")", active));
+        pieChart.getData().add(new PieChart.Data("Inactif (" + inactive + ")", inactive));
         pieChart.getStyleClass().add("dashboard-pie-chart");
         chartStatutBox.getChildren().add(pieChart);
 
-        // Style and tooltips
         Platform.runLater(() -> {
-            if (avail.getNode() != null) avail.getNode().setStyle("-fx-pie-color: #27ae60;");
-            if (unavail.getNode() != null) unavail.getNode().setStyle("-fx-pie-color: #c0392b;");
-
-            int total = available + unavailable;
-            for (PieChart.Data d : pieChart.getData()) {
-                double pct = total > 0 ? (d.getPieValue() / total) * 100.0 : 0;
-                Tooltip tooltip = new Tooltip(d.getName() + "\n" + String.format("%.1f%%", pct));
-                tooltip.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
-                Tooltip.install(d.getNode(), tooltip);
+            if (pieChart.getData().size() >= 2) {
+                Node activeNode = pieChart.getData().get(0).getNode();
+                Node inactiveNode = pieChart.getData().get(1).getNode();
+                if (activeNode != null) activeNode.setStyle("-fx-pie-color: #00b36b;");
+                if (inactiveNode != null) inactiveNode.setStyle("-fx-pie-color: #e63946;");
+                Tooltip.install(activeNode, new Tooltip("Actif: " + active + " lieux"));
+                Tooltip.install(inactiveNode, new Tooltip("Inactif: " + inactive + " lieux"));
             }
         });
     }
 
-    // ==================== HEATMAP: All locations on map ====================
+    // ==================== CHART: Category Timeline ====================
+
+    private void buildCategoryTimelineChart() {
+        if (chartCatTimeline == null) return;
+        chartCatTimeline.getChildren().clear();
+
+        List<categorie> dated = categories.stream()
+                .filter(c -> c.getDateCreation() != null)
+                .sorted(Comparator.comparing(categorie::getDateCreation))
+                .collect(Collectors.toList());
+
+        if (dated.isEmpty()) {
+            chartCatTimeline.getChildren().add(createEmptyLabel("Aucune catégorie avec date"));
+            return;
+        }
+
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        xAxis.setLabel("Date");
+        yAxis.setLabel("Catégories cumulées");
+        styleAxis(xAxis, yAxis);
+
+        LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+        chart.setLegendVisible(false);
+        chart.setAnimated(true);
+        chart.setPrefHeight(280);
+        chart.setMinHeight(300);
+        chart.setMaxHeight(350);
+        chart.setStyle("-fx-background-color: transparent;");
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MM/yyyy");
+
+        int cumulative = 0;
+        for (categorie c : dated) {
+            cumulative++;
+            series.getData().add(new XYChart.Data<>(c.getDateCreation().format(fmt), cumulative));
+        }
+
+        chart.getData().add(series);
+        chartCatTimeline.getChildren().add(chart);
+        VBox.setVgrow(chart, Priority.ALWAYS);
+
+        Platform.runLater(() -> {
+            Node line = chart.lookup(".chart-series-line");
+            if (line != null) {
+                line.setStyle("-fx-stroke: #BFA200; -fx-stroke-width: 3px;");
+            }
+            for (XYChart.Data<String, Number> data : series.getData()) {
+                Node symbol = data.getNode();
+                if (symbol != null) {
+                    symbol.setStyle("-fx-background-color: #BFA200, #0a0a12; -fx-background-radius: 6; -fx-padding: 4;");
+                }
+            }
+        });
+    }
+
+    // ==================== TOP PLACES TABLE ====================
+
+    private void buildTopPlacesTable() {
+        if (topPlacesBox == null) return;
+        topPlacesBox.getChildren().clear();
+
+        if (lieux.isEmpty()) {
+            topPlacesBox.getChildren().add(createEmptyLabel("Aucun lieu"));
+            return;
+        }
+
+        Map<Integer, String> catNames = categories.stream()
+                .collect(Collectors.toMap(categorie::getIdcategorie, categorie::getNomcategorie, (a, b) -> a));
+
+        // Header
+        HBox header = createTableRow("🏅", "Nom", "Ville", "Catégorie", "Prix", true);
+        topPlacesBox.getChildren().add(header);
+
+        List<LieuTouristique> top5 = lieux.stream()
+                .sorted(Comparator.comparingDouble(LieuTouristique::getPrix).reversed())
+                .limit(5)
+                .collect(Collectors.toList());
+
+        int rank = 1;
+        for (LieuTouristique l : top5) {
+            String medal;
+            switch (rank) {
+                case 1: medal = "🥇"; break;
+                case 2: medal = "🥈"; break;
+                case 3: medal = "🥉"; break;
+                default: medal = "#" + rank;
+            }
+            String catName = catNames.getOrDefault(l.getId_categorie(), "-");
+            HBox row = createTableRow(medal, l.getNom(), l.getVille() != null ? l.getVille() : "-",
+                    catName, String.format("%.0f TND", l.getPrix()), false);
+
+            row.setOpacity(0);
+            row.setTranslateX(-20);
+            FadeTransition fade = new FadeTransition(Duration.millis(400), row);
+            fade.setDelay(Duration.millis(rank * 100));
+            fade.setFromValue(0);
+            fade.setToValue(1);
+            TranslateTransition slide = new TranslateTransition(Duration.millis(400), row);
+            slide.setDelay(Duration.millis(rank * 100));
+            slide.setFromX(-20);
+            slide.setToX(0);
+            slide.setInterpolator(Interpolator.EASE_OUT);
+            new ParallelTransition(fade, slide).play();
+
+            topPlacesBox.getChildren().add(row);
+            rank++;
+        }
+    }
+
+    private HBox createTableRow(String rank, String name, String city, String category, String price, boolean isHeader) {
+        HBox row = new HBox(10);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(10, 16, 10, 16));
+
+        if (isHeader) {
+            row.setStyle("-fx-background-color: rgba(191,162,0,0.1); -fx-background-radius: 8;");
+        } else {
+            row.setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 8;");
+            row.setOnMouseEntered(e -> row.setStyle("-fx-background-color: rgba(191,162,0,0.08); -fx-background-radius: 8;"));
+            row.setOnMouseExited(e -> row.setStyle("-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 8;"));
+        }
+
+        String textStyle = isHeader
+                ? "-fx-text-fill: #BFA200; -fx-font-weight: bold; -fx-font-size: 12px;"
+                : "-fx-text-fill: rgba(255,255,255,0.85); -fx-font-size: 12px;";
+
+        Label rankLbl = new Label(rank);
+        rankLbl.setStyle(isHeader ? textStyle : "-fx-font-size: 16px;");
+        rankLbl.setMinWidth(40);
+
+        Label nameLbl = new Label(name);
+        nameLbl.setStyle(textStyle + (isHeader ? "" : " -fx-font-weight: bold;"));
+        nameLbl.setMinWidth(200);
+        HBox.setHgrow(nameLbl, Priority.ALWAYS);
+
+        Label cityLbl = new Label(city);
+        cityLbl.setStyle(textStyle);
+        cityLbl.setMinWidth(120);
+
+        Label catLbl = new Label(category);
+        catLbl.setStyle(textStyle);
+        catLbl.setMinWidth(140);
+
+        Label priceLbl = new Label(price);
+        priceLbl.setStyle(isHeader ? textStyle : "-fx-text-fill: #BFA200; -fx-font-weight: bold; -fx-font-size: 13px;");
+        priceLbl.setMinWidth(80);
+
+        row.getChildren().addAll(rankLbl, nameLbl, cityLbl, catLbl, priceLbl);
+        return row;
+    }
+
+    // ==================== HEATMAP ====================
 
     private void buildHeatmap() {
         if (heatmapWebView == null) return;
 
-        // Gather locations with coordinates
         Map<Integer, Adresse> adresseMap = new HashMap<>();
-        for (Adresse a : adresses) adresseMap.put(a.getId_adresse(), a);
+        for (Adresse a : allAdresses) adresseMap.put(a.getId_adresse(), a);
 
         StringBuilder markers = new StringBuilder();
         double sumLat = 0, sumLon = 0;
@@ -353,10 +687,10 @@ public class DashboardController {
             }
         }
 
-        // Also add adresses that are not linked to any lieu
-        for (Adresse a : adresses) {
+        // Also add adresses not linked to any lieu
+        for (Adresse a : allAdresses) {
             if (a.getLatitude() != 0 && a.getLongitude() != 0) {
-                boolean linked = lieux.stream().anyMatch(l -> l.getId_adresse() == a.getId_adresse());
+                boolean linked = allLieux.stream().anyMatch(l -> l.getId_adresse() == a.getId_adresse());
                 if (!linked) {
                     markers.append(String.format(
                             "addMarker(%f, %f, '%s', '%s', '#BFA200', '—');\n",
@@ -431,7 +765,6 @@ public class DashboardController {
                 "  if(city) popupContent += '<div class=\"popup-city\">📍 '+city+'</div>';\n" +
                 "  if(price!=='—') popupContent += '<div class=\"popup-price\">💰 '+price+' TND</div>';\n" +
                 "  m.bindPopup(popupContent,{className:'custom-popup',maxWidth:220});\n" +
-                "  // Pulse animation circle\n" +
                 "  L.circle([lat,lng],{radius:800,color:color,fillColor:color,fillOpacity:0.08,weight:1,opacity:0.3}).addTo(map);\n" +
                 "}\n" +
                 markers +
@@ -443,6 +776,26 @@ public class DashboardController {
     }
 
     // ==================== HELPERS ====================
+
+    private void styleAxis(Axis<?> x, Axis<?> y) {
+        x.setStyle("-fx-tick-label-fill: rgba(255,255,255,0.6); -fx-tick-label-font-size: 10;");
+        y.setStyle("-fx-tick-label-fill: rgba(255,255,255,0.6); -fx-tick-label-font-size: 10;");
+    }
+
+    private void colorBarsGold(BarChart<?, ?> chart) {
+        String[] goldShades = {"#BFA200", "#D4B530", "#8a7000", "#e8dfa0", "#c9a800", "#6b5800"};
+        int i = 0;
+        for (XYChart.Series<?, ?> s : chart.getData()) {
+            for (XYChart.Data<?, ?> data : s.getData()) {
+                Node node = data.getNode();
+                if (node != null) {
+                    node.setStyle("-fx-bar-fill: " + goldShades[i % goldShades.length] + ";");
+                    Tooltip.install(node, new Tooltip(data.getXValue() + ": " + data.getYValue()));
+                }
+                i++;
+            }
+        }
+    }
 
     private Label createEmptyLabel(String text) {
         Label lbl = new Label(text);
@@ -465,5 +818,63 @@ public class DashboardController {
         slide.setToY(0);
         slide.setInterpolator(Interpolator.EASE_OUT);
         new ParallelTransition(fade, slide).play();
+    }
+
+    // ==================== PDF / EXCEL EXPORT ====================
+
+    @FXML
+    public void exportDashboardPdf() {
+        if (lieux.isEmpty()) return;
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Exporter le rapport PDF");
+        fc.setInitialFileName("Rapport_Tableau_de_Bord.pdf");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+        Stage stage = (Stage) dashboardRoot.getScene().getWindow();
+        File file = fc.showSaveDialog(stage);
+        if (file == null) return;
+
+        new Thread(() -> {
+            try {
+                PdfExportService pdfService = new PdfExportService();
+                pdfService.generateReport(file, lieux, categories, new java.util.ArrayList<>(allAdresses));
+                Platform.runLater(() -> {
+                    if (lblFilterInfo != null) lblFilterInfo.setText("\u2705 PDF exporté: " + file.getName());
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    if (lblFilterInfo != null) lblFilterInfo.setText("\u274c Erreur PDF: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    @FXML
+    public void exportDashboardExcel() {
+        if (lieux.isEmpty()) return;
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Exporter en Excel");
+        fc.setInitialFileName("Tableau_de_Bord.xlsx");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        Stage stage = (Stage) dashboardRoot.getScene().getWindow();
+        File file = fc.showSaveDialog(stage);
+        if (file == null) return;
+
+        new Thread(() -> {
+            try {
+                ExcelExportService excelService = new ExcelExportService();
+                excelService.exportToExcel(file, lieux, categories, new java.util.ArrayList<>(allAdresses));
+                Platform.runLater(() -> {
+                    if (lblFilterInfo != null) lblFilterInfo.setText("\u2705 Excel exporté: " + file.getName());
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    if (lblFilterInfo != null) lblFilterInfo.setText("\u274c Erreur Excel: " + e.getMessage());
+                });
+            }
+        }).start();
     }
 }

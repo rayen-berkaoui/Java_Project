@@ -38,8 +38,14 @@
 
                     <VBox spacing="4" styleClass="form-group">
                         <Label text="Description" styleClass="form-field-label" style="-fx-font-size: 13px;"/>
-                        <TextField fx:id="tfDescription" promptText="Décrivez la catégorie..." styleClass="form-input" prefHeight="42"/>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <TextField fx:id="tfDescription" promptText="Décrivez la catégorie ou utilisez le micro 🎤" styleClass="form-input" prefHeight="42" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="btnMic" text="🎤" onAction="#toggleVoiceRecording" prefWidth="44" prefHeight="44" styleClass="btn-mic" mnemonicParsing="false">
+                                <tooltip><Tooltip text="Reconnaissance vocale — Cliquez pour parler"/></tooltip>
+                            </Button>
+                        </HBox>
                         <Label fx:id="lblErrDesc" text="" styleClass="error-label" visible="false" managed="false"/>
+                        <Label fx:id="lblVoiceStatus" text="" style="-fx-text-fill: rgba(191,162,0,0.85); -fx-font-size: 10px;" visible="false" managed="false"/>
                     </VBox>
                 </VBox>
             </VBox>

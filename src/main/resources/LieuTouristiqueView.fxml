@@ -49,6 +49,13 @@
                 <tooltip><Tooltip text="Supprimer le lieu sélectionné"/></tooltip>
             </Button>
             <Region HBox.hgrow="ALWAYS"/>
+            <Button text="📄 PDF" fx:id="btnExportPdf" styleClass="btn-export" onAction="#exportPdf">
+                <tooltip><Tooltip text="Exporter un rapport PDF professionnel"/></tooltip>
+            </Button>
+            <Button text="📊 Excel" fx:id="btnExportExcel" styleClass="btn-export" onAction="#exportExcel">
+                <tooltip><Tooltip text="Exporter les données en fichier Excel"/></tooltip>
+            </Button>
+            <Region prefWidth="10"/>
             <HBox alignment="CENTER_RIGHT" spacing="6" styleClass="search-container">
                 <Label text="🔍" styleClass="search-icon"/>
                 <TextField fx:id="searchField" promptText="Rechercher un lieu..." styleClass="search-field"/>

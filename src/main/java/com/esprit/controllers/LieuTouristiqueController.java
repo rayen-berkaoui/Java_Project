@@ -1,7 +1,15 @@
 package com.esprit.controllers;
 
+import com.esprit.entities.Adresse;
 import com.esprit.entities.LieuTouristique;
+import com.esprit.services.AdresseServices;
 import com.esprit.services.LieuTouristiqueServices;
+import com.esprit.services.QRCodeService;
+import com.esprit.services.WeatherService;
+import com.esprit.services.PdfExportService;
+import com.esprit.services.ExcelExportService;
+import com.esprit.entities.categorie;
+import com.esprit.services.categorieServices;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -24,6 +32,8 @@ import javafx.stage.Stage;
 import javafx.event.ActionEvent;
 import javafx.util.Duration;
 
+import javafx.scene.Scene;
+import javafx.stage.FileChooser;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -42,12 +52,18 @@ public class LieuTouristiqueController {
     @FXML private TextField searchField;
 
     private LieuTouristiqueServices lieuServices;
+    private AdresseServices adresseServices;
+    private WeatherService weatherService;
     private List<LieuTouristique> lieuList = new ArrayList<>();
     private List<LieuTouristique> filteredList = new ArrayList<>();
     /** Cache of gallery images per lieu id for carousel */
     private final Map<Integer, List<String>> galleryCache = new HashMap<>();
     /** Tracks current carousel image index per lieu id */
     private final Map<Integer, Integer> carouselIndex = new HashMap<>();
+    /** Cache of weather data per city name */
+    private final Map<String, WeatherService.WeatherData> weatherCache = new HashMap<>();
+    /** Cache of Adresse per id_adresse */
+    private final Map<Integer, Adresse> adresseCache = new HashMap<>();
     private int currentPage = 0;
     private int selectedIndex = -1;
     private static final int CARDS_PER_PAGE = 4;
@@ -57,6 +73,8 @@ public class LieuTouristiqueController {
     public void initialize() {
         try {
             lieuServices = new LieuTouristiqueServices();
+            adresseServices = new AdresseServices();
+            weatherService = new WeatherService();
 
             if (btnAjouter != null) btnAjouter.setOnAction(e -> { animateButton(btnAjouter); openAddDialog(); });
             if (btnModifier != null) btnModifier.setOnAction(e -> { animateButton(btnModifier); openEditDialog(); });
@@ -126,16 +144,67 @@ public class LieuTouristiqueController {
                 carouselIndex.put(l.getId_lieu(), 0);
             }
 
+            // Preload adresse cache for weather lookup
+            adresseCache.clear();
+            for (LieuTouristique l : lieuList) {
+                if (l.getId_adresse() > 0 && !adresseCache.containsKey(l.getId_adresse())) {
+                    try {
+                        Adresse adr = adresseServices.getById(l.getId_adresse());
+                        if (adr != null) adresseCache.put(l.getId_adresse(), adr);
+                    } catch (Exception ignored) {}
+                }
+            }
+
             int maxPage = getMaxPage();
             if (currentPage > maxPage) currentPage = maxPage;
             if (selectedIndex >= filteredList.size()) selectedIndex = filteredList.isEmpty() ? -1 : 0;
 
             buildCards();
+
+            // Fetch weather asynchronously for each unique city from adresse table
+            fetchWeatherAsync();
+
             System.out.println("✅ Loaded " + lieuList.size() + " tourist locations");
         } catch (SQLException e) {
             System.err.println("❌ SQL Error: " + e.getMessage());
             showToast("Erreur de chargement: " + e.getMessage(), false);
         }
+    }
+
+    /**
+     * Fetches weather data asynchronously for all unique cities from the adresse table.
+     * Once fetched, rebuilds cards to show weather info.
+     */
+    private void fetchWeatherAsync() {
+        // Collect unique addresses with coordinates
+        Map<String, Adresse> cityAdresses = new HashMap<>();
+        for (Adresse adr : adresseCache.values()) {
+            if (adr.getVille() != null && !adr.getVille().trim().isEmpty()) {
+                cityAdresses.putIfAbsent(adr.getVille().trim().toLowerCase(), adr);
+            }
+        }
+
+        if (cityAdresses.isEmpty()) return;
+
+        // Run weather fetching in a background thread
+        Thread weatherThread = new Thread(() -> {
+            for (Map.Entry<String, Adresse> entry : cityAdresses.entrySet()) {
+                String cityKey = entry.getKey();
+                Adresse adr = entry.getValue();
+                if (!weatherCache.containsKey(cityKey)) {
+                    WeatherService.WeatherData data = weatherService.getWeather(
+                            adr.getLatitude(), adr.getLongitude(), adr.getVille().trim());
+                    if (data != null) {
+                        weatherCache.put(cityKey, data);
+                    }
+                }
+            }
+            // Update UI on JavaFX thread
+            Platform.runLater(this::buildCards);
+        });
+        weatherThread.setDaemon(true);
+        weatherThread.setName("weather-fetch");
+        weatherThread.start();
     }
 
     private int getMaxPage() {
@@ -295,9 +364,55 @@ public class LieuTouristiqueController {
         locationLabel.setStyle("-fx-text-fill: rgba(255,255,255,0.65); -fx-font-size: 11px;");
 
         textOverlay.getChildren().addAll(nameLabel, descLabel, locationLabel);
+
+        // Weather info from adresse city
+        Adresse lieuAdresse = adresseCache.get(lieu.getId_adresse());
+        String weatherCity = lieuAdresse != null ? lieuAdresse.getVille() : null;
+        WeatherService.WeatherData weather = weatherCity != null ? weatherCache.get(weatherCity.trim().toLowerCase()) : null;
+
+        if (weather != null) {
+            HBox weatherRow = new HBox(6);
+            weatherRow.setAlignment(Pos.CENTER_LEFT);
+            weatherRow.setPadding(new Insets(4, 8, 4, 8));
+            weatherRow.setStyle("-fx-background-color: rgba(0,0,0,0.45); -fx-background-radius: 6;");
+
+            Label weatherEmoji = new Label(weather.getWeatherEmoji());
+            weatherEmoji.setStyle("-fx-font-size: 14px;");
+
+            Label weatherTemp = new Label(String.format("%.0f°C", weather.getTemperature()));
+            weatherTemp.setStyle("-fx-text-fill: #BFA200; -fx-font-size: 12px; -fx-font-weight: bold;");
+
+            Label weatherDesc = new Label(capitalize(weather.getDescription()));
+            weatherDesc.setStyle("-fx-text-fill: rgba(255,255,255,0.7); -fx-font-size: 10px;");
+            weatherDesc.setMaxWidth(120);
+
+            Label weatherHumidity = new Label("💧" + weather.getHumidity() + "%");
+            weatherHumidity.setStyle("-fx-text-fill: rgba(255,255,255,0.6); -fx-font-size: 9px;");
+
+            weatherRow.getChildren().addAll(weatherEmoji, weatherTemp, weatherDesc, weatherHumidity);
+            textOverlay.getChildren().add(weatherRow);
+        }
+
         StackPane.setAlignment(textOverlay, Pos.BOTTOM_LEFT);
 
-        card.getChildren().addAll(darkBg, bgImage, gradientOverlay, badge, priceBadge, textOverlay);
+        // QR Code button (bottom-right)
+        Button qrBtn = new Button("📱");
+        qrBtn.getStyleClass().add("qr-btn");
+        qrBtn.setStyle("-fx-background-color: rgba(191,162,0,0.85); -fx-text-fill: #0a0a0a; "
+                + "-fx-font-size: 14px; -fx-padding: 4 8; -fx-background-radius: 8; -fx-cursor: hand;");
+        qrBtn.setOnMouseEntered(ev -> qrBtn.setStyle("-fx-background-color: rgba(212,181,48,1); -fx-text-fill: #0a0a0a; "
+                + "-fx-font-size: 14px; -fx-padding: 4 8; -fx-background-radius: 8; -fx-cursor: hand;"));
+        qrBtn.setOnMouseExited(ev -> qrBtn.setStyle("-fx-background-color: rgba(191,162,0,0.85); -fx-text-fill: #0a0a0a; "
+                + "-fx-font-size: 14px; -fx-padding: 4 8; -fx-background-radius: 8; -fx-cursor: hand;"));
+        qrBtn.setTooltip(new Tooltip("Générer QR Code"));
+        qrBtn.setOnAction(ev -> {
+            ev.consume();
+            showQRCode(lieu);
+        });
+        StackPane.setAlignment(qrBtn, Pos.BOTTOM_RIGHT);
+        StackPane.setMargin(qrBtn, new Insets(0, 14, 18, 0));
+
+        card.getChildren().addAll(darkBg, bgImage, gradientOverlay, badge, priceBadge, textOverlay, qrBtn);
 
         // Horizontal scroll to cycle images (only when multiple images)
         if (galleryPaths.size() > 1) {
@@ -676,5 +791,154 @@ public class LieuTouristiqueController {
                 showToast("Erreur de suppression: " + e.getMessage(), false);
             }
         }
+    }
+
+    private String capitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return s.substring(0, 1).toUpperCase() + s.substring(1);
+    }
+
+    // ========== QR CODE ==========
+
+    private void showQRCode(LieuTouristique lieu) {
+        try {
+            Adresse adresse = adresseCache.get(lieu.getId_adresse());
+            double lat = adresse != null ? adresse.getLatitude() : 0;
+            double lon = adresse != null ? adresse.getLongitude() : 0;
+
+            Image qrImage = QRCodeService.generateQRCode(lieu, lat, lon);
+            if (qrImage == null) {
+                showToast("Erreur de génération du QR Code", false);
+                return;
+            }
+
+            // Create popup dialog
+            Stage qrStage = new Stage();
+            qrStage.initModality(Modality.APPLICATION_MODAL);
+            qrStage.setTitle("QR Code — " + lieu.getNom());
+
+            ImageView qrView = new ImageView(qrImage);
+            qrView.setFitWidth(280);
+            qrView.setFitHeight(280);
+            qrView.setPreserveRatio(true);
+
+            Label title = new Label("📱 " + lieu.getNom());
+            title.setStyle("-fx-text-fill: #BFA200; -fx-font-size: 18px; -fx-font-weight: bold;");
+
+            Label subtitle = new Label("Scannez pour ouvrir dans Google Maps");
+            subtitle.setStyle("-fx-text-fill: rgba(255,255,255,0.7); -fx-font-size: 12px;");
+
+            Button saveBtn = new Button("💾  Sauvegarder PNG");
+            saveBtn.setStyle("-fx-background-color: #BFA200; -fx-text-fill: #0a0a0a; -fx-font-weight: bold; "
+                    + "-fx-padding: 8 20; -fx-background-radius: 8; -fx-font-size: 12px; -fx-cursor: hand;");
+            saveBtn.setOnAction(ev -> {
+                FileChooser fc = new FileChooser();
+                fc.setTitle("Sauvegarder le QR Code");
+                fc.setInitialFileName("QR_" + lieu.getNom().replaceAll("[^a-zA-Z0-9]", "_") + ".png");
+                fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Image", "*.png"));
+                File file = fc.showSaveDialog(qrStage);
+                if (file != null) {
+                    QRCodeService.saveQRCode(lieu, lat, lon, file);
+                    showToast("QR Code sauvegardé !", true);
+                }
+            });
+
+            Button closeBtn = new Button("Fermer");
+            closeBtn.setStyle("-fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: white; "
+                    + "-fx-padding: 8 20; -fx-background-radius: 8; -fx-font-size: 12px; -fx-cursor: hand;");
+            closeBtn.setOnAction(ev -> qrStage.close());
+
+            HBox buttons = new HBox(12, saveBtn, closeBtn);
+            buttons.setAlignment(Pos.CENTER);
+
+            VBox layout = new VBox(16, title, subtitle, qrView, buttons);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(30));
+            layout.setStyle("-fx-background-color: linear-gradient(to bottom, #0a0a12, #12121e);");
+
+            Scene scene = new Scene(layout, 380, 460);
+            qrStage.setScene(scene);
+            qrStage.setResizable(false);
+            qrStage.show();
+
+        } catch (Exception e) {
+            showToast("Erreur QR Code: " + e.getMessage(), false);
+        }
+    }
+
+    // ========== PDF / EXCEL EXPORT ==========
+
+    @FXML
+    public void exportPdf() {
+        if (filteredList.isEmpty()) {
+            showToast("Aucun lieu à exporter", false);
+            return;
+        }
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Exporter en PDF");
+        fc.setInitialFileName("Rapport_Lieux_Touristiques.pdf");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+        Stage stage = (Stage) cardsContainer.getScene().getWindow();
+        File file = fc.showSaveDialog(stage);
+        if (file == null) return;
+
+        // Show progress toast
+        showToast("📄 Génération du PDF en cours...", true);
+
+        new Thread(() -> {
+            try {
+                categorieServices catServices = new categorieServices();
+                java.util.List<categorie> cats = catServices.afficher();
+                java.util.List<Adresse> addrs = new java.util.ArrayList<>(adresseCache.values());
+
+                PdfExportService pdfService = new PdfExportService();
+                pdfService.generateReport(file, filteredList, cats, addrs);
+
+                Platform.runLater(() ->
+                        showToast("✅ PDF exporté: " + file.getName(), true));
+            } catch (Exception e) {
+                Platform.runLater(() ->
+                        showToast("❌ Erreur export PDF: " + e.getMessage(), false));
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+    @FXML
+    public void exportExcel() {
+        if (filteredList.isEmpty()) {
+            showToast("Aucun lieu à exporter", false);
+            return;
+        }
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Exporter en Excel");
+        fc.setInitialFileName("Lieux_Touristiques.xlsx");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("Excel Files", "*.xlsx"));
+        Stage stage = (Stage) cardsContainer.getScene().getWindow();
+        File file = fc.showSaveDialog(stage);
+        if (file == null) return;
+
+        showToast("📊 Génération de l'Excel en cours...", true);
+
+        new Thread(() -> {
+            try {
+                categorieServices catServices = new categorieServices();
+                java.util.List<categorie> cats = catServices.afficher();
+                AdresseServices addrServices = new AdresseServices();
+                java.util.List<Adresse> addrs = addrServices.afficher();
+
+                ExcelExportService excelService = new ExcelExportService();
+                excelService.exportToExcel(file, filteredList, cats, addrs);
+
+                Platform.runLater(() ->
+                        showToast("✅ Excel exporté: " + file.getName(), true));
+            } catch (Exception e) {
+                Platform.runLater(() ->
+                        showToast("❌ Erreur export Excel: " + e.getMessage(), false));
+                e.printStackTrace();
+            }
+        }).start();
     }
 }
