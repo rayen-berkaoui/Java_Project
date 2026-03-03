@@ -1,4 +1,4 @@
-target/
+﻿target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
@@ -12,6 +12,7 @@ target/
 *.iws
 *.iml
 *.ipr
+.idea/
 
 ### Eclipse ###
 .apt_generated
@@ -37,6 +38,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+Thumbs.db
 
 ### Secrets / Credentials ###
 sms.env.bat
@@ -44,3 +46,6 @@ sms.properties
 konnect.properties
 *.env
 *.env.bat
+
+### Logs ###
+*.log
