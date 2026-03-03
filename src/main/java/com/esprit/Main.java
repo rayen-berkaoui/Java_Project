@@ -3,10 +3,8 @@ package com.esprit;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-
 import com.esprit.utils.ThemeManager;
 
 public class Main extends Application {
@@ -20,19 +18,16 @@ public class Main extends Application {
 
         Scene scene = new Scene(loader.load());
 
-        // ✅ Load CSS based on saved theme preference
-        scene.getStylesheets().add(
-                ThemeManager.getInstance().getCssPath()
-        );
+        // Apply theme (loads dark or light based on saved preference)
+        ThemeManager.applyTheme(scene);
+        ThemeManager.trackScene(scene);
 
-        // ✅ Remove white background
-        scene.setFill(Color.BLACK);
-
-        // ✅ Remove white title bar
+        // Remove white title bar
         stage.initStyle(StageStyle.UNDECORATED);
 
         stage.setTitle("Login");
         stage.setScene(scene);
+        stage.setMaximized(true);
         stage.show();
     }
 

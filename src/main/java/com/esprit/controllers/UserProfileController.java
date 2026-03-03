@@ -17,10 +17,7 @@ import javafx.scene.Node;
 
 import com.esprit.entities.utilisateur;
 import com.esprit.services.utilisateurServices;
-import com.esprit.services.AuditLogService;
-import com.esprit.services.TOTPService;
 import com.esprit.utils.ThemeManager;
-import com.esprit.utils.SessionManager;
 
 import java.io.*;
 import java.util.Base64;
@@ -79,16 +76,6 @@ public class UserProfileController {
     @FXML private Label securityMessageLabel;
     @FXML private Label deleteMessageLabel;
 
-    // ================= 2FA FIELDS =================
-    @FXML private Label twoFAStatusLabel;
-    @FXML private VBox qrCodeContainer;
-    @FXML private ImageView qrCodeImageView;
-    @FXML private Label totpSecretLabel;
-    @FXML private TextField totpVerifyField;
-    @FXML private Button toggle2FAButton;
-    @FXML private Label twoFAMessageLabel;
-    private String pendingTotpSecret;  // temp secret during setup
-
     // ================= ACTIVITY LABELS =================
     @FXML private Label memberSinceLabel;
     @FXML private Label accountStatusLabel;
@@ -103,21 +90,10 @@ public class UserProfileController {
     @FXML private ComboBox<String> languageCombo;
     @FXML private CheckBox profileVisibleCheck;
     @FXML private CheckBox activityVisibleCheck;
-    @FXML private CheckBox darkModeToggle;
-
-    // ================= SUPPORT / TICKET =================
-    @FXML private VBox ticketFormContainer;
-    @FXML private TextField ticketSubjectField;
-    @FXML private ComboBox<String> ticketPriorityCombo;
-    @FXML private TextArea ticketDescriptionArea;
-    @FXML private Label ticketMessageLabel;
 
     // ================= STATE =================
     private utilisateurServices userService;
-    private AuditLogService auditService;
-    private TOTPService totpService;
     private utilisateur currentUser;
-    private boolean isAdmin = false;
     private double xOffset = 0;
     private double yOffset = 0;
     private boolean currentPwVisible = false;
@@ -127,8 +103,6 @@ public class UserProfileController {
     @FXML
     public void initialize() {
         userService = new utilisateurServices();
-        auditService = new AuditLogService();
-        totpService = new TOTPService();
         showPane(profilePane);
 
         // Window drag
@@ -154,44 +128,24 @@ public class UserProfileController {
             languageCombo.setValue("Français");
         }
 
-        // Theme toggle — sync with current theme
-        if (darkModeToggle != null) {
-            darkModeToggle.setSelected(ThemeManager.getInstance().isDark());
-        }
-
-        // Session timeout — start monitoring once scene is available
+        // Apply theme to FXML nodes
         javafx.application.Platform.runLater(() -> {
-            if (contentArea != null && contentArea.getScene() != null) {
-                SessionManager.getInstance().startMonitoring(contentArea.getScene());
+            if (titleBar != null && titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) titleBar.getScene().getRoot());
             }
         });
-    }
-
-    // ================= THEME TOGGLE =================
-    @FXML
-    private void handleThemeToggle() {
-        ThemeManager tm = ThemeManager.getInstance();
-        tm.toggle();
-        if (contentArea != null && contentArea.getScene() != null) {
-            tm.applyTheme(contentArea.getScene());
-        }
+        ThemeManager.addThemeChangeListener(() -> javafx.application.Platform.runLater(() -> {
+            if (titleBar != null && titleBar.getScene() != null && titleBar.getScene().getRoot() != null) {
+                ThemeManager.applyThemeToFXML((javafx.scene.Parent) titleBar.getScene().getRoot());
+            }
+        }));
     }
 
     // ================= SET USER =================
 
     public void setUser(utilisateur user) {
         this.currentUser = user;
-        this.isAdmin = userService.isAdmin(user.getRoleId());
         populateAll();
-        refresh2FAStatus();
-
-        // Hide ticket submission for admins - only users can submit tickets
-        if (isAdmin) {
-            if (ticketFormContainer != null) {
-                ticketFormContainer.setVisible(false);
-                ticketFormContainer.setManaged(false);
-            }
-        }
     }
 
     private void populateAll() {
@@ -500,158 +454,6 @@ public class UserProfileController {
         }
     }
 
-    // ================= TWO-FACTOR AUTHENTICATION =================
-
-    /**
-     * Refresh the 2FA status labels and buttons based on current DB state.
-     */
-    private void refresh2FAStatus() {
-        if (currentUser == null) return;
-        boolean enabled = totpService.is2FAEnabled(currentUser.getId());
-        currentUser.setTotpEnabled(enabled);
-
-        if (twoFAStatusLabel != null) {
-            twoFAStatusLabel.setText(enabled ? "Activé ✓" : "Désactivé");
-            twoFAStatusLabel.setStyle(enabled
-                    ? "-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;"
-                    : "-fx-text-fill: #FF6B6B; -fx-font-size: 12; -fx-font-weight: bold;");
-        }
-
-        if (toggle2FAButton != null) {
-            toggle2FAButton.setText(enabled ? "\uD83D\uDEE1  Désactiver la 2FA" : "\uD83D\uDEE1  Activer la 2FA");
-            toggle2FAButton.setStyle(enabled
-                    ? "-fx-padding: 10 30; -fx-background-color: rgba(255,75,75,0.15); -fx-text-fill: #FF6B6B; -fx-background-radius: 12; -fx-border-color: rgba(255,75,75,0.3); -fx-border-radius: 12; -fx-font-weight: bold; -fx-cursor: hand;"
-                    : "-fx-padding: 10 30;");
-        }
-
-        // Hide QR container if already enabled
-        if (qrCodeContainer != null) {
-            qrCodeContainer.setVisible(false);
-            qrCodeContainer.setManaged(false);
-        }
-    }
-
-    /**
-     * Toggle 2FA: if disabled → show QR setup flow; if enabled → disable after confirmation.
-     */
-    @FXML
-    private void handleToggle2FA() {
-        if (currentUser == null) return;
-
-        boolean enabled = totpService.is2FAEnabled(currentUser.getId());
-
-        if (enabled) {
-            // ── DISABLE 2FA ──
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.initStyle(javafx.stage.StageStyle.UNDECORATED);
-            confirm.setHeaderText(null);
-            DialogPane dp = confirm.getDialogPane();
-            dp.getStylesheets().add(ThemeManager.getInstance().getCssPath());
-            dp.setMinWidth(420);
-
-            VBox content = new VBox(12);
-            content.setStyle("-fx-padding: 10 5;");
-            Label titleLbl = new Label("⚠ Désactiver la 2FA ?");
-            titleLbl.setStyle("-fx-font-size: 16; -fx-text-fill: #FF6B6B; -fx-font-weight: bold;");
-            Label msgLbl = new Label("Votre compte sera moins sécurisé sans la vérification\nen deux étapes. Vous pourrez la réactiver à tout moment.");
-            msgLbl.setStyle("-fx-text-fill: #dddddd; -fx-font-size: 13;");
-            msgLbl.setWrapText(true);
-            content.getChildren().addAll(titleLbl, new Separator(), msgLbl);
-            dp.setContent(content);
-
-            Optional<ButtonType> result = confirm.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.OK) {
-                boolean success = totpService.disable2FA(currentUser.getId());
-                if (success) {
-                    currentUser.setTotpEnabled(false);
-                    currentUser.setTotpSecret(null);
-                    refresh2FAStatus();
-                    showMessage(twoFAMessageLabel, "✅ 2FA désactivée", true);
-                } else {
-                    showMessage(twoFAMessageLabel, "❌ Erreur lors de la désactivation", false);
-                }
-            }
-        } else {
-            // ── ENABLE 2FA: generate secret + show QR ──
-            pendingTotpSecret = totpService.generateSecretKey();
-
-            try {
-                javafx.scene.image.Image qrImage = totpService.generateQRCodeImage(
-                        pendingTotpSecret, currentUser.getEmail(), 200, 200);
-                if (qrCodeImageView != null) qrCodeImageView.setImage(qrImage);
-            } catch (Exception ex) {
-                showMessage(twoFAMessageLabel, "❌ Erreur de génération du QR code", false);
-                ex.printStackTrace();
-                return;
-            }
-
-            if (totpSecretLabel != null) {
-                totpSecretLabel.setText("Clé secrète : " + pendingTotpSecret);
-            }
-
-            if (qrCodeContainer != null) {
-                qrCodeContainer.setVisible(true);
-                qrCodeContainer.setManaged(true);
-                // Animate in
-                qrCodeContainer.setOpacity(0);
-                FadeTransition ft = new FadeTransition(Duration.millis(300), qrCodeContainer);
-                ft.setFromValue(0);
-                ft.setToValue(1);
-                ft.play();
-            }
-
-            if (totpVerifyField != null) {
-                totpVerifyField.clear();
-                totpVerifyField.requestFocus();
-                // Digits-only filter
-                totpVerifyField.textProperty().addListener((obs, oldVal, newVal) -> {
-                    if (!newVal.matches("\\d*")) totpVerifyField.setText(newVal.replaceAll("[^\\d]", ""));
-                    if (newVal.length() > 6) totpVerifyField.setText(newVal.substring(0, 6));
-                });
-            }
-
-            showMessage(twoFAMessageLabel, "", true);
-        }
-    }
-
-    /**
-     * Confirm 2FA activation by verifying the 6-digit code from the authenticator app.
-     */
-    @FXML
-    private void handleConfirm2FA() {
-        if (currentUser == null || pendingTotpSecret == null) return;
-
-        String code = totpVerifyField != null ? totpVerifyField.getText().trim() : "";
-        if (code.length() != 6) {
-            showMessage(twoFAMessageLabel, "❌ Entrez un code à 6 chiffres", false);
-            return;
-        }
-
-        try {
-            boolean valid = totpService.verifyCode(pendingTotpSecret, Integer.parseInt(code));
-            if (valid) {
-                boolean saved = totpService.saveSecret(currentUser.getId(), pendingTotpSecret);
-                if (saved) {
-                    currentUser.setTotpSecret(pendingTotpSecret);
-                    currentUser.setTotpEnabled(true);
-                    pendingTotpSecret = null;
-                    refresh2FAStatus();
-                    showMessage(twoFAMessageLabel, "✅ 2FA activée avec succès ! Votre compte est maintenant protégé.", true);
-                } else {
-                    showMessage(twoFAMessageLabel, "❌ Erreur de sauvegarde en base de données", false);
-                }
-            } else {
-                showMessage(twoFAMessageLabel, "❌ Code invalide. Vérifiez votre application et réessayez.", false);
-                if (totpVerifyField != null) {
-                    totpVerifyField.clear();
-                    totpVerifyField.requestFocus();
-                }
-            }
-        } catch (NumberFormatException ex) {
-            showMessage(twoFAMessageLabel, "❌ Code invalide", false);
-        }
-    }
-
     // ================= DELETE ACCOUNT =================
 
     @FXML
@@ -664,6 +466,9 @@ public class UserProfileController {
 
         DialogPane dp = alert.getDialogPane();
         dp.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+        if (ThemeManager.getCurrentTheme() == ThemeManager.Theme.LIGHT) {
+            dp.getStylesheets().add(getClass().getResource("/style-light.css").toExternalForm());
+        }
         dp.setMinWidth(450);
 
         VBox content = new VBox(15);
@@ -704,30 +509,6 @@ public class UserProfileController {
         }
     }
 
-    // ================= TICKET SUBMISSION =================
-
-    @FXML
-    private void handleSubmitTicket() {
-        String subject = ticketSubjectField != null ? ticketSubjectField.getText().trim() : "";
-        String priority = ticketPriorityCombo != null ? ticketPriorityCombo.getValue() : null;
-        String desc = ticketDescriptionArea != null ? ticketDescriptionArea.getText().trim() : "";
-
-        if (subject.isEmpty() || desc.isEmpty()) {
-            showMessage(ticketMessageLabel, "❌ Veuillez remplir le sujet et la description.", false);
-            return;
-        }
-
-        if (currentUser != null) {
-            auditService.log(currentUser.getId(), currentUser.getPrenom() + " " + currentUser.getNom(),
-                    "SUBMIT_TICKET", "SUPPORT", 0, subject, null, priority);
-        }
-
-        showMessage(ticketMessageLabel, "✅ Ticket soumis avec succès !", true);
-        if (ticketSubjectField != null) ticketSubjectField.clear();
-        if (ticketDescriptionArea != null) ticketDescriptionArea.clear();
-        if (ticketPriorityCombo != null) ticketPriorityCombo.setValue(null);
-    }
-
     // ================= WINDOW CONTROLS =================
 
     @FXML
@@ -754,40 +535,6 @@ public class UserProfileController {
         }
     }
 
-    @FXML
-    private void handleBackToMain() {
-        try {
-            Stage stage = (Stage) contentArea.getScene().getWindow();
-
-            if (isAdmin) {
-                // Admin goes back to dashboard
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/dashboard.fxml"));
-                Parent root = loader.load();
-
-                DashboardController controller = loader.getController();
-                if (currentUser != null) {
-                    controller.setUserName(currentUser.getNom());
-                    controller.setAdminId(currentUser.getId());
-                }
-
-                fadeTransition(stage, root, "Tabaani - Dashboard");
-            } else {
-                // User goes back to main interface
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/maininterface.fxml"));
-                Parent root = loader.load();
-
-                if (currentUser != null) {
-                    MainInterfaceController controller = loader.getController();
-                    controller.setUser(currentUser);
-                }
-
-                fadeTransition(stage, root, "Tabaani - Accueil");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     private void fadeTransition(Stage stage, Parent newRoot, String title) {
         Scene oldScene = stage.getScene();
         Node oldRoot = oldScene.getRoot();
@@ -805,15 +552,15 @@ public class UserProfileController {
         ParallelTransition exitAnim = new ParallelTransition(fadeOut, scaleOut);
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(ThemeManager.getInstance().getCssPath());
-            newScene.setFill(javafx.scene.paint.Color.BLACK);
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
             newRoot.setOpacity(0);
             newRoot.setScaleX(1.03);
             newRoot.setScaleY(1.03);
             newRoot.setTranslateY(8);
             stage.setScene(newScene);
-            stage.sizeToScene();
             stage.setTitle(title);
+            stage.setMaximized(true);
 
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);
             fadeIn.setFromValue(0);

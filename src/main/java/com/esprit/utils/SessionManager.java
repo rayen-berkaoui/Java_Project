@@ -136,8 +136,9 @@ public class SessionManager {
         dp.setContent(content);
         dp.getButtonTypes().add(ButtonType.OK);
         ((Button) dp.lookupButton(ButtonType.OK)).setText("Stay Connected");
-        if (monitoredScene != null) {
-            dp.getStylesheets().add(ThemeManager.getInstance().getCssPath());
+        dp.getStylesheets().add(ThemeManager.class.getResource("/style.css").toExternalForm());
+        if (ThemeManager.getCurrentTheme() == ThemeManager.Theme.LIGHT) {
+            dp.getStylesheets().add(ThemeManager.class.getResource("/style-light.css").toExternalForm());
         }
         dp.getStyleClass().add("dialog-pane");
 
@@ -182,8 +183,8 @@ public class SessionManager {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/login.fxml"));
             Parent root = loader.load();
             Scene newScene = new Scene(root);
-            newScene.getStylesheets().add(ThemeManager.getInstance().getCssPath());
-            newScene.setFill(Color.BLACK);
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
             stage.setScene(newScene);
             stage.setTitle("Tabaani - Login");
             stage.sizeToScene();

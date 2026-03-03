@@ -17,29 +17,14 @@ import javafx.application.Platform;
 
 import com.esprit.entities.utilisateur;
 import com.esprit.services.utilisateurServices;
-import com.esprit.services.FaceRecognitionService;
-import com.esprit.services.TOTPService;
-import com.esprit.services.SmsOTPService;
-import com.esprit.services.OTPService;
-import com.esprit.services.EmailService;
 import com.esprit.utils.ThemeManager;
+import com.esprit.services.FaceRecognitionService;
 
 import org.bytedeco.opencv.opencv_core.Mat;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.prefs.Preferences;
-
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.effect.DropShadow;
-import javafx.scene.input.KeyCode;
-import javafx.scene.paint.Color;
-import javafx.stage.Modality;
-import javafx.stage.StageStyle;
 
 public class LoginController {
 
@@ -49,7 +34,6 @@ public class LoginController {
     @FXML private Button togglePasswordButton;
     @FXML private Label errorLabel;
     @FXML private javafx.scene.layout.HBox titleBar;
-    @FXML private CheckBox rememberMeCheckBox;
 
     // ═══════ FACE RECOGNITION FXML ═══════
     @FXML private ImageView webcamView;
@@ -64,43 +48,17 @@ public class LoginController {
     @FXML private Button btnFaceLogin;
     @FXML private Button btnRegisterFace;
 
-    // ═══════ BIOMETRIC INFO PANEL ═══════
-    @FXML private VBox biometricInfoPanel;
-    @FXML private ProgressBar faceQualityBar;
-    @FXML private Label faceQualityLabel;
-    @FXML private ProgressBar confidenceBar;
-    @FXML private Label confidenceLabel;
-    @FXML private Label faceSizeLabel;
-    @FXML private HBox captureProgressBox;
-    @FXML private ProgressBar captureProgressBar;
-    @FXML private Label captureProgressLabel;
-
     private utilisateurServices utilisateurService;
     private FaceRecognitionService faceService;
-    private TOTPService totpService;
-    private SmsOTPService smsOTPService;
-    private OTPService otpService;
-    private EmailService emailService;
     private ScheduledExecutorService cameraTimer;
     private boolean passwordVisible = false;
     private boolean faceCurrentlyDetected = false;
-    private int frameCounter = 0;
-    private double cachedQuality = 0.0;
     private double xOffset = 0;
     private double yOffset = 0;
-
-    private static final String PREF_REMEMBER = "remember_me";
-    private static final String PREF_EMAIL = "saved_email";
-    private static final String PREF_PASSWORD = "saved_password";
-    private final Preferences prefs = Preferences.userNodeForPackage(LoginController.class);
 
     public LoginController() {
         utilisateurService = new utilisateurServices();
         faceService = new FaceRecognitionService();
-        totpService = new TOTPService();
-        smsOTPService = new SmsOTPService();
-        otpService = new OTPService();
-        emailService = new EmailService();
     }
 
     @FXML
@@ -118,23 +76,16 @@ public class LoginController {
             });
         }
 
-        // Load saved credentials if "Remember Me" was checked
-        loadSavedCredentials();
-
         // Entrance animation for the form
         playEntranceAnimation();
 
         // Make sure camera stops when window closes
         Platform.runLater(() -> {
             if (emailField != null && emailField.getScene() != null) {
-                if (emailField.getScene().getWindow() != null) {
-                    emailField.getScene().getWindow().setOnHiding(e -> stopCameraCleanup());
-                } else {
-                    emailField.getScene().windowProperty().addListener((obs, oldW, newW) -> {
-                        if (newW != null) {
-                            newW.setOnHiding(e -> stopCameraCleanup());
-                        }
-                    });
+                emailField.getScene().getWindow().setOnHiding(e -> stopCameraCleanup());
+                // Apply theme to FXML nodes
+                if (emailField.getScene().getRoot() != null) {
+                    ThemeManager.applyThemeToFXML((Parent) emailField.getScene().getRoot());
                 }
             }
         });
@@ -215,67 +166,16 @@ public class LoginController {
 
                 FaceRecognitionService.CameraResult result = faceService.grabFrameWithDetection();
                 if (result != null) {
-                    frameCounter++;
-                    // Only assess quality every 15 frames (~1 second) to avoid lag
-                    final boolean doQualityCheck = result.isFaceDetected() && (frameCounter % 15 == 0);
-                    final double quality;
-                    if (doQualityCheck && result.getOriginalMat() != null) {
-                        quality = faceService.assessFaceQuality(result.getOriginalMat());
-                        cachedQuality = quality;
-                    } else {
-                        quality = cachedQuality;
-                    }
-                    final int fw = result.getFaceWidth();
-                    final int fh = result.getFaceHeight();
-                    final boolean faceDetected = result.isFaceDetected();
-
                     Platform.runLater(() -> {
                         webcamView.setImage(result.getImage());
 
-                        if (faceDetected != faceCurrentlyDetected) {
-                            faceCurrentlyDetected = faceDetected;
+                        if (result.isFaceDetected() != faceCurrentlyDetected) {
+                            faceCurrentlyDetected = result.isFaceDetected();
                             updateFaceIndicator(faceCurrentlyDetected);
-                        }
-
-                        // Update biometric info panel
-                        if (faceDetected) {
-                            if (faceQualityBar != null) faceQualityBar.setProgress(quality);
-                            if (faceQualityLabel != null) {
-                                faceQualityLabel.setText(String.format("%.0f%%", quality * 100));
-                                if (quality >= 0.7) {
-                                    faceQualityLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
-                                } else if (quality >= 0.4) {
-                                    faceQualityLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 11; -fx-font-weight: bold;");
-                                } else {
-                                    faceQualityLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11; -fx-font-weight: bold;");
-                                }
-                            }
-                            if (faceSizeLabel != null) {
-                                String sizeInfo = fw + "x" + fh + "px";
-                                if (fw < 80) {
-                                    faceSizeLabel.setText(sizeInfo + " — Rapprochez-vous");
-                                    faceSizeLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 10;");
-                                } else if (fw < 150) {
-                                    faceSizeLabel.setText(sizeInfo + " — Bonne distance");
-                                    faceSizeLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 10;");
-                                } else {
-                                    faceSizeLabel.setText(sizeInfo + " — Distance ideale");
-                                    faceSizeLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 10;");
-                                }
-                            }
-                        } else {
-                            if (faceQualityBar != null) faceQualityBar.setProgress(0);
-                            if (faceQualityLabel != null) {
-                                faceQualityLabel.setText("--");
-                                faceQualityLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;");
-                            }
-                            if (faceSizeLabel != null) {
-                                faceSizeLabel.setText("");
-                            }
                         }
                     });
                 }
-            }, 0, 66, TimeUnit.MILLISECONDS); // ~15 FPS for smooth performance
+            }, 0, 33, TimeUnit.MILLISECONDS); // ~30 FPS
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -312,89 +212,41 @@ public class LoginController {
         // Run face matching in background
         new Thread(() -> {
             try {
-                // Take MULTIPLE captures for reliable cross-session matching
-                // Each capture gets its own independent preprocessing
-                List<String> capturedEncodings = new ArrayList<>();
-                for (int attempt = 0; attempt < 15 && capturedEncodings.size() < 5; attempt++) {
+                // Take multiple captures for reliability
+                String capturedEncoding = null;
+                for (int attempt = 0; attempt < 8; attempt++) {
                     Mat currentFrame = faceService.grabMat();
-                    if (currentFrame == null) continue;
-
-                    // Only use good quality captures for matching
-                    double quality = faceService.assessFaceQuality(currentFrame);
-                    if (quality < 0.4) {
-                        System.out.println("Skipping low quality capture for login (quality=" + String.format("%.2f", quality) + ")");
+                    if (currentFrame == null) {
+                        Thread.sleep(80);
                         continue;
                     }
 
                     String enc = faceService.encodeFace(currentFrame);
                     if (enc != null) {
-                        capturedEncodings.add(enc);
-                        System.out.println("Face captured on attempt " + (attempt + 1)
-                            + " (" + capturedEncodings.size() + "/5, quality=" + String.format("%.2f", quality) + ")");
-
-                        // Update confidence bar during capture
-                        final int count = capturedEncodings.size();
-                        Platform.runLater(() -> {
-                            if (confidenceBar != null) confidenceBar.setProgress(count / 5.0 * 0.3);
-                            if (confidenceLabel != null) confidenceLabel.setText("Capture " + count + "/5...");
-                        });
+                        capturedEncoding = enc;
+                        System.out.println("Face captured on attempt " + (attempt + 1));
+                        break;
                     }
-                    // Delay between attempts for variation
+                    // Small delay between attempts
                     Thread.sleep(150);
                 }
 
-                if (capturedEncodings.isEmpty()) {
+                if (capturedEncoding == null) {
                     Platform.runLater(() -> {
                         faceStatusLabel.setText("Visage non detecte dans la capture. Reessayez.");
-                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12;");
-                        if (confidenceBar != null) confidenceBar.setProgress(0);
-                        if (confidenceLabel != null) { confidenceLabel.setText("--"); confidenceLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;"); }
+                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
                     });
                     return;
                 }
 
-                Platform.runLater(() -> {
-                    faceStatusLabel.setText("Comparaison biometrique en cours...");
-                    faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12;");
-                });
-
-                // Try each captured encoding against all users, take best match
-                utilisateur bestMatchUser = null;
-                double overallBestScore = 0.0;
-                for (String capturedEncoding : capturedEncodings) {
-                    utilisateur candidate = utilisateurService.findUserByFace(capturedEncoding, faceService);
-                    if (candidate != null) {
-                        double score = faceService.compareFaces(candidate.getFaceEncoding(), capturedEncoding);
-                        if (score > overallBestScore) {
-                            overallBestScore = score;
-                            bestMatchUser = candidate;
-                        }
-                    }
-                }
-                System.out.println("Face login: best overall score = " + overallBestScore
-                    + " from " + capturedEncodings.size() + " captures");
-
-                // Copy to effectively final variable for use inside lambda
-                final utilisateur matchedUser = bestMatchUser;
-                final double finalScore = overallBestScore;
+                // Get all users with face encodings
+                utilisateur matchedUser = utilisateurService.findUserByFace(capturedEncoding, faceService);
 
                 Platform.runLater(() -> {
-                    // Update confidence display
-                    if (confidenceBar != null) confidenceBar.setProgress(finalScore);
-                    if (confidenceLabel != null) {
-                        confidenceLabel.setText(String.format("%.1f%%", finalScore * 100));
-                        if (finalScore >= 0.75) {
-                            confidenceLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
-                        } else {
-                            confidenceLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11; -fx-font-weight: bold;");
-                        }
-                    }
-
                     if (matchedUser != null) {
                         // SUCCESS — face matched
-                        faceStatusLabel.setText("Visage reconnu: " + matchedUser.getNom() + " " + matchedUser.getPrenom()
-                            + " (confiance: " + String.format("%.1f%%", finalScore * 100) + ")");
-                        faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;");
+                        faceStatusLabel.setText("Visage reconnu: " + matchedUser.getNom() + " " + matchedUser.getPrenom());
+                        faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
 
                         errorLabel.setText("Bienvenue " + matchedUser.getNom() + " !");
                         errorLabel.setStyle("-fx-text-fill: #51CF66;");
@@ -404,18 +256,11 @@ public class LoginController {
                             faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.9); -fx-stroke-width: 3;");
                         }
 
-                        // Update last face login in database
-                        utilisateurService.updateLastFaceLogin(matchedUser.getId(), finalScore);
-
-                        // Stop camera and check 2FA before redirect
+                        // Stop camera and redirect
                         PauseTransition delay = new PauseTransition(Duration.millis(1200));
                         delay.setOnFinished(e -> {
                             stopCameraCleanup();
-                            if (totpService.is2FAEnabled(matchedUser.getId())) {
-                                show2FAVerificationDialog(matchedUser);
-                            } else {
-                                redirectToDashboard(matchedUser);
-                            }
+                            redirectToDashboard(matchedUser);
                         });
                         delay.play();
 
@@ -484,57 +329,34 @@ public class LoginController {
 
         new Thread(() -> {
             try {
-                // Use multi-capture for more robust registration (8 samples) with progress
+                // Use multi-capture for more robust registration (3 samples)
                 Platform.runLater(() -> {
-                    faceStatusLabel.setText("Capture en cours (8 echantillons)... Restez immobile et regardez la camera.");
-                    faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12;");
-                    if (captureProgressBox != null) {
-                        captureProgressBox.setVisible(true);
-                        captureProgressBox.setManaged(true);
-                    }
-                    if (captureProgressBar != null) captureProgressBar.setProgress(0);
-                    if (captureProgressLabel != null) captureProgressLabel.setText("0/8");
+                    faceStatusLabel.setText("Capture 1/3... Restez immobile.");
+                    faceStatusLabel.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 11;");
                 });
 
-                String faceEncoding = faceService.encodeMultipleFaces((captured, total, quality, qualityMsg) -> {
-                    Platform.runLater(() -> {
-                        if (captureProgressBar != null) captureProgressBar.setProgress((double) captured / total);
-                        if (captureProgressLabel != null) captureProgressLabel.setText(captured + "/" + total);
-                        if (faceQualityLabel != null) faceQualityLabel.setText(String.format("%.0f%%", quality * 100));
-                        if (faceQualityBar != null) faceQualityBar.setProgress(quality);
-                        faceStatusLabel.setText("Echantillon " + captured + "/" + total + " — " + qualityMsg);
-                    });
-                });
-
+                String faceEncoding = faceService.encodeMultipleFaces();
                 if (faceEncoding == null) {
                     Platform.runLater(() -> {
-                        faceStatusLabel.setText("Impossible d'encoder le visage. Ameliorez l'eclairage et reessayez.");
-                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12;");
-                        if (captureProgressBox != null) { captureProgressBox.setVisible(false); captureProgressBox.setManaged(false); }
+                        faceStatusLabel.setText("Impossible d'encoder le visage. Reessayez en regardant la camera.");
+                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
                     });
                     return;
                 }
 
-                // Save face encoding with confidence to database
-                boolean saved = utilisateurService.saveFaceEncodingWithConfidence(user.getId(), faceEncoding, 1.0);
+                // Save face encoding to database
+                boolean saved = utilisateurService.saveFaceEncoding(user.getId(), faceEncoding);
 
                 Platform.runLater(() -> {
-                    if (captureProgressBox != null) { captureProgressBox.setVisible(false); captureProgressBox.setManaged(false); }
-
                     if (saved) {
-                        int samples = faceEncoding.split("\\|\\|\\|").length;
-                        faceStatusLabel.setText("Visage enregistre avec succes ! " + samples + " echantillons biometriques stockes.\n"
-                            + "Vous pouvez maintenant vous connecter par reconnaissance faciale.");
-                        faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12; -fx-font-weight: bold;");
+                        faceStatusLabel.setText("Visage enregistre avec succes ! Vous pouvez maintenant vous connecter par reconnaissance faciale.");
+                        faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;");
 
                         errorLabel.setText("Visage enregistre !");
                         errorLabel.setStyle("-fx-text-fill: #51CF66;");
-
-                        if (confidenceBar != null) confidenceBar.setProgress(1.0);
-                        if (confidenceLabel != null) { confidenceLabel.setText("100%"); confidenceLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11; -fx-font-weight: bold;"); }
                     } else {
-                        faceStatusLabel.setText("Erreur lors de l'enregistrement du visage en base de donnees.");
-                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12;");
+                        faceStatusLabel.setText("Erreur lors de l'enregistrement du visage.");
+                        faceStatusLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 11;");
                     }
                 });
 
@@ -580,16 +402,16 @@ public class LoginController {
         if (faceIndicator == null) return;
 
         if (detected) {
-            faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.6); -fx-stroke-width: 2.5;");
+            faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.6); -fx-stroke-width: 2;");
             if (faceStatusLabel != null) {
-                faceStatusLabel.setText("Visage detecte — Pret pour la connexion biometrique");
-                faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 12;");
+                faceStatusLabel.setText("Visage detecte - Pret pour la connexion");
+                faceStatusLabel.setStyle("-fx-text-fill: #51CF66; -fx-font-size: 11;");
             }
         } else {
-            faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.3); -fx-stroke-width: 1.5;");
+            faceIndicator.setStyle("-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.3); -fx-stroke-width: 1;");
             if (faceStatusLabel != null) {
                 faceStatusLabel.setText("Positionnez votre visage dans le cercle");
-                faceStatusLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 12;");
+                faceStatusLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11;");
             }
         }
     }
@@ -607,16 +429,7 @@ public class LoginController {
         faceService.stopCamera();
         faceCurrentlyDetected = false;
 
-        Platform.runLater(() -> {
-            setCameraUIState(false);
-            // Reset biometric displays
-            if (faceQualityBar != null) faceQualityBar.setProgress(0);
-            if (faceQualityLabel != null) { faceQualityLabel.setText("--"); faceQualityLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;"); }
-            if (confidenceBar != null) confidenceBar.setProgress(0);
-            if (confidenceLabel != null) { confidenceLabel.setText("--"); confidenceLabel.setStyle("-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;"); }
-            if (faceSizeLabel != null) faceSizeLabel.setText("");
-            if (captureProgressBox != null) { captureProgressBox.setVisible(false); captureProgressBox.setManaged(false); }
-        });
+        Platform.runLater(() -> setCameraUIState(false));
     }
 
     // =========================
@@ -644,16 +457,6 @@ public class LoginController {
         utilisateur user = utilisateurService.loginUser(email, password);
 
         if (user != null) {
-
-            // Save or clear "Remember Me" credentials
-            saveCredentials(email, password);
-
-            // ✅ Check if 2FA (TOTP) is enabled for this user
-            if (totpService.is2FAEnabled(user.getId())) {
-                // Show 2FA verification dialog before proceeding
-                show2FAVerificationDialog(user);
-                return;
-            }
 
             errorLabel.setText("✅ Bienvenue " + user.getNom());
             errorLabel.setStyle("-fx-text-fill: #51CF66;");
@@ -730,277 +533,17 @@ public class LoginController {
     }
 
     // =========================
-    // 2FA VERIFICATION DIALOG
-    // =========================
-
-    /**
-     * Show a stylish 2FA TOTP verification dialog.
-     * The user must enter the 6-digit code from Google Authenticator.
-     * Also offers SMS OTP and Email OTP as alternatives.
-     */
-    private void show2FAVerificationDialog(utilisateur user) {
-        Stage dialog = new Stage();
-        dialog.initModality(Modality.APPLICATION_MODAL);
-        dialog.initStyle(StageStyle.TRANSPARENT);
-        dialog.initOwner(emailField.getScene().getWindow());
-
-        // ── Main container ──
-        VBox container = new VBox(18);
-        container.setAlignment(Pos.CENTER);
-        container.setPadding(new Insets(35, 40, 35, 40));
-        container.setMaxWidth(420);
-        container.setStyle(
-            "-fx-background-color: linear-gradient(to bottom, #1a1a2e, #16213e);" +
-            "-fx-background-radius: 20;" +
-            "-fx-border-color: rgba(255,215,0,0.3);" +
-            "-fx-border-width: 1;" +
-            "-fx-border-radius: 20;"
-        );
-        container.setEffect(new DropShadow(30, Color.rgb(0, 0, 0, 0.7)));
-
-        // ── Shield icon ──
-        Label shieldIcon = new Label("\uD83D\uDD10");
-        shieldIcon.setStyle("-fx-font-size: 48;");
-
-        // ── Title ──
-        Label title = new Label("Vérification 2FA");
-        title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 22; -fx-font-weight: bold;");
-
-        Label subtitle = new Label("Entrez le code à 6 chiffres de votre\napplication d'authentification");
-        subtitle.setStyle("-fx-text-fill: #aaaaaa; -fx-font-size: 13; -fx-text-alignment: center;");
-        subtitle.setWrapText(true);
-
-        // ── Code input (6-digit) ──
-        TextField codeField = new TextField();
-        codeField.setPromptText("000 000");
-        codeField.setMaxWidth(220);
-        codeField.setAlignment(Pos.CENTER);
-        codeField.setStyle(
-            "-fx-background-color: rgba(255,255,255,0.08);" +
-            "-fx-text-fill: white;" +
-            "-fx-font-size: 28;" +
-            "-fx-font-weight: bold;" +
-            "-fx-prompt-text-fill: #555555;" +
-            "-fx-padding: 12 20;" +
-            "-fx-background-radius: 12;" +
-            "-fx-border-color: rgba(255,215,0,0.2);" +
-            "-fx-border-radius: 12;" +
-            "-fx-alignment: center;"
-        );
-        // Restrict to 6 digits only
-        codeField.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (!newVal.matches("\\d*")) {
-                codeField.setText(newVal.replaceAll("[^\\d]", ""));
-            }
-            if (newVal.length() > 6) {
-                codeField.setText(newVal.substring(0, 6));
-            }
-        });
-
-        // ── Error label ──
-        Label errorLbl = new Label();
-        errorLbl.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12;");
-        errorLbl.setVisible(false);
-
-        // ── Verify button ──
-        Button verifyBtn = new Button("✓  Vérifier");
-        verifyBtn.setMaxWidth(220);
-        verifyBtn.setStyle(
-            "-fx-background-color: linear-gradient(to right, #FFD700, #FFA500);" +
-            "-fx-text-fill: #1a1a2e;" +
-            "-fx-font-size: 15;" +
-            "-fx-font-weight: bold;" +
-            "-fx-padding: 12 30;" +
-            "-fx-background-radius: 12;" +
-            "-fx-cursor: hand;"
-        );
-
-        // ── Alternative methods ──
-        Label altLabel = new Label("— ou utilisez une autre méthode —");
-        altLabel.setStyle("-fx-text-fill: #666666; -fx-font-size: 11;");
-
-        HBox altButtons = new HBox(10);
-        altButtons.setAlignment(Pos.CENTER);
-
-        Button smsBtn = new Button("\uD83D\uDCF1 SMS");
-        smsBtn.setStyle(
-            "-fx-background-color: rgba(255,255,255,0.08);" +
-            "-fx-text-fill: #51CF66;" +
-            "-fx-font-size: 12;" +
-            "-fx-padding: 8 18;" +
-            "-fx-background-radius: 10;" +
-            "-fx-cursor: hand;" +
-            "-fx-border-color: rgba(81,207,102,0.3);" +
-            "-fx-border-radius: 10;"
-        );
-
-        Button emailBtn = new Button("✉ Email");
-        emailBtn.setStyle(
-            "-fx-background-color: rgba(255,255,255,0.08);" +
-            "-fx-text-fill: #74C0FC;" +
-            "-fx-font-size: 12;" +
-            "-fx-padding: 8 18;" +
-            "-fx-background-radius: 10;" +
-            "-fx-cursor: hand;" +
-            "-fx-border-color: rgba(116,192,252,0.3);" +
-            "-fx-border-radius: 10;"
-        );
-
-        altButtons.getChildren().addAll(smsBtn, emailBtn);
-
-        // ── Cancel button ──
-        Button cancelBtn = new Button("Annuler");
-        cancelBtn.setStyle(
-            "-fx-background-color: transparent;" +
-            "-fx-text-fill: #888888;" +
-            "-fx-font-size: 12;" +
-            "-fx-cursor: hand;" +
-            "-fx-underline: true;"
-        );
-
-        container.getChildren().addAll(shieldIcon, title, subtitle, codeField, errorLbl,
-                                       verifyBtn, altLabel, altButtons, cancelBtn);
-
-        // ── Verify TOTP code action ──
-        Runnable verifyAction = () -> {
-            String code = codeField.getText().trim();
-            if (code.length() != 6) {
-                errorLbl.setText("❌ Le code doit contenir 6 chiffres");
-                errorLbl.setVisible(true);
-                shakeNode(codeField);
-                return;
-            }
-            try {
-                String secret = totpService.getSecret(user.getId());
-                if (secret != null && totpService.verifyCode(secret, Integer.parseInt(code))) {
-                    // ✅ 2FA verified!
-                    dialog.close();
-                    errorLabel.setText("✅ Bienvenue " + user.getNom());
-                    errorLabel.setStyle("-fx-text-fill: #51CF66;");
-                    redirectToDashboard(user);
-                } else {
-                    errorLbl.setText("❌ Code invalide. Réessayez.");
-                    errorLbl.setVisible(true);
-                    shakeNode(codeField);
-                    codeField.clear();
-                    codeField.requestFocus();
-                }
-            } catch (Exception ex) {
-                errorLbl.setText("❌ Erreur de vérification: " + ex.getMessage());
-                errorLbl.setVisible(true);
-            }
-        };
-
-        verifyBtn.setOnAction(e -> verifyAction.run());
-        codeField.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ENTER) verifyAction.run();
-        });
-
-        // ── SMS OTP alternative ──
-        smsBtn.setOnAction(e -> {
-            String phone = String.valueOf(user.getNumTel());
-            if (phone == null || phone.isEmpty()) {
-                errorLbl.setText("❌ Aucun numéro de téléphone enregistré");
-                errorLbl.setVisible(true);
-                return;
-            }
-            if (!smsOTPService.isConfigured()) {
-                errorLbl.setText("⚠ Service SMS non configuré");
-                errorLbl.setVisible(true);
-                return;
-            }
-            String otp = otpService.generateOTP();
-            otpService.storeOTP(user.getEmail(), otp);
-            smsOTPService.sendSmsOTP(phone, otp);
-            subtitle.setText("Un code SMS a été envoyé au " + phone.replaceAll(".(?=.{3})", "*"));
-            codeField.clear();
-            codeField.setPromptText("Code SMS");
-            codeField.requestFocus();
-            // Override verify action for SMS OTP
-            verifyBtn.setOnAction(ev -> {
-                String enteredCode = codeField.getText().trim();
-                if (otpService.verifyOTP(user.getEmail(), enteredCode)) {
-                    dialog.close();
-                    errorLabel.setText("✅ Bienvenue " + user.getNom());
-                    errorLabel.setStyle("-fx-text-fill: #51CF66;");
-                    redirectToDashboard(user);
-                } else {
-                    errorLbl.setText("❌ Code SMS invalide ou expiré");
-                    errorLbl.setVisible(true);
-                    shakeNode(codeField);
-                    codeField.clear();
-                }
-            });
-        });
-
-        // ── Email OTP alternative ──
-        emailBtn.setOnAction(e -> {
-            String otp = otpService.generateOTP();
-            otpService.storeOTP(user.getEmail(), otp);
-            emailService.sendOtpEmail(user.getEmail(), otp);
-            subtitle.setText("Un code a été envoyé à " + user.getEmail().replaceAll("(?<=.).(?=.*@)", "*"));
-            codeField.clear();
-            codeField.setPromptText("Code Email");
-            codeField.requestFocus();
-            // Override verify action for Email OTP
-            verifyBtn.setOnAction(ev -> {
-                String enteredCode = codeField.getText().trim();
-                if (otpService.verifyOTP(user.getEmail(), enteredCode)) {
-                    dialog.close();
-                    errorLabel.setText("✅ Bienvenue " + user.getNom());
-                    errorLabel.setStyle("-fx-text-fill: #51CF66;");
-                    redirectToDashboard(user);
-                } else {
-                    errorLbl.setText("❌ Code email invalide ou expiré");
-                    errorLbl.setVisible(true);
-                    shakeNode(codeField);
-                    codeField.clear();
-                }
-            });
-        });
-
-        cancelBtn.setOnAction(e -> dialog.close());
-
-        // ── Build scene ──
-        StackPane root = new StackPane(container);
-        root.setStyle("-fx-background-color: rgba(0,0,0,0.6);");
-        root.setPadding(new Insets(40));
-
-        Scene scene = new Scene(root, 500, 520);
-        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
-        scene.setOnKeyPressed(e -> {
-            if (e.getCode() == KeyCode.ESCAPE) dialog.close();
-        });
-
-        dialog.setScene(scene);
-
-        // ── Entrance animation ──
-        container.setOpacity(0);
-        container.setScaleX(0.85);
-        container.setScaleY(0.85);
-
-        dialog.show();
-        codeField.requestFocus();
-
-        FadeTransition fadeIn = new FadeTransition(Duration.millis(250), container);
-        fadeIn.setFromValue(0);
-        fadeIn.setToValue(1);
-
-        ScaleTransition scaleIn = new ScaleTransition(Duration.millis(250), container);
-        scaleIn.setFromX(0.85);
-        scaleIn.setFromY(0.85);
-        scaleIn.setToX(1);
-        scaleIn.setToY(1);
-        scaleIn.setInterpolator(Interpolator.SPLINE(0.25, 0.1, 0.25, 1));
-
-        new ParallelTransition(fadeIn, scaleIn).play();
-    }
-
-    // =========================
     // DASHBOARD REDIRECT (ROLE-BASED)
     // =========================
     private void redirectToDashboard(utilisateur user) {
         stopCameraCleanup();
+
+        // Apply user's saved theme preference
+        String themePref = user.getThemePreference();
+        if (themePref != null && !themePref.isEmpty()) {
+            ThemeManager.setModeFromString(themePref);
+        }
+
         try {
             boolean isAdmin = utilisateurService.isAdmin(user.getRoleId());
 
@@ -1024,7 +567,7 @@ public class LoginController {
                 controller.setUser(user);
 
                 Stage stage = (Stage) emailField.getScene().getWindow();
-                fadeTransition(stage, root, "Tabaani - Accueil");
+                fadeTransition(stage, root, "SmartTravel - Accueil");
             }
 
         } catch (Exception e) {
@@ -1036,46 +579,6 @@ public class LoginController {
                 e.getCause().printStackTrace();
             }
             showError("❌ Impossible d'ouvrir le dashboard: " + e.getMessage());
-        }
-    }
-
-    // =========================
-    // REMEMBER ME
-    // =========================
-
-    /**
-     * Load saved credentials from preferences if "Remember Me" was previously checked.
-     */
-    private void loadSavedCredentials() {
-        boolean remembered = prefs.getBoolean(PREF_REMEMBER, false);
-        if (remembered) {
-            String savedEmail = prefs.get(PREF_EMAIL, "");
-            String savedPassword = prefs.get(PREF_PASSWORD, "");
-
-            if (!savedEmail.isEmpty()) {
-                emailField.setText(savedEmail);
-            }
-            if (!savedPassword.isEmpty()) {
-                passwordField.setText(savedPassword);
-            }
-            if (rememberMeCheckBox != null) {
-                rememberMeCheckBox.setSelected(true);
-            }
-        }
-    }
-
-    /**
-     * Save or clear credentials based on "Remember Me" checkbox state.
-     */
-    private void saveCredentials(String email, String password) {
-        if (rememberMeCheckBox != null && rememberMeCheckBox.isSelected()) {
-            prefs.putBoolean(PREF_REMEMBER, true);
-            prefs.put(PREF_EMAIL, email);
-            prefs.put(PREF_PASSWORD, password);
-        } else {
-            prefs.putBoolean(PREF_REMEMBER, false);
-            prefs.remove(PREF_EMAIL);
-            prefs.remove(PREF_PASSWORD);
         }
     }
 
@@ -1151,10 +654,8 @@ public class LoginController {
 
         exitAnim.setOnFinished(e -> {
             Scene newScene = new Scene(newRoot);
-            newScene.getStylesheets().add(
-                ThemeManager.getInstance().getCssPath()
-            );
-            newScene.setFill(javafx.scene.paint.Color.BLACK);
+            ThemeManager.applyTheme(newScene);
+            ThemeManager.trackScene(newScene);
 
             // Prepare entrance state
             newRoot.setOpacity(0);
@@ -1163,8 +664,8 @@ public class LoginController {
             newRoot.setTranslateY(8);
 
             stage.setScene(newScene);
-            stage.sizeToScene();
             stage.setTitle(title);
+            stage.setMaximized(true);
 
             // Fade in + scale to normal + slide up
             FadeTransition fadeIn = new FadeTransition(Duration.millis(400), newRoot);

@@ -24,6 +24,8 @@ public class utilisateur {
     private LocalDate lastFaceLogin;  // last successful face login date
     private String totpSecret;        // TOTP secret key for Google Authenticator 2FA
     private boolean totpEnabled;      // whether 2FA is enabled for this user
+    private int loyaltyPoints;        // loyalty points earned from card payments
+    private String themePreference;    // DARK, LIGHT, or SYSTEM (follows device theme)
 
     // =========================
     // Constructeur vide
@@ -207,6 +209,22 @@ public class utilisateur {
 
     public void setTotpEnabled(boolean totpEnabled) {
         this.totpEnabled = totpEnabled;
+    }
+
+    public int getLoyaltyPoints() {
+        return loyaltyPoints;
+    }
+
+    public void setLoyaltyPoints(int loyaltyPoints) {
+        this.loyaltyPoints = loyaltyPoints;
+    }
+
+    public String getThemePreference() {
+        return themePreference;
+    }
+
+    public void setThemePreference(String themePreference) {
+        this.themePreference = themePreference;
     }
 
     // =========================

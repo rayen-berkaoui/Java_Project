@@ -177,6 +177,10 @@ public class utilisateurServices implements ICrud<utilisateur> {
                 u.setNumTel(rs.getInt("num_tel"));
                 u.setProfilePicture(rs.getString("profile_picture"));
                 u.setFaceEncoding(rs.getString("face_encoding"));
+                try { u.setThemePreference(rs.getString("theme_preference")); } catch (SQLException ignored) {}
+                try { u.setLoyaltyPoints(rs.getInt("loyalty_points")); } catch (SQLException ignored) {}
+                try { u.setTotpSecret(rs.getString("totp_secret")); } catch (SQLException ignored) {}
+                try { u.setTotpEnabled(rs.getBoolean("totp_enabled")); } catch (SQLException ignored) {}
 
                 Date date = rs.getDate("date_creation");
                 if (date != null) {
@@ -397,7 +401,50 @@ public class utilisateurServices implements ICrud<utilisateur> {
     }
 
     // =====================================================
-    // ✅ RESET PASSWORD BY EMAIL
+    // LOYALTY POINTS SYSTEM
+    // =====================================================
+    public int getLoyaltyPoints(int userId) {
+        String sql = "SELECT loyalty_points FROM utilisateur WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("loyalty_points");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public boolean addLoyaltyPoints(int userId, int points) {
+        String sql = "UPDATE utilisateur SET loyalty_points = loyalty_points + ? WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, points);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean deductLoyaltyPoints(int userId, int points) {
+        String sql = "UPDATE utilisateur SET loyalty_points = GREATEST(loyalty_points - ?, 0) WHERE id = ? AND loyalty_points >= ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, points);
+            ps.setInt(2, userId);
+            ps.setInt(3, points);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // =====================================================
+    // RESET PASSWORD BY EMAIL
     // =====================================================
     public boolean resetPassword(String email, String newPassword) {
         String sql = "UPDATE utilisateur SET mot_de_passe = ? WHERE email = ?";
@@ -540,7 +587,6 @@ public class utilisateurServices implements ICrud<utilisateur> {
     // ✅ GET SINGLE USER BY ID
     // =====================================================
     public utilisateur getUserById(int id) {
-        // Refresh connection to handle stale/closed connections
         con = MyDataBase.getInstance().getConnection();
         String sql = "SELECT * FROM utilisateur WHERE id = ?";
         try {
@@ -613,6 +659,8 @@ public class utilisateurServices implements ICrud<utilisateur> {
         } catch (SQLException ignored) {}
         try { u.setTotpSecret(rs.getString("totp_secret")); } catch (SQLException ignored) {}
         try { u.setTotpEnabled(rs.getBoolean("totp_enabled")); } catch (SQLException ignored) {}
+        try { u.setThemePreference(rs.getString("theme_preference")); } catch (SQLException ignored) {}
+        try { u.setLoyaltyPoints(rs.getInt("loyalty_points")); } catch (SQLException ignored) {}
         Date date = rs.getDate("date_creation");
         if (date != null) u.setDateCreation(date.toLocalDate());
         return u;
@@ -622,19 +670,121 @@ public class utilisateurServices implements ICrud<utilisateur> {
     // ✅ SAVE FACE ENCODING
     // =====================================================
     public boolean saveFaceEncoding(int userId, String faceEncoding) {
-        // Count the number of samples in the encoding
-        int samplesCount = faceEncoding != null ? faceEncoding.split("\\|\\|\\|").length : 0;
-        String sql = "UPDATE utilisateur SET face_encoding = ?, face_samples_count = ? WHERE id = ?";
+        // Ensure column can hold large multi-capture Base64 data (~240KB+)
+        ensureFaceEncodingColumnSize();
+
+        String sql = "UPDATE utilisateur SET face_encoding = ? WHERE id = ?";
         try {
             PreparedStatement ps = con.prepareStatement(sql);
             ps.setString(1, faceEncoding);
-            ps.setInt(2, samplesCount);
-            ps.setInt(3, userId);
-            return ps.executeUpdate() > 0;
+            ps.setInt(2, userId);
+            boolean result = ps.executeUpdate() > 0;
+            if (result) {
+                System.out.println("Face encoding saved for user " + userId + " (length: " + faceEncoding.length() + " chars)");
+            }
+            return result;
         } catch (SQLException e) {
+            System.err.println("Error saving face encoding: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Ensure the face_encoding column is LONGTEXT to hold multi-capture Base64 data.
+     * TEXT = 64KB limit, MEDIUMTEXT = 16MB, LONGTEXT = 4GB.
+     * Multi-capture (3 × 200×200 grayscale) Base64 = ~240KB, needs at least MEDIUMTEXT.
+     */
+    private void ensureFaceEncodingColumnSize() {
+        try {
+            Statement st = con.createStatement();
+            st.executeUpdate("ALTER TABLE utilisateur MODIFY COLUMN face_encoding LONGTEXT");
+            System.out.println("face_encoding column ensured as LONGTEXT");
+        } catch (SQLException e) {
+            // Column might already be LONGTEXT or table structure differs — safe to ignore
+            System.out.println("face_encoding column check: " + e.getMessage());
+        }
+    }
+
+    // =====================================================
+    // ✅ GET ALL USERS WITH FACE ENCODING
+    // =====================================================
+    public List<utilisateur> getAllUsersWithFaceEncoding() {
+        List<utilisateur> list = new ArrayList<>();
+        String sql = "SELECT * FROM utilisateur WHERE face_encoding IS NOT NULL AND statut = 'ACTIF'";
+        try {
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery(sql);
+            while (rs.next()) list.add(mapUser(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    // =====================================================
+    // ✅ FIND USER BY FACE (compare with all stored faces)
+    // =====================================================
+    public utilisateur findUserByFace(String capturedEncoding, FaceRecognitionService faceService) {
+        List<utilisateur> usersWithFaces = getAllUsersWithFaceEncoding();
+        utilisateur bestMatch = null;
+        double bestScore = 0.0;
+
+        System.out.println("=== Comparing face against " + usersWithFaces.size() + " registered users ===");
+
+        for (utilisateur u : usersWithFaces) {
+            String storedEncoding = u.getFaceEncoding();
+            if (storedEncoding == null || storedEncoding.isEmpty()) continue;
+
+            double score = faceService.compareFaces(storedEncoding, capturedEncoding);
+            System.out.println("Face match score for " + u.getEmail() + ": " + String.format("%.4f", score));
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = u;
+            }
+        }
+
+        // Use the score already computed — no need to call compareFaces again
+        if (bestMatch != null && bestScore >= 0.42) {
+            System.out.println("✅ Face matched: " + bestMatch.getEmail() + " (score: " + String.format("%.4f", bestScore) + ")");
+            return bestMatch;
+        }
+
+        System.out.println("❌ No face match found. Best score: " + String.format("%.4f", bestScore));
+        return null;
+    }
+
+    // =====================================================
+    // ✅ THEME PREFERENCE (per-user persistence)
+    // =====================================================
+    public String getThemePreference(int userId) {
+        String sql = "SELECT theme_preference FROM utilisateur WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                String pref = rs.getString("theme_preference");
+                return pref != null ? pref : "SYSTEM";
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "SYSTEM";
+    }
+
+    public boolean saveThemePreference(int userId, String themePreference) {
+        String sql = "UPDATE utilisateur SET theme_preference = ? WHERE id = ?";
+        try {
+            PreparedStatement ps = con.prepareStatement(sql);
+            ps.setString(1, themePreference);
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     // =====================================================
@@ -670,52 +820,5 @@ public class utilisateurServices implements ICrud<utilisateur> {
             e.printStackTrace();
             return false;
         }
-    }
-
-    // =====================================================
-    // ✅ GET ALL USERS WITH FACE ENCODING
-    // =====================================================
-    public List<utilisateur> getAllUsersWithFaceEncoding() {
-        List<utilisateur> list = new ArrayList<>();
-        String sql = "SELECT * FROM utilisateur WHERE face_encoding IS NOT NULL AND statut = 'ACTIF'";
-        try {
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery(sql);
-            while (rs.next()) list.add(mapUser(rs));
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    // =====================================================
-    // ✅ FIND USER BY FACE (compare with all stored faces)
-    // =====================================================
-    public utilisateur findUserByFace(String capturedEncoding, FaceRecognitionService faceService) {
-        List<utilisateur> usersWithFaces = getAllUsersWithFaceEncoding();
-        utilisateur bestMatch = null;
-        double bestScore = 0.0;
-
-        for (utilisateur u : usersWithFaces) {
-            String storedEncoding = u.getFaceEncoding();
-            if (storedEncoding == null || storedEncoding.isEmpty()) continue;
-
-            double score = faceService.compareFaces(storedEncoding, capturedEncoding);
-            System.out.println("Face match score for " + u.getEmail() + ": " + score);
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = u;
-            }
-        }
-
-        // Use the already computed bestScore instead of calling compareFaces again
-        if (bestMatch != null && bestScore >= 0.80) {
-            System.out.println("✅ Face matched: " + bestMatch.getEmail() + " (score: " + bestScore + ")");
-            return bestMatch;
-        }
-
-        System.out.println("❌ No face match found. Best score: " + bestScore);
-        return null;
     }
 }

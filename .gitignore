@@ -37,3 +37,10 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Secrets / Credentials ###
+sms.env.bat
+sms.properties
+konnect.properties
+*.env
+*.env.bat
