@@ -16,11 +16,27 @@ import java.util.List;
  */
 public class GeminiService {
 
-    private static final String API_KEY = "AIzaSyC16bP-UfJ2fHQCx7A7KnhcLkehO1GF6w0";
+    private static final String API_KEY;
+    static {
+        String key = "AIzaSyC16bP-UfJ2fHQCx7A7KnhcLkehO1GF6w0"; // default fallback
+        try (java.io.InputStream is = GeminiService.class.getResourceAsStream("/gemini.properties")) {
+            if (is != null) {
+                java.util.Properties props = new java.util.Properties();
+                props.load(is);
+                String k = props.getProperty("api.key", "").trim();
+                if (!k.isEmpty()) key = k;
+            }
+        } catch (Exception ignored) {}
+        API_KEY = key;
+        System.out.println("Gemini API key loaded: " + key.substring(0, 10) + "...");
+    }
     private static final String[] MODELS = {
             "gemini-2.5-flash",
             "gemini-2.0-flash-lite",
-            "gemini-2.0-flash"
+            "gemini-2.0-flash",
+            "gemini-1.5-flash",
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro"
     };
     private String activeModel = MODELS[0];
     private static final String API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
@@ -249,8 +265,8 @@ public class GeminiService {
         }
 
         // All models exhausted
-        throw lastError != null ? lastError
-                : new RuntimeException("Tous les modèles Gemini sont indisponibles. Réessayez plus tard.");
+        throw lastError != null ? new RuntimeException("Quota API Gemini d\u00e9pass\u00e9e pour tous les mod\u00e8les. Veuillez r\u00e9essayer dans quelques minutes ou v\u00e9rifier votre cl\u00e9 API.")
+                : new RuntimeException("Tous les mod\u00e8les Gemini sont indisponibles. R\u00e9essayez plus tard.");
     }
 
     private String parseResponse(String body) {

@@ -46,7 +46,7 @@
                     <Region prefWidth="10"/>
                     <Button text="📄 PDF" styleClass="btn-export" onAction="#exportDashboardPdf" prefHeight="26"/>
                     <Button text="📊 Excel" styleClass="btn-export" onAction="#exportDashboardExcel" prefHeight="26"/>
-                    <Label fx:id="lblFilterInfo" text="" style="-fx-text-fill: #BFA200; -fx-font-size: 11px; -fx-font-style: italic;"/>
+                    <Label fx:id="lblFilterInfo" text="" style="-fx-text-fill: #FFD700; -fx-font-size: 11px; -fx-font-style: italic;"/>
                 </HBox>
             </VBox>
         </HBox>

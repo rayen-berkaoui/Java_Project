@@ -9,16 +9,14 @@ import java.util.List;
 
 public class AdresseServices implements ICrud<Adresse> {
 
-    Connection con;
-
-    public AdresseServices() {
-        con = MyDataBase.getInstance().getConnection();
+    private Connection getConnection() {
+        return MyDataBase.getInstance().getConnection();
     }
 
     @Override
     public void ajouter(Adresse a) throws SQLException {
         String sql = "INSERT INTO adresse (rue, ville, latitude, longitude, altitude) VALUES (?,?,?,?,?)";
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setString(1, a.getRue());
         ps.setString(2, a.getVille());
         ps.setDouble(3, a.getLatitude());
@@ -31,7 +29,7 @@ public class AdresseServices implements ICrud<Adresse> {
     @Override
     public void modifier(Adresse a) throws SQLException {
         String sql = "UPDATE adresse SET rue=?, ville=?, latitude=?, longitude=?, altitude=? WHERE id_adresse=?";
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setString(1, a.getRue());
         ps.setString(2, a.getVille());
         ps.setDouble(3, a.getLatitude());
@@ -45,7 +43,7 @@ public class AdresseServices implements ICrud<Adresse> {
     @Override
     public void supprimer(int id) throws SQLException {
         String sql = "DELETE FROM adresse WHERE id_adresse=?";
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setInt(1, id);
         ps.executeUpdate();
         System.out.println("🗑️ Adresse supprimée");
@@ -55,7 +53,8 @@ public class AdresseServices implements ICrud<Adresse> {
     public List<Adresse> afficher() throws SQLException {
         List<Adresse> adresses = new ArrayList<>();
         String sql = "SELECT * FROM adresse";
-        Statement st = con.createStatement();
+        System.out.println("[DEBUG] AdresseServices.afficher() - executing: " + sql);
+        Statement st = getConnection().createStatement();
         ResultSet rs = st.executeQuery(sql);
 
         while (rs.next()) {
@@ -69,6 +68,7 @@ public class AdresseServices implements ICrud<Adresse> {
             );
             adresses.add(a);
         }
+        System.out.println("[DEBUG] AdresseServices.afficher() - found " + adresses.size() + " adresses");
         return adresses;
     }
 
@@ -77,7 +77,7 @@ public class AdresseServices implements ICrud<Adresse> {
      */
     public Adresse getById(int id) throws SQLException {
         String sql = "SELECT * FROM adresse WHERE id_adresse=?";
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setInt(1, id);
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {

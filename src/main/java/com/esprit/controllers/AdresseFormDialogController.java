@@ -108,7 +108,7 @@ public class AdresseFormDialogController {
         // If editing, center map on existing position
         Platform.runLater(() -> {
             if (mapReady && mapEngine != null && mapPositionSelected) {
-                mapEngine.executeScript(String.format(
+                mapEngine.executeScript(String.format(java.util.Locale.US,
                     "updateMarker(%f, %f); map.setView([%f, %f], 15);",
                     mapLat, mapLon, mapLat, mapLon
                 ));
@@ -147,7 +147,7 @@ public class AdresseFormDialogController {
         // Center map
         Platform.runLater(() -> {
             if (mapReady && mapEngine != null) {
-                mapEngine.executeScript(String.format(
+                mapEngine.executeScript(String.format(java.util.Locale.US,
                     "updateMarker(%f, %f); map.setView([%f, %f], 15);",
                     a.getLatitude(), a.getLongitude(), a.getLatitude(), a.getLongitude()
                 ));
@@ -355,11 +355,11 @@ public class AdresseFormDialogController {
     private void updateMapSummaryLabels() {
         if (lblMapRue != null) lblMapRue.setText(mapRue.isEmpty() ? "—" : mapRue);
         if (lblMapVille != null) lblMapVille.setText(mapVille.isEmpty() ? "—" : mapVille);
-        if (lblMapLat != null) lblMapLat.setText(String.format("%.6f", mapLat));
-        if (lblMapLon != null) lblMapLon.setText(String.format("%.6f", mapLon));
-        if (lblMapAlt != null) lblMapAlt.setText(String.format("%.0f m", mapAlt));
+        if (lblMapLat != null) lblMapLat.setText(String.format(java.util.Locale.US, "%.6f", mapLat));
+        if (lblMapLon != null) lblMapLon.setText(String.format(java.util.Locale.US, "%.6f", mapLon));
+        if (lblMapAlt != null) lblMapAlt.setText(String.format(java.util.Locale.US, "%.0f m", mapAlt));
         if (lblSelectedPos != null) {
-            lblSelectedPos.setText(String.format("✓ %.5f, %.5f", mapLat, mapLon));
+            lblSelectedPos.setText(String.format(java.util.Locale.US, "✓ %.5f, %.5f", mapLat, mapLon));
             lblSelectedPos.setStyle("-fx-text-fill: #2ecc71; -fx-font-size: 12px; -fx-font-weight: bold;");
         }
     }
@@ -404,6 +404,8 @@ public class AdresseFormDialogController {
     // ========== HTML GENERATORS ==========
 
     private String getMapHtml(double initLat, double initLng, int zoom) {
+        String sLat = String.format(java.util.Locale.US, "%f", initLat);
+        String sLng = String.format(java.util.Locale.US, "%f", initLng);
         return "<!DOCTYPE html>\n" +
             "<html><head>\n" +
             "<meta charset='utf-8'/>\n" +
@@ -411,9 +413,9 @@ public class AdresseFormDialogController {
             "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>\n" +
             "<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>\n" +
             "<style>\n" +
-            "  html, body { margin:0; padding:0; height:100%; background:#e8e8e8; overflow:hidden; }\n" +
+            "  html, body { margin:0; padding:0; height:100%; background:#0d1a2a; overflow:hidden; }\n" +
             "  #map { width:100%; height:100%; }\n" +
-            "  .leaflet-container { background:#e8e8e8; }\n" +
+            "  .leaflet-container { background:#0d1a2a; }\n" +
             "  .search-info {\n" +
             "    position:absolute; bottom:10px; left:10px; z-index:1000;\n" +
             "    background:rgba(13,26,42,0.9); color:#BFA200; padding:8px 14px;\n" +
@@ -425,11 +427,11 @@ public class AdresseFormDialogController {
             "<div id='map'></div>\n" +
             "<div id='searchInfo' class='search-info'></div>\n" +
             "<script>\n" +
-            "var map = L.map('map').setView([" + initLat + ", " + initLng + "], " + zoom + ");\n" +
-            "L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n" +
-            "  attribution: '&copy; OpenStreetMap contributors', maxZoom: 19\n" +
+            "var map = L.map('map').setView([" + sLat + ", " + sLng + "], " + zoom + ");\n" +
+            "L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {\n" +
+            "  attribution: '&copy; OpenStreetMap &copy; CARTO', maxZoom: 19\n" +
             "}).addTo(map);\n" +
-            "var marker = L.marker([" + initLat + ", " + initLng + "], {draggable: true}).addTo(map);\n" +
+            "var marker = L.marker([" + sLat + ", " + sLng + "], {draggable: true}).addTo(map);\n" +
             "marker.bindPopup('<b>Cliquez ou glissez pour choisir</b>').openPopup();\n" +
             "\n" +
             "setTimeout(function(){ map.invalidateSize(); }, 200);\n" +

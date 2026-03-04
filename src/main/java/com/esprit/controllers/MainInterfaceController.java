@@ -50,6 +50,9 @@ public class MainInterfaceController {
     @FXML private ScrollPane panelLieux;
     @FXML private ScrollPane panelRestaurants;
     @FXML private ScrollPane panelProfil;
+    @FXML private Node panelAdresses;
+    @FXML private Node panelCategories;
+    @FXML private Node panelLieuxTouristiques;
 
     // Carousels
     @FXML private HBox lieuxAccueilCarousel;
@@ -78,6 +81,14 @@ public class MainInterfaceController {
     @FXML private Button navRestaurants;
     @FXML private Button navPaiements;
     @FXML private Button navProfil;
+    @FXML private Button navTourisme;
+    @FXML private Button navAdresses;
+    @FXML private Button navCategories;
+    @FXML private Button navLieuxTouristiques;
+
+    // Chatbot
+    @FXML private VBox chatBotPanel;
+    @FXML private Button chatBotFab;
 
     private double xOffset = 0;
     private double yOffset = 0;
@@ -175,17 +186,17 @@ public class MainInterfaceController {
     // ================================================================
     // PANEL SWITCHING
     // ================================================================
-    private void showPanel(ScrollPane target) {
-        if (panelAccueil != null) panelAccueil.setVisible(false);
-        if (panelLieux != null) panelLieux.setVisible(false);
-        if (panelRestaurants != null) panelRestaurants.setVisible(false);
-        if (panelProfil != null) panelProfil.setVisible(false);
+    private void showPanel(Node target) {
+        Node[] allPanels = { panelAccueil, panelLieux, panelRestaurants, panelProfil, panelAdresses, panelCategories, panelLieuxTouristiques };
+        for (Node p : allPanels) {
+            if (p != null) p.setVisible(false);
+        }
         if (target != null) target.setVisible(true);
         highlightNav(null);
     }
 
     private void highlightNav(Button active) {
-        Button[] allNav = { navAccueil, navLieux, navRestaurants, navPaiements, navProfil };
+        Button[] allNav = { navAccueil, navLieux, navRestaurants, navPaiements, navProfil, navTourisme, navAdresses, navCategories, navLieuxTouristiques };
         for (Button btn : allNav) {
             if (btn != null) btn.setStyle(btn == active
                 ? "-fx-background-color: " + ThemeManager.accentHover() + "; -fx-text-fill: " + ThemeManager.accent() + "; -fx-font-size: 12; -fx-padding: 10 14; -fx-background-radius: 8; -fx-cursor: hand; -fx-font-weight: bold;"
@@ -197,6 +208,21 @@ public class MainInterfaceController {
     @FXML public void handleShowLieux() { showPanel(panelLieux); highlightNav(navLieux); }
     @FXML public void handleShowRestaurants() { showPanel(panelRestaurants); highlightNav(navRestaurants); }
     @FXML public void handleShowProfil() { showPanel(panelProfil); highlightNav(navProfil); loadProfileData(); }
+    @FXML public void handleShowAdresses() { showPanel(panelAdresses); highlightNav(navAdresses); }
+    @FXML public void handleShowCategories() { showPanel(panelCategories); highlightNav(navCategories); }
+    @FXML public void handleShowLieuxTouristiques() { showPanel(panelLieuxTouristiques); highlightNav(navLieuxTouristiques); }
+
+    @FXML
+    public void handleToggleChatBot() {
+        if (chatBotPanel != null) {
+            boolean show = !chatBotPanel.isVisible();
+            chatBotPanel.setVisible(show);
+            chatBotPanel.setManaged(show);
+            if (chatBotFab != null) {
+                chatBotFab.setText(show ? "\u2715" : "\uD83E\uDD16");
+            }
+        }
+    }
 
     // ================================================================
     // RENDER LIEU CARDS (Destinations)
@@ -965,6 +991,25 @@ public class MainInterfaceController {
             Stage stage = (Stage) titleBar.getScene().getWindow();
             fadeTransition(stage, root, "SmartTravel - Mes Paiements");
         } catch (Exception e) { e.printStackTrace(); }
+    }
+
+    @FXML public void handleGoToTourisme() {
+        System.out.println("\n[TOURISM] handleGoToTourisme() called (user)");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainView.fxml"));
+            System.out.println("[TOURISM] Loading MainView.fxml...");
+            Parent root = loader.load();
+            System.out.println("[TOURISM] MainView.fxml loaded OK!");
+            MainController mainCtrl = loader.getController();
+            mainCtrl.setReturnTarget("user", currentUser);
+            mainCtrl.setDashboardOnly(true);
+            Stage stage = (Stage) titleBar.getScene().getWindow();
+            fadeTransition(stage, root, "SmartTravel - Dashboard Tourisme");
+            System.out.println("[TOURISM] Scene transition started");
+        } catch (Exception e) {
+            System.err.println("[TOURISM] ❌ FAILED to load tourism module:");
+            e.printStackTrace();
+        }
     }
 
     @FXML public void handleMinimize() { ((Stage) titleBar.getScene().getWindow()).setIconified(true); }

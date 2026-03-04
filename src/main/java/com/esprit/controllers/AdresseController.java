@@ -58,10 +58,10 @@ public class AdresseController {
     private static final double CARD_HEIGHT = 300;
 
     private static final String[] CARD_GRADIENTS = {
-            "linear-gradient(to bottom right, #0d1a2a, #061020)",
-            "linear-gradient(to bottom right, #1a1a2e, #10102a)",
-            "linear-gradient(to bottom right, #1a2a1e, #0d200d)",
-            "linear-gradient(to bottom right, #2a1e1a, #20100d)"
+            "rgba(15,15,15,0.95)",
+            "rgba(15,15,15,0.95)",
+            "rgba(15,15,15,0.95)",
+            "rgba(15,15,15,0.95)"
     };
     private static final String[] CARD_ICONS = {"📍", "🏠", "🗺️", "🌍", "📌", "🏢"};
 
@@ -139,8 +139,9 @@ public class AdresseController {
             // Show all addresses on map preview
             showAllAddressesOnMap();
             System.out.println("✅ Loaded " + adresseList.size() + " addresses");
-        } catch (SQLException e) {
-            System.err.println("❌ SQL Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("❌ AdresseController.loadData() Error: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
             showToast("Erreur de chargement: " + e.getMessage(), false);
         }
     }
@@ -177,6 +178,10 @@ public class AdresseController {
         if (btnPrev != null) btnPrev.setDisable(false);
         if (btnNext != null) btnNext.setDisable(false);
 
+        // Ensure cards container has enough height for cards
+        cardsContainer.setMinHeight(CARD_HEIGHT + 20);
+        cardsContainer.setPrefHeight(CARD_HEIGHT + 20);
+
         int startIdx = currentPage * CARDS_PER_PAGE;
         int endIdx = Math.min(startIdx + CARDS_PER_PAGE, filteredList.size());
 
@@ -184,15 +189,11 @@ public class AdresseController {
             StackPane card = createCard(filteredList.get(i), i);
             cardsContainer.getChildren().add(card);
 
-            int delay = (i - startIdx) * 120;
-            card.setOpacity(0); card.setTranslateY(40); card.setScaleX(0.9); card.setScaleY(0.9);
-            FadeTransition fade = new FadeTransition(Duration.millis(400), card);
-            fade.setToValue(1.0); fade.setDelay(Duration.millis(delay)); fade.setInterpolator(Interpolator.EASE_OUT);
-            TranslateTransition slide = new TranslateTransition(Duration.millis(450), card);
-            slide.setToY(0); slide.setDelay(Duration.millis(delay)); slide.setInterpolator(Interpolator.EASE_OUT);
-            ScaleTransition scale = new ScaleTransition(Duration.millis(400), card);
-            scale.setToX(1.0); scale.setToY(1.0); scale.setDelay(Duration.millis(delay)); scale.setInterpolator(Interpolator.EASE_OUT);
-            new ParallelTransition(fade, slide, scale).play();
+            // Cards start fully visible — no opacity animation on initial build
+            card.setOpacity(1.0);
+            card.setTranslateY(0);
+            card.setScaleX(1.0);
+            card.setScaleY(1.0);
         }
 
         lblPageInfo.setText((currentPage + 1) + " / " + (getMaxPage() + 1));
@@ -239,7 +240,7 @@ public class AdresseController {
 
         // Ville (city) as subtitle
         Label villeLabel = new Label("🏙 " + (adr.getVille() != null ? adr.getVille() : "—"));
-        villeLabel.setStyle("-fx-text-fill: rgba(191,162,0,0.85); -fx-font-size: 14px; -fx-font-weight: bold;");
+        villeLabel.setStyle("-fx-text-fill: rgba(255,215,0,0.85); -fx-font-size: 14px; -fx-font-weight: bold;");
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
@@ -261,8 +262,8 @@ public class AdresseController {
 
         // Selection highlight
         if (index == selectedIndex) {
-            card.setStyle("-fx-border-color: #BFA200; -fx-border-width: 2.5; -fx-border-radius: 12; "
-                    + "-fx-effect: dropshadow(gaussian, rgba(191,162,0,0.6), 20, 0.7, 0, 0);");
+            card.setStyle("-fx-border-color: #FFD700; -fx-border-width: 2.5; -fx-border-radius: 12; "
+                    + "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.6), 20, 0.7, 0, 0);");
             Rectangle selClip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
             selClip.setArcWidth(24); selClip.setArcHeight(24);
             card.setClip(selClip);
@@ -284,7 +285,7 @@ public class AdresseController {
             if (index != selectedIndex) {
                 ScaleTransition hover = new ScaleTransition(Duration.millis(200), card);
                 hover.setToX(1.04); hover.setToY(1.04); hover.setInterpolator(Interpolator.EASE_OUT); hover.play();
-                card.setEffect(new DropShadow(25, Color.rgb(191, 162, 0, 0.4)));
+                card.setEffect(new DropShadow(25, Color.rgb(255, 215, 0, 0.4)));
             }
         });
         card.setOnMouseExited(e -> {
@@ -306,7 +307,7 @@ public class AdresseController {
         int maxDots = Math.min(totalPages, 10);
         for (int i = 0; i < maxDots; i++) {
             Circle dot = new Circle(5);
-            dot.setStyle(i == currentPage ? "-fx-fill: #BFA200;" : "-fx-fill: rgba(191,162,0,0.25);");
+            dot.setStyle(i == currentPage ? "-fx-fill: #FFD700;" : "-fx-fill: rgba(255,215,0,0.25);");
             final int page = i;
             dot.setCursor(Cursor.HAND);
             dot.setOnMouseClicked(e -> { currentPage = page; buildCards(); });
@@ -322,11 +323,7 @@ public class AdresseController {
     // ========== ANIMATIONS ==========
 
     private void playEntranceAnimation() {
-        Node root = cardsContainer.getParent();
-        if (root == null) return;
-        root.setOpacity(0);
-        FadeTransition fade = new FadeTransition(Duration.millis(600), root);
-        fade.setFromValue(0); fade.setToValue(1); fade.setInterpolator(Interpolator.EASE_OUT); fade.play();
+        // Safe entrance: don't set parent opacity to 0 (causes invisible cards in non-active tabs)
         if (lblCount != null && lblCount.getParent() != null) {
             ScaleTransition pulse = new ScaleTransition(Duration.millis(500), lblCount.getParent());
             pulse.setFromX(0.85); pulse.setFromY(0.85); pulse.setToX(1.0); pulse.setToY(1.0);
@@ -504,7 +501,7 @@ public class AdresseController {
             Adresse a = adresseList.get(i);
             String label = ((a.getRue() != null ? a.getRue() : "") + ", " + (a.getVille() != null ? a.getVille() : "")).replace("'", "\\\\'");
             if (i > 0) sb.append(",");
-            sb.append(String.format("{lat:%f,lng:%f,label:'%s'}", a.getLatitude(), a.getLongitude(), label));
+            sb.append(String.format(java.util.Locale.US, "{lat:%f,lng:%f,label:'%s'}", a.getLatitude(), a.getLongitude(), label));
         }
         sb.append("]);");
         mapEngine.executeScript(sb.toString());
@@ -514,7 +511,7 @@ public class AdresseController {
         if (adr == null) return;
         if (mapPreviewReady && mapEngine != null) {
             String label = (adr.getRue() != null ? adr.getRue() : "") + ", " + (adr.getVille() != null ? adr.getVille() : "");
-            mapEngine.executeScript(String.format(
+            mapEngine.executeScript(String.format(java.util.Locale.US,
                 "clearMarkers(); addMarker(%f, %f, '%s'); map.setView([%f, %f], 15);",
                 adr.getLatitude(), adr.getLongitude(),
                 label.replace("'", "\\\\'"),
@@ -537,16 +534,16 @@ public class AdresseController {
             "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>\n" +
             "<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>\n" +
             "<style>\n" +
-            "  html, body { margin:0; padding:0; height:100%; background:#e8e8e8; overflow:hidden; }\n" +
+            "  html, body { margin:0; padding:0; height:100%; background:#0d1a2a; overflow:hidden; }\n" +
             "  #map { width:100%; height:100%; }\n" +
-            "  .leaflet-container { background:#e8e8e8; }\n" +
+            "  .leaflet-container { background:#0d1a2a; }\n" +
             "</style>\n" +
             "</head><body>\n" +
             "<div id='map'></div>\n" +
             "<script>\n" +
             "var map = L.map('map').setView([" + initLat + ", " + initLng + "], " + zoom + ");\n" +
-            "L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n" +
-            "  attribution: '&copy; OpenStreetMap',\n" +
+            "L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {\n" +
+            "  attribution: '&copy; OpenStreetMap &copy; CARTO',\n" +
             "  maxZoom: 19\n" +
             "}).addTo(map);\n" +
             "var markers = [];\n" +

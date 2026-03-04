@@ -13,12 +13,12 @@
             <!-- Dialog Header Section -->
             <HBox alignment="CENTER_LEFT" spacing="12" styleClass="dialog-header-section">
                 <padding><Insets top="16" right="30" bottom="16" left="30"/></padding>
-                <Label text="🏛️" style="-fx-font-size: 30px;"/>
+                <Label text="&#x1F3DB;&#xFE0F;" style="-fx-font-size: 30px;"/>
                 <VBox spacing="3" HBox.hgrow="ALWAYS">
                     <Label text="Lieu Touristique" styleClass="dialog-page-title" style="-fx-font-size: 22px;"/>
-                    <Label text="Définir les détails du lieu touristique" styleClass="dialog-page-subtitle"/>
+                    <Label text="D&#x00E9;finir les d&#x00E9;tails du lieu touristique" styleClass="dialog-page-subtitle"/>
                 </VBox>
-                <Button fx:id="btnFullscreen" text="⛶" styleClass="btn-fullscreen" mnemonicParsing="false"/>
+                <Button fx:id="btnFullscreen" text="&#x26F6;" styleClass="btn-fullscreen" mnemonicParsing="false"/>
             </HBox>
 
             <!-- Gold Separator -->
@@ -31,7 +31,7 @@
                 <!-- Left Column -->
                 <VBox spacing="16" HBox.hgrow="ALWAYS" styleClass="form-section">
                     <padding><Insets top="20" right="25" bottom="20" left="25"/></padding>
-                    <Label text="ℹ️ Informations générales" styleClass="form-section-title" style="-fx-font-size: 15px;"/>
+                    <Label text="&#x2139;&#xFE0F; Informations g&#x00E9;n&#x00E9;rales" styleClass="form-section-title" style="-fx-font-size: 15px;"/>
 
                     <VBox spacing="4" styleClass="form-group">
                         <Label text="Nom" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
@@ -42,13 +42,13 @@
                     <VBox spacing="4" styleClass="form-group">
                         <Label text="Description" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
                         <HBox spacing="8" alignment="CENTER_LEFT">
-                            <TextField fx:id="tfDescription" promptText="Description détaillée..." styleClass="form-input" prefHeight="40" HBox.hgrow="ALWAYS"/>
-                            <Button fx:id="btnAiDesc" text="✨ IA" onAction="#generateAiDescription" styleClass="btn-ai-generate" prefHeight="40" mnemonicParsing="false">
-                                <tooltip><Tooltip text="Générer une description avec l'IA Gemini"/></tooltip>
+                            <TextField fx:id="tfDescription" promptText="Description d&#x00E9;taill&#x00E9;e..." styleClass="form-input" prefHeight="40" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="btnAiDesc" text="&#x2728; IA" onAction="#generateAiDescription" styleClass="btn-ai-generate" prefHeight="40" mnemonicParsing="false">
+                                <tooltip><Tooltip text="G&#x00E9;n&#x00E9;rer une description avec l'IA Gemini"/></tooltip>
                             </Button>
                         </HBox>
                         <Label fx:id="lblErrDesc" text="" styleClass="error-label" visible="false" managed="false"/>
-                        <Label fx:id="lblAiStatus" text="" style="-fx-text-fill: rgba(191,162,0,0.85); -fx-font-size: 10px;" visible="false" managed="false"/>
+                        <Label fx:id="lblAiStatus" text="" style="-fx-text-fill: rgba(255,215,0,0.85); -fx-font-size: 10px;" visible="false" managed="false"/>
                     </VBox>
 
                     <VBox spacing="4" styleClass="form-group">
@@ -67,7 +67,7 @@
                 <!-- Right Column -->
                 <VBox spacing="16" HBox.hgrow="ALWAYS" styleClass="form-section">
                     <padding><Insets top="20" right="25" bottom="20" left="25"/></padding>
-                    <Label text="🔗 Détails et médias" styleClass="form-section-title" style="-fx-font-size: 15px;"/>
+                    <Label text="&#x1F5C2; D&#x00E9;tails et m&#x00E9;dias" styleClass="form-section-title" style="-fx-font-size: 15px;"/>
 
                     <VBox spacing="4" styleClass="form-group">
                         <Label text="Statut" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
@@ -76,29 +76,29 @@
                     </VBox>
 
                     <VBox spacing="4" styleClass="form-group">
-                        <Label text="Catégorie" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
-                        <ComboBox fx:id="cbCategorie" promptText="Sélectionner une catégorie..." styleClass="form-combo" prefHeight="40" maxWidth="1.7976931348623157E308"/>
+                        <Label text="Cat&#x00E9;gorie" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
+                        <ComboBox fx:id="cbCategorie" promptText="S&#x00E9;lectionner une cat&#x00E9;gorie..." styleClass="form-combo" prefHeight="40" maxWidth="1.7976931348623157E308"/>
                         <Label fx:id="lblErrCat" text="" styleClass="error-label" visible="false" managed="false"/>
                     </VBox>
 
                     <VBox spacing="4" styleClass="form-group">
                         <Label text="Adresse" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
-                        <ComboBox fx:id="cbAdresse" promptText="Sélectionner une adresse..." styleClass="form-combo" prefHeight="40" maxWidth="1.7976931348623157E308"/>
+                        <ComboBox fx:id="cbAdresse" promptText="S&#x00E9;lectionner une adresse..." styleClass="form-combo" prefHeight="40" maxWidth="1.7976931348623157E308"/>
                         <Label fx:id="lblErrAdr" text="" styleClass="error-label" visible="false" managed="false"/>
                     </VBox>
 
                     <!-- Single Image Picker -->
                     <VBox spacing="8" styleClass="form-group">
                         <HBox alignment="CENTER_LEFT" spacing="8">
-                            <Label text="🖼️ Image" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
+                            <Label text="&#x1F5BC;&#xFE0F; Image" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
                             <Region HBox.hgrow="ALWAYS"/>
                             <Button fx:id="btnBrowseImage" text="Parcourir..." styleClass="btn-browse" style="-fx-font-size: 11px; -fx-padding: 4 14;"/>
                         </HBox>
                         <StackPane fx:id="imagePreviewPane" alignment="CENTER" styleClass="gallery-drop-zone" minHeight="120" prefHeight="140">
-                            <Label fx:id="lblImageHint" text="📸 Aucune image sélectionnée" styleClass="gallery-drop-hint"/>
+                            <Label fx:id="lblImageHint" text="&#x1F4F8; Aucune image s&#x00E9;lectionn&#x00E9;e" styleClass="gallery-drop-hint"/>
                             <ImageView fx:id="ivPreview" fitWidth="200" fitHeight="130" preserveRatio="true" visible="false"/>
                         </StackPane>
-                        <Label fx:id="lblImagePath" text="" style="-fx-text-fill: rgba(191,162,0,0.6); -fx-font-size: 11px;" wrapText="true"/>
+                        <Label fx:id="lblImagePath" text="" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 11px;" wrapText="true"/>
                     </VBox>
                 </VBox>
 

@@ -34,7 +34,7 @@ public class QRCodeService {
             BufferedImage bufferedImage = createQRImage(content, QR_SIZE);
             return SwingFXUtils.toFXImage(bufferedImage, null);
         } catch (WriterException e) {
-            System.err.println("❌ QR Code generation failed: " + e.getMessage());
+            System.err.println("QR Code generation failed: " + e.getMessage());
             return null;
         }
     }
@@ -47,10 +47,10 @@ public class QRCodeService {
         try {
             BufferedImage bufferedImage = createQRImage(content, QR_SIZE);
             ImageIO.write(bufferedImage, "PNG", outputFile);
-            System.out.println("✅ QR Code saved to: " + outputFile.getAbsolutePath());
+            System.out.println("QR Code saved to: " + outputFile.getAbsolutePath());
             return outputFile;
         } catch (Exception e) {
-            System.err.println("❌ QR Code save failed: " + e.getMessage());
+            System.err.println("QR Code save failed: " + e.getMessage());
             return null;
         }
     }
@@ -62,17 +62,19 @@ public class QRCodeService {
         StringBuilder sb = new StringBuilder();
         // Google Maps link for easy navigation
         sb.append("https://www.google.com/maps?q=")
-          .append(latitude).append(",").append(longitude);
+          .append(String.format(java.util.Locale.US, "%.6f", latitude))
+          .append(",")
+          .append(String.format(java.util.Locale.US, "%.6f", longitude));
         sb.append("\n\n");
-        sb.append("📍 ").append(lieu.getNom() != null ? lieu.getNom() : "Lieu Touristique");
+        sb.append("\uD83D\uDCCD ").append(lieu.getNom() != null ? lieu.getNom() : "Lieu Touristique");
         if (lieu.getVille() != null) {
-            sb.append("\n🏙️ ").append(lieu.getVille());
+            sb.append("\n\uD83C\uDFD9\uFE0F ").append(lieu.getVille());
         }
-        sb.append("\n💰 ").append(String.format("%.0f TND", lieu.getPrix()));
+        sb.append("\n\uD83D\uDCB0 ").append(String.format(java.util.Locale.US, "%.0f TND", lieu.getPrix()));
         if (lieu.getDescription() != null && !lieu.getDescription().isEmpty()) {
             String desc = lieu.getDescription();
             if (desc.length() > 100) desc = desc.substring(0, 97) + "...";
-            sb.append("\n📝 ").append(desc);
+            sb.append("\n\uD83D\uDCC4 ").append(desc);
         }
         return sb.toString();
     }
@@ -97,7 +99,7 @@ public class QRCodeService {
         g.fillRect(0, 0, size, size);
 
         // Gold QR code modules
-        g.setColor(new java.awt.Color(191, 162, 0));
+        g.setColor(new java.awt.Color(255, 215, 0));
         for (int x = 0; x < size; x++) {
             for (int y = 0; y < size; y++) {
                 if (bitMatrix.get(x, y)) {

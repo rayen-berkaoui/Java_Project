@@ -1718,6 +1718,25 @@ public class DashboardController {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
+    @FXML private void handleGoToTourisme() {
+        System.out.println("\n[TOURISM] handleGoToTourisme() called (admin)");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/MainView.fxml"));
+            System.out.println("[TOURISM] Loading MainView.fxml...");
+            Parent root = loader.load();
+            System.out.println("[TOURISM] MainView.fxml loaded OK!");
+            MainController mainCtrl = loader.getController();
+            mainCtrl.setReturnTarget("admin", null);
+            root.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+            Stage stage = (Stage) contentArea.getScene().getWindow();
+            fadeTransition(stage, root, "Tabaani - Gestion Touristique");
+            System.out.println("[TOURISM] Scene transition started");
+        } catch (Exception e) {
+            System.err.println("[TOURISM] ❌ FAILED to load tourism module:");
+            e.printStackTrace();
+        }
+    }
+
     // ================= SUPPORT =================
     @FXML private void handleViewFAQ() {
         showAlert("FAQ - Questions frequentes",

@@ -10,16 +10,14 @@ import java.util.List;
 
 public class categorieServices implements ICrud<categorie> {
 
-    Connection con;
-
-    public categorieServices() {
-        con = MyDataBase.getInstance().getConnection();
+    private Connection getConnection() {
+        return MyDataBase.getInstance().getConnection();
     }
 
     @Override
     public void ajouter(categorie categorie) throws SQLException {
         String sql = "INSERT INTO categorie (nom_categorie, description, date_creation) VALUES (?,?,?)";
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setString(1, categorie.getNomcategorie());
         ps.setString(2, categorie.getDescription());
         if (categorie.getDateCreation() != null) {
@@ -34,7 +32,7 @@ public class categorieServices implements ICrud<categorie> {
     @Override
     public void supprimer(int id) throws SQLException {
         String sql = "DELETE FROM `categorie` WHERE `id_categorie`=?";
-        PreparedStatement preparedStatement = con.prepareStatement(sql);
+        PreparedStatement preparedStatement = getConnection().prepareStatement(sql);
         preparedStatement.setInt(1, id);
         preparedStatement.executeUpdate();
         System.out.println("Catégorie supprimée !");
@@ -44,7 +42,8 @@ public class categorieServices implements ICrud<categorie> {
     public List<categorie> afficher() throws SQLException {
         List<categorie> categories = new ArrayList<>();
         String sql = "SELECT * FROM categorie";
-        Statement statement = con.createStatement();
+        System.out.println("[DEBUG] categorieServices.afficher() - executing: " + sql);
+        Statement statement = getConnection().createStatement();
         ResultSet rs = statement.executeQuery(sql);
 
         while (rs.next()) {
@@ -61,6 +60,7 @@ public class categorieServices implements ICrud<categorie> {
 
             categories.add(categorie);
         }
+        System.out.println("[DEBUG] categorieServices.afficher() - found " + categories.size() + " categories");
         return categories;
     }
 
@@ -68,7 +68,7 @@ public class categorieServices implements ICrud<categorie> {
         String sql = "UPDATE categorie SET nom_categorie = ?, description = ?, date_creation = ? " +
                 "WHERE id_categorie = ?";
 
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setString(1, categorie.getNomcategorie());
         ps.setString(2, categorie.getDescription());
         ps.setDate(3, Date.valueOf(categorie.getDateCreation()));

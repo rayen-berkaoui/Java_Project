@@ -165,8 +165,9 @@ public class LieuTouristiqueController {
             fetchWeatherAsync();
 
             System.out.println("✅ Loaded " + lieuList.size() + " tourist locations");
-        } catch (SQLException e) {
-            System.err.println("❌ SQL Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("❌ LieuTouristiqueController.loadData() Error: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
             showToast("Erreur de chargement: " + e.getMessage(), false);
         }
     }
@@ -243,6 +244,10 @@ public class LieuTouristiqueController {
         if (btnPrev != null) btnPrev.setDisable(false);
         if (btnNext != null) btnNext.setDisable(false);
 
+        // Ensure cards container has enough height for cards
+        cardsContainer.setMinHeight(CARD_HEIGHT + 20);
+        cardsContainer.setPrefHeight(CARD_HEIGHT + 20);
+
         int startIdx = currentPage * CARDS_PER_PAGE;
         int endIdx = Math.min(startIdx + CARDS_PER_PAGE, filteredList.size());
 
@@ -250,30 +255,11 @@ public class LieuTouristiqueController {
             StackPane card = createCard(filteredList.get(i), i);
             cardsContainer.getChildren().add(card);
 
-            // Staggered card entrance animation
-            int delay = (i - startIdx) * 120;
-            card.setOpacity(0);
-            card.setTranslateY(40);
-            card.setScaleX(0.9);
-            card.setScaleY(0.9);
-
-            FadeTransition fade = new FadeTransition(Duration.millis(400), card);
-            fade.setToValue(1.0);
-            fade.setDelay(Duration.millis(delay));
-            fade.setInterpolator(Interpolator.EASE_OUT);
-
-            TranslateTransition slide = new TranslateTransition(Duration.millis(450), card);
-            slide.setToY(0);
-            slide.setDelay(Duration.millis(delay));
-            slide.setInterpolator(Interpolator.EASE_OUT);
-
-            ScaleTransition scale = new ScaleTransition(Duration.millis(400), card);
-            scale.setToX(1.0);
-            scale.setToY(1.0);
-            scale.setDelay(Duration.millis(delay));
-            scale.setInterpolator(Interpolator.EASE_OUT);
-
-            new ParallelTransition(fade, slide, scale).play();
+            // Cards start fully visible — no opacity animation on initial build
+            card.setOpacity(1.0);
+            card.setTranslateY(0);
+            card.setScaleX(1.0);
+            card.setScaleY(1.0);
         }
 
         int totalPages = getMaxPage() + 1;
@@ -314,7 +300,7 @@ public class LieuTouristiqueController {
         // Dark fallback background (visible when no image)
         Region darkBg = new Region();
         darkBg.setPrefSize(CARD_WIDTH, CARD_HEIGHT);
-        darkBg.setStyle("-fx-background-color: linear-gradient(to bottom right, #1a1a2e, #0d0d1a);");
+        darkBg.setStyle("-fx-background-color: rgba(15,15,15,0.95); -fx-border-color: rgba(255,215,0,0.08); -fx-border-width: 1;");
 
         // Gradient overlay at the bottom for text readability
         Region gradientOverlay = new Region();
@@ -326,10 +312,10 @@ public class LieuTouristiqueController {
         Label badge = new Label(lieu.getStatut() == 1 ? "ACTIF" : "INACTIF");
         badge.getStyleClass().add("lieu-badge");
         if (lieu.getStatut() == 1) {
-            badge.setStyle("-fx-background-color: #00b36b; -fx-text-fill: white; -fx-font-size: 9px; "
+            badge.setStyle("-fx-background-color: #51CF66; -fx-text-fill: white; -fx-font-size: 9px; "
                     + "-fx-font-weight: bold; -fx-padding: 3 10; -fx-background-radius: 4;");
         } else {
-            badge.setStyle("-fx-background-color: #e63946; -fx-text-fill: white; -fx-font-size: 9px; "
+            badge.setStyle("-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-font-size: 9px; "
                     + "-fx-font-weight: bold; -fx-padding: 3 10; -fx-background-radius: 4;");
         }
         StackPane.setAlignment(badge, Pos.TOP_LEFT);
@@ -337,7 +323,7 @@ public class LieuTouristiqueController {
 
         // Price badge (top-right)
         Label priceBadge = new Label(String.format("%.0f TND", lieu.getPrix()));
-        priceBadge.setStyle("-fx-background-color: rgba(191,162,0,0.9); -fx-text-fill: #0a0a0a; -fx-font-size: 10px; "
+        priceBadge.setStyle("-fx-background-color: rgba(255,215,0,0.9); -fx-text-fill: #0a0a0a; -fx-font-size: 10px; "
                 + "-fx-font-weight: bold; -fx-padding: 3 10; -fx-background-radius: 4;");
         StackPane.setAlignment(priceBadge, Pos.TOP_RIGHT);
         StackPane.setMargin(priceBadge, new Insets(14, 14, 0, 0));
@@ -380,7 +366,7 @@ public class LieuTouristiqueController {
             weatherEmoji.setStyle("-fx-font-size: 14px;");
 
             Label weatherTemp = new Label(String.format("%.0f°C", weather.getTemperature()));
-            weatherTemp.setStyle("-fx-text-fill: #BFA200; -fx-font-size: 12px; -fx-font-weight: bold;");
+            weatherTemp.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 12px; -fx-font-weight: bold;");
 
             Label weatherDesc = new Label(capitalize(weather.getDescription()));
             weatherDesc.setStyle("-fx-text-fill: rgba(255,255,255,0.7); -fx-font-size: 10px;");
@@ -398,11 +384,11 @@ public class LieuTouristiqueController {
         // QR Code button (bottom-right)
         Button qrBtn = new Button("📱");
         qrBtn.getStyleClass().add("qr-btn");
-        qrBtn.setStyle("-fx-background-color: rgba(191,162,0,0.85); -fx-text-fill: #0a0a0a; "
+        qrBtn.setStyle("-fx-background-color: rgba(255,215,0,0.85); -fx-text-fill: #0a0a0a; "
                 + "-fx-font-size: 14px; -fx-padding: 4 8; -fx-background-radius: 8; -fx-cursor: hand;");
-        qrBtn.setOnMouseEntered(ev -> qrBtn.setStyle("-fx-background-color: rgba(212,181,48,1); -fx-text-fill: #0a0a0a; "
+        qrBtn.setOnMouseEntered(ev -> qrBtn.setStyle("-fx-background-color: rgba(255,230,100,1); -fx-text-fill: #0a0a0a; "
                 + "-fx-font-size: 14px; -fx-padding: 4 8; -fx-background-radius: 8; -fx-cursor: hand;"));
-        qrBtn.setOnMouseExited(ev -> qrBtn.setStyle("-fx-background-color: rgba(191,162,0,0.85); -fx-text-fill: #0a0a0a; "
+        qrBtn.setOnMouseExited(ev -> qrBtn.setStyle("-fx-background-color: rgba(255,215,0,0.85); -fx-text-fill: #0a0a0a; "
                 + "-fx-font-size: 14px; -fx-padding: 4 8; -fx-background-radius: 8; -fx-cursor: hand;"));
         qrBtn.setTooltip(new Tooltip("Générer QR Code"));
         qrBtn.setOnAction(ev -> {
@@ -423,7 +409,7 @@ public class LieuTouristiqueController {
             int curImgIdx = carouselIndex.getOrDefault(lieu.getId_lieu(), 0);
             for (int di = 0; di < Math.min(galleryPaths.size(), 8); di++) {
                 Circle dot = new Circle(3);
-                dot.setFill(di == curImgIdx ? Color.rgb(191, 162, 0) : Color.rgb(255, 255, 255, 0.5));
+                dot.setFill(di == curImgIdx ? Color.rgb(255, 215, 0) : Color.rgb(255, 255, 255, 0.5));
                 imgDots.getChildren().add(dot);
             }
             if (galleryPaths.size() > 8) {
@@ -466,7 +452,7 @@ public class LieuTouristiqueController {
                 for (int d = 0; d < dotCount; d++) {
                     Node dotNode = imgDots.getChildren().get(d);
                     if (dotNode instanceof Circle) {
-                        ((Circle) dotNode).setFill(d == ci ? Color.rgb(191, 162, 0) : Color.rgb(255, 255, 255, 0.5));
+                        ((Circle) dotNode).setFill(d == ci ? Color.rgb(255, 215, 0) : Color.rgb(255, 255, 255, 0.5));
                     }
                 }
 
@@ -476,8 +462,8 @@ public class LieuTouristiqueController {
 
         // Selection highlight
         if (index == selectedIndex) {
-            card.setStyle("-fx-border-color: #BFA200; -fx-border-width: 2.5; -fx-border-radius: 12; "
-                    + "-fx-effect: dropshadow(gaussian, rgba(191,162,0,0.6), 20, 0.7, 0, 0);");
+            card.setStyle("-fx-border-color: #FFD700; -fx-border-width: 2.5; -fx-border-radius: 12; "
+                    + "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.6), 20, 0.7, 0, 0);");
             Rectangle selClip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
             selClip.setArcWidth(24);
             selClip.setArcHeight(24);
@@ -506,7 +492,7 @@ public class LieuTouristiqueController {
                 hover.setToY(1.04);
                 hover.setInterpolator(Interpolator.EASE_OUT);
                 hover.play();
-                card.setEffect(new DropShadow(25, Color.rgb(191, 162, 0, 0.4)));
+                card.setEffect(new DropShadow(25, Color.rgb(255, 215, 0, 0.4)));
             }
         });
         card.setOnMouseExited(e -> {
@@ -551,7 +537,7 @@ public class LieuTouristiqueController {
         int maxDots = Math.min(totalPages, 10);
         for (int i = 0; i < maxDots; i++) {
             Circle dot = new Circle(5);
-            dot.setStyle(i == currentPage ? "-fx-fill: #BFA200;" : "-fx-fill: rgba(191,162,0,0.25);");
+            dot.setStyle(i == currentPage ? "-fx-fill: #FFD700;" : "-fx-fill: rgba(255,215,0,0.25);");
             final int page = i;
             dot.setCursor(javafx.scene.Cursor.HAND);
             dot.setOnMouseClicked(e -> {
@@ -570,16 +556,7 @@ public class LieuTouristiqueController {
     // ========== ANIMATIONS ==========
 
     private void playEntranceAnimation() {
-        Node root = cardsContainer.getParent();
-        if (root == null) return;
-
-        root.setOpacity(0);
-        FadeTransition fade = new FadeTransition(Duration.millis(600), root);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-        fade.setInterpolator(Interpolator.EASE_OUT);
-        fade.play();
-
+        // Safe entrance: don't set parent opacity to 0 (causes invisible cards in non-active tabs)
         if (lblCount != null && lblCount.getParent() != null) {
             ScaleTransition pulse = new ScaleTransition(Duration.millis(500), lblCount.getParent());
             pulse.setFromX(0.85);
@@ -823,13 +800,13 @@ public class LieuTouristiqueController {
             qrView.setPreserveRatio(true);
 
             Label title = new Label("📱 " + lieu.getNom());
-            title.setStyle("-fx-text-fill: #BFA200; -fx-font-size: 18px; -fx-font-weight: bold;");
+            title.setStyle("-fx-text-fill: #FFD700; -fx-font-size: 18px; -fx-font-weight: bold;");
 
             Label subtitle = new Label("Scannez pour ouvrir dans Google Maps");
             subtitle.setStyle("-fx-text-fill: rgba(255,255,255,0.7); -fx-font-size: 12px;");
 
             Button saveBtn = new Button("💾  Sauvegarder PNG");
-            saveBtn.setStyle("-fx-background-color: #BFA200; -fx-text-fill: #0a0a0a; -fx-font-weight: bold; "
+            saveBtn.setStyle("-fx-background-color: #FFD700; -fx-text-fill: #0a0a0a; -fx-font-weight: bold; "
                     + "-fx-padding: 8 20; -fx-background-radius: 8; -fx-font-size: 12px; -fx-cursor: hand;");
             saveBtn.setOnAction(ev -> {
                 FileChooser fc = new FileChooser();
@@ -854,7 +831,7 @@ public class LieuTouristiqueController {
             VBox layout = new VBox(16, title, subtitle, qrView, buttons);
             layout.setAlignment(Pos.CENTER);
             layout.setPadding(new Insets(30));
-            layout.setStyle("-fx-background-color: linear-gradient(to bottom, #0a0a12, #12121e);");
+            layout.setStyle("-fx-background-color: rgba(15,15,15,0.95);");
 
             Scene scene = new Scene(layout, 380, 460);
             qrStage.setScene(scene);

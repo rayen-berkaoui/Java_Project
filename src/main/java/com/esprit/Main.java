@@ -32,6 +32,11 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
+        // Global uncaught exception handler — catches all silent failures
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            System.err.println("\n[UNCAUGHT] Exception on thread " + t.getName() + ":");
+            e.printStackTrace();
+        });
         launch();
     }
 }

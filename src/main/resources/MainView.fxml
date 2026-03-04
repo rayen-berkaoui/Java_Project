@@ -5,11 +5,10 @@
 <?import javafx.geometry.Insets?>
 
 <StackPane xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="com.esprit.controllers.MainController"
-           prefHeight="1080" prefWidth="1920">
+           fx:controller="com.esprit.controllers.MainController">
 
     <!-- Main App Content -->
-    <BorderPane styleClass="root-pane" prefHeight="1080" prefWidth="1920">
+    <BorderPane styleClass="root-pane">
 
         <top>
             <VBox spacing="0">
@@ -19,6 +18,11 @@
 
                     <!-- Brand Logo -->
                     <HBox spacing="10" alignment="CENTER_LEFT" styleClass="nav-brand">
+                        <Button fx:id="btnBack" text="⬅" onAction="#handleBack"
+                                style="-fx-font-size: 18px; -fx-background-color: rgba(255,215,0,0.1); -fx-text-fill: #FFD700; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 6 12;"
+                                >
+                            <tooltip><Tooltip fx:id="backTooltip" text="Retour"/></tooltip>
+                        </Button>
                         <Label text="🗺️" style="-fx-font-size: 30px;"/>
                         <VBox spacing="0" alignment="CENTER_LEFT">
                             <Label styleClass="nav-title" text="GESTION"/>
@@ -28,7 +32,7 @@
 
                     <Region HBox.hgrow="ALWAYS"/>
 
-                    <HBox spacing="10" alignment="CENTER">
+                    <HBox fx:id="navButtonsBox" spacing="10" alignment="CENTER">
                         <Button styleClass="nav-button" text="📊  Dashboard" onAction="#selectDashboardTab" prefHeight="42" minWidth="150"/>
                         <Button styleClass="nav-button" text="📂  Catégories" onAction="#selectCategoriesTab" prefHeight="42" minWidth="150"/>
                         <Button styleClass="nav-button" text="📍  Adresses" onAction="#selectAddressesTab" prefHeight="42" minWidth="150"/>
@@ -49,7 +53,7 @@
         </top>
 
         <center>
-            <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" styleClass="main-tab-pane" prefHeight="1010" prefWidth="1920">
+            <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" styleClass="main-tab-pane">
 
                 <Tab text="Dashboard" closable="false">
                     <fx:include source="DashboardView.fxml"/>

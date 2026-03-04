@@ -6,7 +6,7 @@
 <?import javafx.geometry.Insets?>
 
 <ScrollPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.AdresseController"
-            fitToWidth="true" fitToHeight="true" styleClass="content-scroll" prefHeight="1010" prefWidth="1920">
+            fitToWidth="true" fitToHeight="false" styleClass="content-scroll">
     <VBox styleClass="content-root" VBox.vgrow="ALWAYS">
         <padding><Insets top="25" right="40" bottom="25" left="40"/></padding>
 
@@ -97,10 +97,10 @@
             <padding><Insets top="5" right="0" bottom="10" left="0"/></padding>
             <HBox alignment="CENTER_LEFT" spacing="10">
                 <Label text="🗺️" style="-fx-font-size: 22px;"/>
-                <Label fx:id="lblMapTitle" text="Carte — sélectionnez une adresse" style="-fx-text-fill: rgba(191,162,0,0.85); -fx-font-size: 15px; -fx-font-weight: bold;"/>
+                <Label fx:id="lblMapTitle" text="Carte — sélectionnez une adresse" style="-fx-text-fill: rgba(255,215,0,0.85); -fx-font-size: 15px; -fx-font-weight: bold;"/>
             </HBox>
             <WebView fx:id="mapPreview" prefHeight="300" VBox.vgrow="ALWAYS"
-                     style="-fx-border-color: rgba(191,162,0,0.2); -fx-border-width: 1; -fx-border-radius: 12;"/>
+                     style="-fx-border-color: rgba(255,215,0,0.2); -fx-border-width: 1; -fx-border-radius: 12;"/>
         </VBox>
 
     </VBox>

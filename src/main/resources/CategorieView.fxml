@@ -5,7 +5,7 @@
 <?import javafx.geometry.Insets?>
 
 <ScrollPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.CategorieController"
-            fitToWidth="true" fitToHeight="true" styleClass="content-scroll" prefHeight="1010" prefWidth="1920">
+            fitToWidth="true" fitToHeight="false" styleClass="content-scroll">
     <VBox styleClass="content-root" VBox.vgrow="ALWAYS">
         <padding><Insets top="25" right="40" bottom="25" left="40"/></padding>
 

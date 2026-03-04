@@ -51,10 +51,10 @@ public class CategorieController {
     private static final double CARD_HEIGHT = 300;
 
     private static final String[] CARD_GRADIENTS = {
-            "linear-gradient(to bottom right, #1a1a3e, #0d0d2a)",
-            "linear-gradient(to bottom right, #1e2a1e, #0d1a0d)",
-            "linear-gradient(to bottom right, #2a1a1a, #1a0d0d)",
-            "linear-gradient(to bottom right, #1a2a2a, #0d1a1a)"
+            "rgba(15,15,15,0.95)",
+            "rgba(15,15,15,0.95)",
+            "rgba(15,15,15,0.95)",
+            "rgba(15,15,15,0.95)"
     };
     private static final String[] CARD_ICONS = {"📁", "📋", "🏷️", "📦", "🗂️", "📑"};
 
@@ -117,8 +117,9 @@ public class CategorieController {
             if (selectedIndex >= filteredList.size()) selectedIndex = filteredList.isEmpty() ? -1 : 0;
             buildCards();
             System.out.println("✅ Loaded " + catList.size() + " categories");
-        } catch (SQLException e) {
-            System.err.println("❌ SQL Error: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("❌ CategorieController.loadData() Error: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
             showToast("Erreur de chargement: " + e.getMessage(), false);
         }
     }
@@ -155,6 +156,10 @@ public class CategorieController {
         if (btnPrev != null) btnPrev.setDisable(false);
         if (btnNext != null) btnNext.setDisable(false);
 
+        // Ensure cards container has enough height for cards
+        cardsContainer.setMinHeight(CARD_HEIGHT + 20);
+        cardsContainer.setPrefHeight(CARD_HEIGHT + 20);
+
         int startIdx = currentPage * CARDS_PER_PAGE;
         int endIdx = Math.min(startIdx + CARDS_PER_PAGE, filteredList.size());
 
@@ -162,15 +167,11 @@ public class CategorieController {
             StackPane card = createCard(filteredList.get(i), i);
             cardsContainer.getChildren().add(card);
 
-            int delay = (i - startIdx) * 120;
-            card.setOpacity(0); card.setTranslateY(40); card.setScaleX(0.9); card.setScaleY(0.9);
-            FadeTransition fade = new FadeTransition(Duration.millis(400), card);
-            fade.setToValue(1.0); fade.setDelay(Duration.millis(delay)); fade.setInterpolator(Interpolator.EASE_OUT);
-            TranslateTransition slide = new TranslateTransition(Duration.millis(450), card);
-            slide.setToY(0); slide.setDelay(Duration.millis(delay)); slide.setInterpolator(Interpolator.EASE_OUT);
-            ScaleTransition scale = new ScaleTransition(Duration.millis(400), card);
-            scale.setToX(1.0); scale.setToY(1.0); scale.setDelay(Duration.millis(delay)); scale.setInterpolator(Interpolator.EASE_OUT);
-            new ParallelTransition(fade, slide, scale).play();
+            // Cards start fully visible — no opacity animation on initial build
+            card.setOpacity(1.0);
+            card.setTranslateY(0);
+            card.setScaleX(1.0);
+            card.setScaleY(1.0);
         }
 
         lblPageInfo.setText((currentPage + 1) + " / " + (getMaxPage() + 1));
@@ -239,8 +240,8 @@ public class CategorieController {
 
         // Selection highlight
         if (index == selectedIndex) {
-            card.setStyle("-fx-border-color: #BFA200; -fx-border-width: 2.5; -fx-border-radius: 12; "
-                    + "-fx-effect: dropshadow(gaussian, rgba(191,162,0,0.6), 20, 0.7, 0, 0);");
+            card.setStyle("-fx-border-color: #FFD700; -fx-border-width: 2.5; -fx-border-radius: 12; "
+                    + "-fx-effect: dropshadow(gaussian, rgba(255,215,0,0.6), 20, 0.7, 0, 0);");
             Rectangle selClip = new Rectangle(CARD_WIDTH, CARD_HEIGHT);
             selClip.setArcWidth(24); selClip.setArcHeight(24);
             card.setClip(selClip);
@@ -260,7 +261,7 @@ public class CategorieController {
             if (index != selectedIndex) {
                 ScaleTransition hover = new ScaleTransition(Duration.millis(200), card);
                 hover.setToX(1.04); hover.setToY(1.04); hover.setInterpolator(Interpolator.EASE_OUT); hover.play();
-                card.setEffect(new DropShadow(25, Color.rgb(191, 162, 0, 0.4)));
+                card.setEffect(new DropShadow(25, Color.rgb(255, 215, 0, 0.4)));
             }
         });
         card.setOnMouseExited(e -> {
@@ -282,7 +283,7 @@ public class CategorieController {
         int maxDots = Math.min(totalPages, 10);
         for (int i = 0; i < maxDots; i++) {
             Circle dot = new Circle(5);
-            dot.setStyle(i == currentPage ? "-fx-fill: #BFA200;" : "-fx-fill: rgba(191,162,0,0.25);");
+            dot.setStyle(i == currentPage ? "-fx-fill: #FFD700;" : "-fx-fill: rgba(255,215,0,0.25);");
             final int page = i;
             dot.setCursor(Cursor.HAND);
             dot.setOnMouseClicked(e -> { currentPage = page; buildCards(); });
@@ -298,11 +299,7 @@ public class CategorieController {
     // ========== ANIMATIONS ==========
 
     private void playEntranceAnimation() {
-        Node root = cardsContainer.getParent();
-        if (root == null) return;
-        root.setOpacity(0);
-        FadeTransition fade = new FadeTransition(Duration.millis(600), root);
-        fade.setFromValue(0); fade.setToValue(1); fade.setInterpolator(Interpolator.EASE_OUT); fade.play();
+        // Safe entrance: don't set parent opacity to 0 (causes invisible cards in non-active tabs)
         if (lblCount != null && lblCount.getParent() != null) {
             ScaleTransition pulse = new ScaleTransition(Duration.millis(500), lblCount.getParent());
             pulse.setFromX(0.85); pulse.setFromY(0.85); pulse.setToX(1.0); pulse.setToY(1.0);

@@ -102,6 +102,15 @@
                     <Button text="&#x1F6E1;  Admin Panel" styleClass="sidebar-button" prefWidth="212" onAction="#handleGoToAdmin" />
                 </VBox>
 
+                <Region prefHeight="8" />
+                <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.1), transparent); -fx-pref-height: 1;" />
+                <Region prefHeight="8" />
+
+                <VBox spacing="4" style="-fx-padding: 8 14;">
+                    <Label text="TOURISME" style="-fx-text-fill: rgba(255,215,0,0.4); -fx-font-size: 10; -fx-font-weight: bold; -fx-padding: 0 6 8 6;" />
+                    <Button fx:id="btnTourisme" text="&#x1F3D6;  Gestion Touristique" styleClass="sidebar-button" prefWidth="212" onAction="#handleGoToTourisme" />
+                </VBox>
+
                 <Region VBox.vgrow="ALWAYS" />
 
                 <VBox spacing="4" style="-fx-padding: 14;">
@@ -116,7 +125,8 @@
             </VBox>
 
             <!-- MAIN CONTENT -->
-            <StackPane fx:id="contentArea" HBox.hgrow="ALWAYS" style="-fx-background-color: #0a0a0a;">
+            <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" HBox.hgrow="ALWAYS" style="-fx-background-color: #0a0a0a; -fx-background: #0a0a0a; -fx-border-color: transparent;">
+            <StackPane fx:id="contentArea" style="-fx-background-color: #0a0a0a;">
 
                 <!-- ============ DASHBOARD PANEL ============ -->
                 <VBox fx:id="dashboardPane" spacing="22" style="-fx-background-color: #0a0a0a; -fx-padding: 28;">
@@ -296,6 +306,7 @@
                 </VBox>
 
             </StackPane>
+            </ScrollPane>
         </HBox>
     </center>
 </BorderPane>

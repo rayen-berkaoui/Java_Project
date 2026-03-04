@@ -17,7 +17,7 @@ public class LieuService {
 
     public List<Lieu> getAll() {
         List<Lieu> list = new ArrayList<>();
-        String sql = "SELECT l.*, c.nom_categorie FROM lieu l " +
+        String sql = "SELECT l.*, c.nom_categorie FROM lieu_touristique l " +
                      "LEFT JOIN categorie c ON l.id_categorie = c.id_categorie " +
                      "WHERE l.statut = 1 ORDER BY l.nom";
         try {
@@ -33,7 +33,7 @@ public class LieuService {
     }
 
     public Lieu getById(int id) {
-        String sql = "SELECT l.*, c.nom_categorie FROM lieu l " +
+        String sql = "SELECT l.*, c.nom_categorie FROM lieu_touristique l " +
                      "LEFT JOIN categorie c ON l.id_categorie = c.id_categorie " +
                      "WHERE l.id_lieu = ?";
         try {

@@ -9,10 +9,8 @@ import java.util.List;
 
 public class LieuTouristiqueServices implements ICrud<LieuTouristique> {
 
-    private Connection con;
-
-    public LieuTouristiqueServices() {
-        con = MyDataBase.getInstance().getConnection();
+    private Connection getConnection() {
+        return MyDataBase.getInstance().getConnection();
     }
 
     @Override
@@ -21,7 +19,7 @@ public class LieuTouristiqueServices implements ICrud<LieuTouristique> {
             "(nom, description, ville, prix, image, statut, id_categorie, id_adresse) " +
             "VALUES (?,?,?,?,?,?,?,?)";
 
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setString(1, l.getNom());
         ps.setString(2, l.getDescription());
         ps.setString(3, l.getVille());
@@ -32,7 +30,6 @@ public class LieuTouristiqueServices implements ICrud<LieuTouristique> {
         ps.setInt(8, l.getId_adresse());
 
         ps.executeUpdate();
-        System.out.println("✅ Lieu touristique ajouté");
     }
 
     @Override
@@ -40,7 +37,7 @@ public class LieuTouristiqueServices implements ICrud<LieuTouristique> {
         String sql = "UPDATE lieu_touristique SET nom=?, description=?, ville=?, prix=?, image=?, statut=?, " +
             "id_categorie=?, id_adresse=? WHERE id_lieu=?";
 
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setString(1, l.getNom());
         ps.setString(2, l.getDescription());
         ps.setString(3, l.getVille());
@@ -52,23 +49,22 @@ public class LieuTouristiqueServices implements ICrud<LieuTouristique> {
         ps.setInt(9, l.getId_lieu());
 
         ps.executeUpdate();
-        System.out.println("✏️ Lieu touristique modifié");
     }
 
     @Override
     public void supprimer(int id) throws SQLException {
         String sql = "DELETE FROM lieu_touristique WHERE id_lieu=?";
-        PreparedStatement ps = con.prepareStatement(sql);
+        PreparedStatement ps = getConnection().prepareStatement(sql);
         ps.setInt(1, id);
         ps.executeUpdate();
-        System.out.println("🗑️ Lieu touristique supprimé");
     }
 
     @Override
     public List<LieuTouristique> afficher() throws SQLException {
         List<LieuTouristique> lieux = new ArrayList<>();
         String sql = "SELECT * FROM lieu_touristique";
-        Statement st = con.createStatement();
+        System.out.println("[DEBUG] LieuTouristiqueServices.afficher() - executing: " + sql);
+        Statement st = getConnection().createStatement();
         ResultSet rs = st.executeQuery(sql);
 
         while (rs.next()) {
@@ -85,6 +81,7 @@ public class LieuTouristiqueServices implements ICrud<LieuTouristique> {
 
             lieux.add(l);
         }
+        System.out.println("[DEBUG] LieuTouristiqueServices.afficher() - found " + lieux.size() + " lieux");
         return lieux;
     }
 
@@ -99,7 +96,7 @@ public class LieuTouristiqueServices implements ICrud<LieuTouristique> {
                 "JOIN categorie c ON l.id_categorie = c.id_categorie " +
                 "JOIN adresse a ON l.id_adresse = a.id_adresse";
 
-        Statement st = con.createStatement();
+        Statement st = getConnection().createStatement();
         ResultSet rs = st.executeQuery(sql);
 
         while (rs.next()) {

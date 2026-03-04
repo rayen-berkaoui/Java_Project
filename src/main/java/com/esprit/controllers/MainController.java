@@ -3,7 +3,10 @@ package com.esprit.controllers;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -12,9 +15,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import com.esprit.services.ThemeService;
+import com.esprit.entities.utilisateur;
+import com.esprit.utils.ThemeManager;
 
 /**
  * Main controller for navigation, fullscreen toggle, and chatbot panel.
+ * Supports returning to either admin dashboard or user main interface.
  */
 public class MainController {
 
@@ -30,9 +36,23 @@ public class MainController {
     @FXML
     private Button btnThemeToggle;
 
+    @FXML
+    private javafx.scene.layout.HBox navButtonsBox;
+
+    @FXML
+    private Button btnBack;
+
+    @FXML
+    private Tooltip backTooltip;
+
     private Stage stage;
     private boolean isFullScreen = false;
     private boolean chatBotVisible = false;
+
+    /** Tracks where to return: "admin" or "user" */
+    private String returnTarget = "admin";
+    /** Holds the current user (when coming from user interface) */
+    private utilisateur currentUser;
 
     @FXML
     public void initialize() {
@@ -45,36 +65,52 @@ public class MainController {
             mainTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
                 if (newTab != null && newTab.getContent() != null) {
                     Node content = newTab.getContent();
-                    content.setOpacity(0);
-                    content.setTranslateY(12);
-
-                    FadeTransition fade = new FadeTransition(Duration.millis(350), content);
-                    fade.setFromValue(0);
-                    fade.setToValue(1);
-                    fade.setInterpolator(Interpolator.EASE_OUT);
-
-                    TranslateTransition slide = new TranslateTransition(Duration.millis(350), content);
-                    slide.setFromY(12);
-                    slide.setToY(0);
-                    slide.setInterpolator(Interpolator.EASE_OUT);
-
-                    new ParallelTransition(fade, slide).play();
+                    // Ensure content is visible immediately — no animation on initial load
+                    content.setOpacity(1.0);
+                    content.setTranslateY(0);
                 }
             });
 
-            // Entrance animation for the whole scene
-            Platform.runLater(() -> {
-                if (mainTabPane.getScene() != null) {
-                    Node root = mainTabPane.getScene().getRoot();
-                    root.setOpacity(0);
-                    FadeTransition entrance = new FadeTransition(Duration.millis(700), root);
-                    entrance.setFromValue(0);
-                    entrance.setToValue(1);
-                    entrance.setInterpolator(Interpolator.EASE_OUT);
-                    entrance.play();
-                }
-            });
+            // No entrance animation on the scene root — handled by parent's fadeTransition
         }
+    }
+
+    // ========== RETURN TARGET ==========
+
+    /**
+     * Sets the return target and user when navigating from user interface.
+     * @param target "admin" to return to admin dashboard, "user" to return to user interface
+     * @param user the logged-in user (only needed when target is "user")
+     */
+    public void setReturnTarget(String target, utilisateur user) {
+        this.returnTarget = target;
+        this.currentUser = user;
+        Platform.runLater(() -> {
+            if (backTooltip != null) {
+                backTooltip.setText("user".equals(target) ? "Retour a l'accueil" : "Retour au Dashboard Admin");
+            }
+        });
+    }
+
+    /**
+     * Show only the Dashboard tab, hiding all other tabs and their nav buttons.
+     */
+    public void setDashboardOnly(boolean dashOnly) {
+        Platform.runLater(() -> {
+            if (mainTabPane == null) return;
+            if (dashOnly) {
+                // Remove all tabs except Dashboard (index 0)
+                while (mainTabPane.getTabs().size() > 1) {
+                    mainTabPane.getTabs().remove(mainTabPane.getTabs().size() - 1);
+                }
+                mainTabPane.getSelectionModel().select(0);
+                // Hide the nav buttons bar (Dashboard/Categories/Adresses/Lieux)
+                if (navButtonsBox != null) {
+                    navButtonsBox.setVisible(false);
+                    navButtonsBox.setManaged(false);
+                }
+            }
+        });
     }
 
     // ========== TAB NAVIGATION ==========
@@ -97,6 +133,40 @@ public class MainController {
     @FXML
     public void selectLocationsTab() {
         selectTab(3);
+    }
+
+    @FXML
+    public void handleBack() {
+        try {
+            if ("user".equals(returnTarget)) {
+                // Return to user main interface
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/maininterface.fxml"));
+                Parent root = loader.load();
+                MainInterfaceController controller = loader.getController();
+                if (currentUser != null) {
+                    controller.setUser(currentUser);
+                }
+                Stage currentStage = (Stage) mainTabPane.getScene().getWindow();
+                Scene newScene = new Scene(root);
+                ThemeManager.applyTheme(newScene);
+                ThemeManager.trackScene(newScene);
+                currentStage.setScene(newScene);
+                currentStage.setTitle("SmartTravel - Accueil");
+                currentStage.setMaximized(true);
+            } else {
+                // Return to admin dashboard
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/dashboard.fxml"));
+                Parent root = loader.load();
+                Stage currentStage = (Stage) mainTabPane.getScene().getWindow();
+                Scene newScene = new Scene(root);
+                newScene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
+                currentStage.setScene(newScene);
+                currentStage.setTitle("Tabaani - Dashboard");
+                currentStage.setMaximized(true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @FXML

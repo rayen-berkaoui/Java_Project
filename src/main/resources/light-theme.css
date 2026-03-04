@@ -1,5 +1,5 @@
 /* =================================================================
-   LIGHT THEME OVERRIDE — Applied on top of style.css (dark theme)
+   LIGHT THEME OVERRIDE Ã¢â‚¬â€ Applied on top of style.css (dark theme)
    Maintains gold accents, switches dark backgrounds to light ones
    ================================================================= */
 
@@ -11,7 +11,7 @@
 /* ===== NAVIGATION BAR ===== */
 .nav-bar {
     -fx-background-color: linear-gradient(to right, rgba(255,255,255,0.97), rgba(248,248,250,0.97), rgba(255,255,255,0.97));
-    -fx-border-color: transparent transparent rgba(191,162,0,0.2) transparent;
+    -fx-border-color: transparent transparent rgba(255,215,0,0.2) transparent;
 }
 
 .nav-title {
@@ -19,7 +19,7 @@
 }
 
 .nav-title-sub {
-    -fx-text-fill: #BFA200;
+    -fx-text-fill: #FFD700;
 }
 
 .nav-button {
@@ -29,13 +29,13 @@
 }
 
 .nav-button:hover {
-    -fx-background-color: rgba(191,162,0,0.12);
+    -fx-background-color: rgba(255,215,0,0.12);
     -fx-text-fill: #8a7000;
-    -fx-border-color: rgba(191,162,0,0.3);
+    -fx-border-color: rgba(255,215,0,0.3);
 }
 
 .nav-button:pressed {
-    -fx-background-color: rgba(191,162,0,0.2);
+    -fx-background-color: rgba(255,215,0,0.2);
 }
 
 .fullscreen-btn {
@@ -44,7 +44,7 @@
 
 /* ===== ACCENT LINE ===== */
 .accent-line {
-    -fx-background-color: linear-gradient(to right, transparent 0%, #BFA200 20%, #D4B530 50%, #BFA200 80%, transparent 100%);
+    -fx-background-color: linear-gradient(to right, transparent 0%, #FFD700 20%, #FFD700 50%, #FFD700 80%, transparent 100%);
     -fx-opacity: 0.7;
 }
 
@@ -65,7 +65,7 @@
 /* ===== PAGE HEADERS ===== */
 .page-header-banner {
     -fx-background-color: linear-gradient(to right, rgba(255,255,255,0.95), rgba(248,245,230,0.9));
-    -fx-border-color: rgba(191,162,0,0.15);
+    -fx-border-color: rgba(255,215,0,0.15);
 }
 
 .header-main-title {
@@ -73,7 +73,7 @@
 }
 
 .header-tag {
-    -fx-text-fill: #BFA200;
+    -fx-text-fill: #FFD700;
 }
 
 .header-description {
@@ -81,7 +81,7 @@
 }
 
 .header-icon-badge {
-    -fx-background-color: rgba(191,162,0,0.1);
+    -fx-background-color: rgba(255,215,0,0.1);
 }
 
 /* ===== TAB PANE ===== */
@@ -102,7 +102,7 @@
 }
 
 .main-tab-pane > .tab-header-area > .headers-region > .tab:selected {
-    -fx-background-color: rgba(191,162,0,0.1);
+    -fx-background-color: rgba(255,215,0,0.1);
 }
 
 .main-tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
@@ -122,8 +122,8 @@
 
 .dashboard-stat-card:hover {
     -fx-background-color: linear-gradient(to bottom right, #fffef5, #fdf8e0);
-    -fx-border-color: rgba(191,162,0,0.25);
-    -fx-effect: dropshadow(gaussian, rgba(191,162,0,0.15), 12, 0.2, 0, 3);
+    -fx-border-color: rgba(255,215,0,0.25);
+    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.15), 12, 0.2, 0, 3);
 }
 
 .dashboard-stat-value {
@@ -143,7 +143,7 @@
 
 .dashboard-chart-card:hover {
     -fx-background-color: linear-gradient(to bottom right, #fffef5, #fdf8e0);
-    -fx-border-color: rgba(191,162,0,0.2);
+    -fx-border-color: rgba(255,215,0,0.2);
 }
 
 .dashboard-chart-title {
@@ -179,7 +179,7 @@
 }
 
 .table-view .table-row-cell:selected {
-    -fx-background-color: rgba(191,162,0,0.12);
+    -fx-background-color: rgba(255,215,0,0.12);
 }
 
 .table-view .table-row-cell .table-cell {
@@ -196,22 +196,22 @@
 
 /* ===== BUTTONS ===== */
 .action-button {
-    -fx-background-color: linear-gradient(to bottom, #BFA200, #a88e00);
+    -fx-background-color: linear-gradient(to bottom, #FFD700, #CC9900);
     -fx-text-fill: white;
 }
 
 .action-button:hover {
-    -fx-background-color: linear-gradient(to bottom, #d4b530, #BFA200);
+    -fx-background-color: linear-gradient(to bottom, #FFD700, #FFD700);
 }
 
 .action-button-outline {
     -fx-background-color: transparent;
-    -fx-border-color: rgba(191,162,0,0.4);
+    -fx-border-color: rgba(255,215,0,0.4);
     -fx-text-fill: #8a7000;
 }
 
 .action-button-outline:hover {
-    -fx-background-color: rgba(191,162,0,0.08);
+    -fx-background-color: rgba(255,215,0,0.08);
 }
 
 .action-button-danger {
@@ -231,7 +231,7 @@
 }
 
 .text-field:focused, .text-area:focused, .combo-box:focused, .date-picker:focused {
-    -fx-border-color: rgba(191,162,0,0.5);
+    -fx-border-color: rgba(255,215,0,0.5);
     -fx-background-color: #fffff5;
 }
 
@@ -244,7 +244,7 @@
 }
 
 .search-field:focused {
-    -fx-border-color: rgba(191,162,0,0.4);
+    -fx-border-color: rgba(255,215,0,0.4);
 }
 
 /* ===== SCROLL BAR ===== */
@@ -258,7 +258,7 @@
 }
 
 .scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
-    -fx-background-color: rgba(191,162,0,0.4);
+    -fx-background-color: rgba(255,215,0,0.4);
 }
 
 /* ===== DIALOGS ===== */
@@ -277,7 +277,7 @@
 /* ===== TOAST ===== */
 .toast-container {
     -fx-background-color: rgba(255,255,255,0.95);
-    -fx-border-color: rgba(191,162,0,0.3);
+    -fx-border-color: rgba(255,215,0,0.3);
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.2, 0, 3);
 }
 
@@ -326,7 +326,7 @@
 
 .stats-card:hover {
     -fx-background-color: linear-gradient(to bottom right, #fffef5, #fdf8e0);
-    -fx-border-color: rgba(191,162,0,0.2);
+    -fx-border-color: rgba(255,215,0,0.2);
 }
 
 /* ===== CHART COLORS ===== */
@@ -372,7 +372,7 @@
 }
 
 .combo-box-popup .list-view .list-cell:hover {
-    -fx-background-color: rgba(191,162,0,0.1);
+    -fx-background-color: rgba(255,215,0,0.1);
 }
 
 /* ===== PAGINATION ===== */

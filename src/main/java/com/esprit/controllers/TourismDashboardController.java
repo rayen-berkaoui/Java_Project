@@ -71,7 +71,7 @@ public class TourismDashboardController {
             catServices = new categorieServices();
             adresseServices = new AdresseServices();
         } catch (Exception e) {
-            System.err.println("ÔØî Dashboard: Error initializing services: " + e.getMessage());
+            System.err.println("❌ Dashboard: Error initializing services: " + e.getMessage());
         }
 
         Platform.runLater(() -> {
@@ -83,12 +83,15 @@ public class TourismDashboardController {
     }
 
     private void loadData() {
+        System.out.println("[TOURISM] TourismDashboardController.loadData() called");
         try {
             allLieux = lieuServices.afficher();
             allCategories = catServices.afficher();
             allAdresses = adresseServices.afficher();
-        } catch (SQLException e) {
-            System.err.println("ÔØî Dashboard: Error loading data: " + e.getMessage());
+            System.out.println("[TOURISM] Dashboard loaded: " + allLieux.size() + " lieux, " + allCategories.size() + " categories, " + allAdresses.size() + " adresses");
+        } catch (Exception e) {
+            System.err.println("❌ Dashboard.loadData() Error: " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -96,7 +99,7 @@ public class TourismDashboardController {
 
     private void applyFilter(LocalDate from, LocalDate to) {
         if (from == null && to == null) {
-            // No filter ÔÇö show all
+            // No filter — show all
             categories = new ArrayList<>(allCategories);
             lieux = new ArrayList<>(allLieux);
             if (lblFilterInfo != null) lblFilterInfo.setText("");
@@ -124,11 +127,11 @@ public class TourismDashboardController {
 
             // Update info label
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            String info = "­ƒöì Filtre actif : ";
-            if (from != null && to != null) info += from.format(fmt) + " ÔåÆ " + to.format(fmt);
+            String info = "🔍 Filtre actif : ";
+            if (from != null && to != null) info += from.format(fmt) + " → " + to.format(fmt);
             else if (from != null) info += "depuis " + from.format(fmt);
             else info += "jusqu'au " + to.format(fmt);
-            info += " | " + categories.size() + " cat├®g. | " + lieux.size() + " lieux";
+            info += " | " + categories.size() + " catég. | " + lieux.size() + " lieux";
             if (lblFilterInfo != null) lblFilterInfo.setText(info);
         }
     }
@@ -279,7 +282,7 @@ public class TourismDashboardController {
         }
 
         if (catCounts.isEmpty()) {
-            chartCategorieBox.getChildren().add(createEmptyLabel("Aucune donn├®e disponible"));
+            chartCategorieBox.getChildren().add(createEmptyLabel("Aucune donnée disponible"));
             return;
         }
 
@@ -299,7 +302,7 @@ public class TourismDashboardController {
         chartCategorieBox.getChildren().add(pieChart);
 
         Platform.runLater(() -> {
-            String[] colors = {"#BFA200", "#D4B530", "#8a7000", "#e8dfa0", "#6b5800", "#c9a800", "#a89000", "#f0e6a0"};
+            String[] colors = {"#FFD700", "#3498db", "#e74c3c", "#2ecc71", "#9b59b6", "#e67e22", "#1abc9c", "#f39c12"};
             int i = 0;
             int total = catCounts.values().stream().mapToInt(Integer::intValue).sum();
             for (PieChart.Data d : pieChart.getData()) {
@@ -330,7 +333,7 @@ public class TourismDashboardController {
         }
 
         if (villeCounts.isEmpty()) {
-            chartVilleBox.getChildren().add(createEmptyLabel("Aucune donn├®e disponible"));
+            chartVilleBox.getChildren().add(createEmptyLabel("Aucune donnée disponible"));
             return;
         }
 
@@ -373,7 +376,7 @@ public class TourismDashboardController {
         chartPriceBox.getChildren().clear();
 
         if (lieux.isEmpty()) {
-            chartPriceBox.getChildren().add(createEmptyLabel("Aucune donn├®e disponible"));
+            chartPriceBox.getChildren().add(createEmptyLabel("Aucune donnée disponible"));
             return;
         }
 
@@ -424,13 +427,13 @@ public class TourismDashboardController {
         chartAvgPriceCat.getChildren().clear();
 
         if (categories.isEmpty() || lieux.isEmpty()) {
-            chartAvgPriceCat.getChildren().add(createEmptyLabel("Aucune donn├®e"));
+            chartAvgPriceCat.getChildren().add(createEmptyLabel("Aucune donnée"));
             return;
         }
 
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
-        xAxis.setLabel("Cat├®gorie");
+        xAxis.setLabel("Catégorie");
         yAxis.setLabel("Prix moyen (TND)");
         styleAxis(xAxis, yAxis);
 
@@ -473,7 +476,7 @@ public class TourismDashboardController {
         chartStatutBox.getChildren().clear();
 
         if (lieux.isEmpty()) {
-            chartStatutBox.getChildren().add(createEmptyLabel("Aucune donn├®e disponible"));
+            chartStatutBox.getChildren().add(createEmptyLabel("Aucune donnée disponible"));
             return;
         }
 
@@ -497,8 +500,8 @@ public class TourismDashboardController {
             if (pieChart.getData().size() >= 2) {
                 Node activeNode = pieChart.getData().get(0).getNode();
                 Node inactiveNode = pieChart.getData().get(1).getNode();
-                if (activeNode != null) activeNode.setStyle("-fx-pie-color: #00b36b;");
-                if (inactiveNode != null) inactiveNode.setStyle("-fx-pie-color: #e63946;");
+                if (activeNode != null) activeNode.setStyle("-fx-pie-color: #51CF66;");
+                if (inactiveNode != null) inactiveNode.setStyle("-fx-pie-color: #FF6B6B;");
                 Tooltip.install(activeNode, new Tooltip("Actif: " + active + " lieux"));
                 Tooltip.install(inactiveNode, new Tooltip("Inactif: " + inactive + " lieux"));
             }
@@ -517,14 +520,14 @@ public class TourismDashboardController {
                 .collect(Collectors.toList());
 
         if (dated.isEmpty()) {
-            chartCatTimeline.getChildren().add(createEmptyLabel("Aucune cat├®gorie avec date"));
+            chartCatTimeline.getChildren().add(createEmptyLabel("Aucune catégorie avec date"));
             return;
         }
 
         CategoryAxis xAxis = new CategoryAxis();
         NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Date");
-        yAxis.setLabel("Cat├®gories cumul├®es");
+        yAxis.setLabel("Catégories cumulées");
         styleAxis(xAxis, yAxis);
 
         LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
@@ -551,12 +554,12 @@ public class TourismDashboardController {
         Platform.runLater(() -> {
             Node line = chart.lookup(".chart-series-line");
             if (line != null) {
-                line.setStyle("-fx-stroke: #BFA200; -fx-stroke-width: 3px;");
+                line.setStyle("-fx-stroke: #FFD700; -fx-stroke-width: 3px;");
             }
             for (XYChart.Data<String, Number> data : series.getData()) {
                 Node symbol = data.getNode();
                 if (symbol != null) {
-                    symbol.setStyle("-fx-background-color: #BFA200, #0a0a12; -fx-background-radius: 6; -fx-padding: 4;");
+                    symbol.setStyle("-fx-background-color: #FFD700, #0a0a12; -fx-background-radius: 6; -fx-padding: 4;");
                 }
             }
         });
@@ -577,7 +580,7 @@ public class TourismDashboardController {
                 .collect(Collectors.toMap(categorie::getIdcategorie, categorie::getNomcategorie, (a, b) -> a));
 
         // Header
-        HBox header = createTableRow("­ƒÅà", "Nom", "Ville", "Cat├®gorie", "Prix", true);
+        HBox header = createTableRow("🏆", "Nom", "Ville", "Catégorie", "Prix", true);
         topPlacesBox.getChildren().add(header);
 
         List<LieuTouristique> top5 = lieux.stream()
@@ -589,9 +592,9 @@ public class TourismDashboardController {
         for (LieuTouristique l : top5) {
             String medal;
             switch (rank) {
-                case 1: medal = "­ƒÑç"; break;
-                case 2: medal = "­ƒÑê"; break;
-                case 3: medal = "­ƒÑë"; break;
+                case 1: medal = "🥇"; break;
+                case 2: medal = "🥈"; break;
+                case 3: medal = "🥉"; break;
                 default: medal = "#" + rank;
             }
             String catName = catNames.getOrDefault(l.getId_categorie(), "-");
@@ -630,7 +633,7 @@ public class TourismDashboardController {
         }
 
         String textStyle = isHeader
-                ? "-fx-text-fill: #BFA200; -fx-font-weight: bold; -fx-font-size: 12px;"
+                ? "-fx-text-fill: #FFD700; -fx-font-weight: bold; -fx-font-size: 12px;"
                 : "-fx-text-fill: rgba(255,255,255,0.85); -fx-font-size: 12px;";
 
         Label rankLbl = new Label(rank);
@@ -651,7 +654,7 @@ public class TourismDashboardController {
         catLbl.setMinWidth(140);
 
         Label priceLbl = new Label(price);
-        priceLbl.setStyle(isHeader ? textStyle : "-fx-text-fill: #BFA200; -fx-font-weight: bold; -fx-font-size: 13px;");
+        priceLbl.setStyle(isHeader ? textStyle : "-fx-text-fill: #FFD700; -fx-font-weight: bold; -fx-font-size: 13px;");
         priceLbl.setMinWidth(80);
 
         row.getChildren().addAll(rankLbl, nameLbl, cityLbl, catLbl, priceLbl);
@@ -675,7 +678,7 @@ public class TourismDashboardController {
             if (a != null && a.getLatitude() != 0 && a.getLongitude() != 0) {
                 String tooltip = l.getNom() != null ? l.getNom().replace("'", "\\'").replace("\"", "&quot;") : "";
                 String city = l.getVille() != null ? l.getVille().replace("'", "\\'") : "";
-                String statusColor = l.getStatut() == 1 ? "#27ae60" : "#c0392b";
+                String statusColor = l.getStatut() == 1 ? "#51CF66" : "#FF6B6B";
                 markers.append(String.format(
                         "addMarker(%f, %f, '%s', '%s', '%s', %s);\n",
                         a.getLatitude(), a.getLongitude(), tooltip, city,
@@ -693,7 +696,7 @@ public class TourismDashboardController {
                 boolean linked = allLieux.stream().anyMatch(l -> l.getId_adresse() == a.getId_adresse());
                 if (!linked) {
                     markers.append(String.format(
-                            "addMarker(%f, %f, '%s', '%s', '#BFA200', 'ÔÇö');\n",
+                            "addMarker(%f, %f, '%s', '%s', '#FFD700', '—');\n",
                             a.getLatitude(), a.getLongitude(),
                             (a.getRue() != null ? a.getRue().replace("'", "\\'") : "Adresse"),
                             (a.getVille() != null ? a.getVille().replace("'", "\\'") : "")
@@ -716,7 +719,7 @@ public class TourismDashboardController {
         engine.setJavaScriptEnabled(true);
         engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
             if (newState == Worker.State.SUCCEEDED) {
-                System.out.println("Ô£à Dashboard heatmap loaded with " + markerCount + " markers");
+                System.out.println("✅ Dashboard heatmap loaded with " + markerCount + " markers");
             }
         });
         engine.loadContent(html);
@@ -733,9 +736,9 @@ public class TourismDashboardController {
                 "  .leaflet-container{background:#0d1a2a;}\n" +
                 "  .custom-popup .leaflet-popup-content-wrapper{background:rgba(10,10,20,0.95);color:white;border:1px solid rgba(191,162,0,0.4);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.5);}\n" +
                 "  .custom-popup .leaflet-popup-tip{background:rgba(10,10,20,0.95);border:1px solid rgba(191,162,0,0.4);}\n" +
-                "  .popup-title{font-weight:bold;font-size:14px;color:#BFA200;margin-bottom:4px;}\n" +
+                "  .popup-title{font-weight:bold;font-size:14px;color:#FFD700;margin-bottom:4px;}\n" +
                 "  .popup-city{font-size:12px;color:rgba(200,200,200,0.7);}\n" +
-                "  .popup-price{font-size:13px;color:#27ae60;margin-top:4px;font-weight:600;}\n" +
+                "  .popup-price{font-size:13px;color:#51CF66;margin-top:4px;font-weight:600;}\n" +
                 "  .map-legend{position:absolute;bottom:20px;right:20px;z-index:1000;background:rgba(10,10,20,0.92);padding:12px 16px;border-radius:10px;border:1px solid rgba(191,162,0,0.3);color:white;font-size:12px;}\n" +
                 "  .legend-item{display:flex;align-items:center;margin:4px 0;}\n" +
                 "  .legend-dot{width:10px;height:10px;border-radius:50%;margin-right:8px;}\n" +
@@ -743,10 +746,10 @@ public class TourismDashboardController {
                 "</head><body>\n" +
                 "<div id='map'></div>\n" +
                 "<div class='map-legend'>\n" +
-                "  <div style='font-weight:bold;color:#BFA200;margin-bottom:6px;'>­ƒôì " + totalMarkers + " emplacements</div>\n" +
-                "  <div class='legend-item'><div class='legend-dot' style='background:#27ae60;'></div>Disponible</div>\n" +
-                "  <div class='legend-item'><div class='legend-dot' style='background:#c0392b;'></div>Indisponible</div>\n" +
-                "  <div class='legend-item'><div class='legend-dot' style='background:#BFA200;'></div>Adresse seule</div>\n" +
+                "  <div style='font-weight:bold;color:#FFD700;margin-bottom:6px;'>📌 " + totalMarkers + " emplacements</div>\n" +
+                "  <div class='legend-item'><div class='legend-dot' style='background:#51CF66;'></div>Disponible</div>\n" +
+                "  <div class='legend-item'><div class='legend-dot' style='background:#FF6B6B;'></div>Indisponible</div>\n" +
+                "  <div class='legend-item'><div class='legend-dot' style='background:#FFD700;'></div>Adresse seule</div>\n" +
                 "</div>\n" +
                 "<script>\n" +
                 "var map = L.map('map',{zoomControl:true}).setView([" + lat + "," + lon + "]," + zoom + ");\n" +
@@ -762,8 +765,8 @@ public class TourismDashboardController {
                 "  });\n" +
                 "  var m = L.marker([lat,lng],{icon:icon}).addTo(map);\n" +
                 "  var popupContent = '<div class=\"popup-title\">'+name+'</div>';\n" +
-                "  if(city) popupContent += '<div class=\"popup-city\">­ƒôì '+city+'</div>';\n" +
-                "  if(price!=='ÔÇö') popupContent += '<div class=\"popup-price\">­ƒÆ░ '+price+' TND</div>';\n" +
+                "  if(city) popupContent += '<div class=\"popup-city\">📌 '+city+'</div>';\n" +
+                "  if(price!=='—') popupContent += '<div class=\"popup-price\">­ƒÆ░ '+price+' TND</div>';\n" +
                 "  m.bindPopup(popupContent,{className:'custom-popup',maxWidth:220});\n" +
                 "  L.circle([lat,lng],{radius:800,color:color,fillColor:color,fillOpacity:0.08,weight:1,opacity:0.3}).addTo(map);\n" +
                 "}\n" +
@@ -783,7 +786,7 @@ public class TourismDashboardController {
     }
 
     private void colorBarsGold(BarChart<?, ?> chart) {
-        String[] goldShades = {"#BFA200", "#D4B530", "#8a7000", "#e8dfa0", "#c9a800", "#6b5800"};
+        String[] goldShades = {"#FFD700", "#3498db", "#e74c3c", "#2ecc71", "#9b59b6", "#e67e22"};
         int i = 0;
         for (XYChart.Series<?, ?> s : chart.getData()) {
             for (XYChart.Data<?, ?> data : s.getData()) {
@@ -806,18 +809,11 @@ public class TourismDashboardController {
     }
 
     private void playEntranceAnimation() {
-        if (dashboardRoot == null) return;
-        dashboardRoot.setOpacity(0);
-        dashboardRoot.setTranslateY(15);
-        FadeTransition fade = new FadeTransition(Duration.millis(500), dashboardRoot);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-        fade.setInterpolator(Interpolator.EASE_OUT);
-        TranslateTransition slide = new TranslateTransition(Duration.millis(500), dashboardRoot);
-        slide.setFromY(15);
-        slide.setToY(0);
-        slide.setInterpolator(Interpolator.EASE_OUT);
-        new ParallelTransition(fade, slide).play();
+        // Safe entrance: dashboard is immediately visible (parent handles fade)
+        if (dashboardRoot != null) {
+            dashboardRoot.setOpacity(1.0);
+            dashboardRoot.setTranslateY(0);
+        }
     }
 
     // ==================== PDF / EXCEL EXPORT ====================
@@ -839,7 +835,7 @@ public class TourismDashboardController {
                 PdfExportService pdfService = new PdfExportService();
                 pdfService.generateReport(file, lieux, categories, new java.util.ArrayList<>(allAdresses));
                 Platform.runLater(() -> {
-                    if (lblFilterInfo != null) lblFilterInfo.setText("\u2705 PDF export├®: " + file.getName());
+                    if (lblFilterInfo != null) lblFilterInfo.setText("\u2705 PDF exporté: " + file.getName());
                 });
             } catch (Exception e) {
                 e.printStackTrace();
@@ -867,7 +863,7 @@ public class TourismDashboardController {
                 ExcelExportService excelService = new ExcelExportService();
                 excelService.exportToExcel(file, lieux, categories, new java.util.ArrayList<>(allAdresses));
                 Platform.runLater(() -> {
-                    if (lblFilterInfo != null) lblFilterInfo.setText("\u2705 Excel export├®: " + file.getName());
+                    if (lblFilterInfo != null) lblFilterInfo.setText("\u2705 Excel exporté: " + file.getName());
                 });
             } catch (Exception e) {
                 e.printStackTrace();

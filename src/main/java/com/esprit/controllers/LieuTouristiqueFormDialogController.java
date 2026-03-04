@@ -60,7 +60,7 @@ public class LieuTouristiqueFormDialogController {
             geminiService = new GeminiService();
             loadComboBoxData();
         } catch (Exception e) {
-            System.err.println("❌ Error loading combo data: " + e.getMessage());
+            System.err.println("Ã¢ÂÅ’ Error loading combo data: " + e.getMessage());
         }
 
         // --- Browse image button ---
@@ -100,7 +100,7 @@ public class LieuTouristiqueFormDialogController {
         imagePreviewPane.setOnDragEntered(event -> {
             if (event.getDragboard().hasFiles()) {
                 imagePreviewPane.getStyleClass().add("gallery-drop-zone-active");
-                if (lblImageHint != null) lblImageHint.setText("📥 Relâchez pour sélectionner");
+                if (lblImageHint != null) lblImageHint.setText("Ã°Å¸â€œÂ¥ RelÃƒÂ¢chez pour sÃƒÂ©lectionner");
             }
             event.consume();
         });
@@ -108,7 +108,7 @@ public class LieuTouristiqueFormDialogController {
         imagePreviewPane.setOnDragExited(event -> {
             imagePreviewPane.getStyleClass().remove("gallery-drop-zone-active");
             if (lblImageHint != null && selectedImagePath.isEmpty()) {
-                lblImageHint.setText("📸 Aucune image sélectionnée");
+                lblImageHint.setText("Ã°Å¸â€œÂ¸ Aucune image sÃƒÂ©lectionnÃƒÂ©e");
             }
             event.consume();
         });
@@ -137,7 +137,7 @@ public class LieuTouristiqueFormDialogController {
         if (imagePreviewPane == null || imagePreviewPane.getScene() == null) return;
         try {
             FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Sélectionner une image");
+            fileChooser.setTitle("SÃƒÂ©lectionner une image");
             String userHome = System.getProperty("user.home");
             File initialDir = new File(userHome + File.separator + "Pictures");
             if (initialDir.exists()) fileChooser.setInitialDirectory(initialDir);
@@ -150,7 +150,7 @@ public class LieuTouristiqueFormDialogController {
                 setImagePreview(selectedFile.getAbsolutePath());
             }
         } catch (Exception e) {
-            System.err.println("❌ Error selecting image: " + e.getMessage());
+            System.err.println("Ã¢ÂÅ’ Error selecting image: " + e.getMessage());
         }
     }
 
@@ -176,7 +176,7 @@ public class LieuTouristiqueFormDialogController {
         }
         if (lblImagePath != null) {
             String fileName = new File(path).getName();
-            lblImagePath.setText("📎 " + fileName);
+            lblImagePath.setText("Ã°Å¸â€œÅ½ " + fileName);
         }
     }
 
@@ -223,7 +223,7 @@ public class LieuTouristiqueFormDialogController {
                 }
             });
         } catch (SQLException e) {
-            System.err.println("❌ SQL error loading combobox data: " + e.getMessage());
+            System.err.println("Ã¢ÂÅ’ SQL error loading combobox data: " + e.getMessage());
         }
     }
 
@@ -277,7 +277,7 @@ public class LieuTouristiqueFormDialogController {
     public LieuTouristique getLieuTouristique() {
         if (tfNom == null || tfDescription == null || tfVille == null || tfPrix == null ||
                 tfStatut == null || cbCategorie == null || cbAdresse == null) {
-            System.err.println("❌ One or more form fields are not initialized");
+            System.err.println("Ã¢ÂÅ’ One or more form fields are not initialized");
             return null;
         }
 
@@ -285,19 +285,19 @@ public class LieuTouristiqueFormDialogController {
 
         String nom = tfNom.getText().trim();
         if (nom.isEmpty()) { showFieldError(tfNom, lblErrNom, "Le nom est obligatoire"); valid = false; }
-        else if (nom.length() < 2) { showFieldError(tfNom, lblErrNom, "Minimum 2 caractères"); valid = false; }
-        else if (nom.length() > 100) { showFieldError(tfNom, lblErrNom, "Maximum 100 caractères"); valid = false; }
+        else if (nom.length() < 2) { showFieldError(tfNom, lblErrNom, "Minimum 2 caractÃƒÂ¨res"); valid = false; }
+        else if (nom.length() > 100) { showFieldError(tfNom, lblErrNom, "Maximum 100 caractÃƒÂ¨res"); valid = false; }
         else showFieldValid(tfNom, lblErrNom);
 
         String description = tfDescription.getText().trim();
         if (description.isEmpty()) { showFieldError(tfDescription, lblErrDesc, "La description est obligatoire"); valid = false; }
-        else if (description.length() < 5) { showFieldError(tfDescription, lblErrDesc, "Minimum 5 caractères"); valid = false; }
+        else if (description.length() < 5) { showFieldError(tfDescription, lblErrDesc, "Minimum 5 caractÃƒÂ¨res"); valid = false; }
         else showFieldValid(tfDescription, lblErrDesc);
 
         String ville = tfVille.getText().trim();
         if (ville.isEmpty()) { showFieldError(tfVille, lblErrVille, "La ville est obligatoire"); valid = false; }
-        else if (ville.length() < 2) { showFieldError(tfVille, lblErrVille, "Minimum 2 caractères"); valid = false; }
-        else if (!ville.matches("[a-zA-ZÀ-ÿ\\s\\-'.]+")) { showFieldError(tfVille, lblErrVille, "La ville ne doit contenir que des lettres"); valid = false; }
+        else if (ville.length() < 2) { showFieldError(tfVille, lblErrVille, "Minimum 2 caractÃƒÂ¨res"); valid = false; }
+        else if (!ville.matches("[a-zA-ZÃƒâ‚¬-ÃƒÂ¿\\s\\-'.]+")) { showFieldError(tfVille, lblErrVille, "La ville ne doit contenir que des lettres"); valid = false; }
         else showFieldValid(tfVille, lblErrVille);
 
         double prix = 0;
@@ -306,7 +306,7 @@ public class LieuTouristiqueFormDialogController {
         else {
             try {
                 prix = Double.parseDouble(priceStr);
-                if (prix < 0) { showFieldError(tfPrix, lblErrPrix, "Le prix ne peut pas être négatif"); valid = false; }
+                if (prix < 0) { showFieldError(tfPrix, lblErrPrix, "Le prix ne peut pas ÃƒÂªtre nÃƒÂ©gatif"); valid = false; }
                 else showFieldValid(tfPrix, lblErrPrix);
             } catch (NumberFormatException e) {
                 showFieldError(tfPrix, lblErrPrix, "Nombre invalide"); valid = false;
@@ -327,11 +327,11 @@ public class LieuTouristiqueFormDialogController {
         }
 
         categorie selectedCat = cbCategorie.getSelectionModel().getSelectedItem();
-        if (selectedCat == null) { showComboError(cbCategorie, lblErrCat, "Veuillez sélectionner une catégorie"); valid = false; }
+        if (selectedCat == null) { showComboError(cbCategorie, lblErrCat, "Veuillez sÃƒÂ©lectionner une catÃƒÂ©gorie"); valid = false; }
         else showComboValid(cbCategorie, lblErrCat);
 
         Adresse selectedAdr = cbAdresse.getSelectionModel().getSelectedItem();
-        if (selectedAdr == null) { showComboError(cbAdresse, lblErrAdr, "Veuillez sélectionner une adresse"); valid = false; }
+        if (selectedAdr == null) { showComboError(cbAdresse, lblErrAdr, "Veuillez sÃƒÂ©lectionner une adresse"); valid = false; }
         else showComboValid(cbAdresse, lblErrAdr);
 
         if (!valid) return null;
@@ -353,20 +353,20 @@ public class LieuTouristiqueFormDialogController {
         categorie selectedCat = cbCategorie.getSelectionModel().getSelectedItem();
 
         if (nom.isEmpty()) {
-            showAiStatus("⚠️ Entrez le nom du lieu d'abord", true);
+            showAiStatus("Ã¢Å¡Â Ã¯Â¸Â Entrez le nom du lieu d'abord", true);
             return;
         }
         if (ville.isEmpty()) {
-            showAiStatus("⚠️ Entrez la ville d'abord", true);
+            showAiStatus("Ã¢Å¡Â Ã¯Â¸Â Entrez la ville d'abord", true);
             return;
         }
 
-        String catName = selectedCat != null ? selectedCat.getNomcategorie() : "Général";
+        String catName = selectedCat != null ? selectedCat.getNomcategorie() : "GÃƒÂ©nÃƒÂ©ral";
         double prix = 0;
         try { prix = Double.parseDouble(tfPrix.getText().trim()); } catch (Exception ignored) {}
 
         btnAiDesc.setDisable(true);
-        showAiStatus("✨ Génération IA en cours...", false);
+        showAiStatus("Ã¢Å“Â¨ GÃƒÂ©nÃƒÂ©ration IA en cours...", false);
 
         double finalPrix = prix;
         Thread aiThread = new Thread(() -> {
@@ -375,7 +375,7 @@ public class LieuTouristiqueFormDialogController {
                 Platform.runLater(() -> {
                     tfDescription.setText(description);
                     btnAiDesc.setDisable(false);
-                    showAiStatus("✅ Description générée par IA", false);
+                    showAiStatus("Ã¢Å“â€¦ Description gÃƒÂ©nÃƒÂ©rÃƒÂ©e par IA", false);
                     // Auto-hide status after 3 seconds
                     new Thread(() -> {
                         try { Thread.sleep(3000); } catch (Exception ignored) {}
@@ -385,7 +385,7 @@ public class LieuTouristiqueFormDialogController {
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     btnAiDesc.setDisable(false);
-                    showAiStatus("❌ " + e.getMessage(), true);
+                    showAiStatus("Ã¢ÂÅ’ " + e.getMessage(), true);
                 });
             }
         });
@@ -399,7 +399,7 @@ public class LieuTouristiqueFormDialogController {
             lblAiStatus.setText(text);
             lblAiStatus.setStyle(isError
                     ? "-fx-text-fill: #e74c3c; -fx-font-size: 10px;"
-                    : "-fx-text-fill: rgba(191,162,0,0.85); -fx-font-size: 10px;");
+                    : "-fx-text-fill: rgba(255,215,0,0.85); -fx-font-size: 10px;");
             lblAiStatus.setVisible(true);
             lblAiStatus.setManaged(true);
         }
@@ -418,8 +418,8 @@ public class LieuTouristiqueFormDialogController {
         if (val == null) return;
         String v = val.trim();
         if (v.isEmpty()) clearFieldState(tfNom, lblErrNom);
-        else if (v.length() < 2) showFieldError(tfNom, lblErrNom, "Minimum 2 caractères");
-        else if (v.length() > 100) showFieldError(tfNom, lblErrNom, "Maximum 100 caractères");
+        else if (v.length() < 2) showFieldError(tfNom, lblErrNom, "Minimum 2 caractÃƒÂ¨res");
+        else if (v.length() > 100) showFieldError(tfNom, lblErrNom, "Maximum 100 caractÃƒÂ¨res");
         else showFieldValid(tfNom, lblErrNom);
     }
 
@@ -427,7 +427,7 @@ public class LieuTouristiqueFormDialogController {
         if (val == null) return;
         String v = val.trim();
         if (v.isEmpty()) clearFieldState(tfDescription, lblErrDesc);
-        else if (v.length() < 5) showFieldError(tfDescription, lblErrDesc, "Minimum 5 caractères");
+        else if (v.length() < 5) showFieldError(tfDescription, lblErrDesc, "Minimum 5 caractÃƒÂ¨res");
         else showFieldValid(tfDescription, lblErrDesc);
     }
 
@@ -435,8 +435,8 @@ public class LieuTouristiqueFormDialogController {
         if (val == null) return;
         String v = val.trim();
         if (v.isEmpty()) clearFieldState(tfVille, lblErrVille);
-        else if (v.length() < 2) showFieldError(tfVille, lblErrVille, "Minimum 2 caractères");
-        else if (!v.matches("[a-zA-ZÀ-ÿ\\s\\-'.]+")) showFieldError(tfVille, lblErrVille, "Lettres uniquement");
+        else if (v.length() < 2) showFieldError(tfVille, lblErrVille, "Minimum 2 caractÃƒÂ¨res");
+        else if (!v.matches("[a-zA-ZÃƒâ‚¬-ÃƒÂ¿\\s\\-'.]+")) showFieldError(tfVille, lblErrVille, "Lettres uniquement");
         else showFieldValid(tfVille, lblErrVille);
     }
 
@@ -444,7 +444,7 @@ public class LieuTouristiqueFormDialogController {
         if (val == null || val.trim().isEmpty()) { clearFieldState(tfPrix, lblErrPrix); return; }
         try {
             double d = Double.parseDouble(val.trim());
-            if (d < 0) showFieldError(tfPrix, lblErrPrix, "Le prix ne peut pas être négatif");
+            if (d < 0) showFieldError(tfPrix, lblErrPrix, "Le prix ne peut pas ÃƒÂªtre nÃƒÂ©gatif");
             else showFieldValid(tfPrix, lblErrPrix);
         } catch (NumberFormatException e) {
             showFieldError(tfPrix, lblErrPrix, "Nombre invalide");
