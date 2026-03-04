@@ -4,8 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+<<<<<<< HEAD
     <groupId>org.example</groupId>
     <artifactId>ProjetJava</artifactId>
+=======
+    <groupId>com.esprit</groupId>
+    <artifactId>3A17</artifactId>
+>>>>>>> 63e232345d15a63d946628d8620828cae650e007
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -15,6 +20,7 @@
     </properties>
 
     <dependencies>
+<<<<<<< HEAD
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
@@ -65,4 +71,15 @@
         </plugins>
     </build>
 
+=======
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version><x></x>
+        </dependency>
+
+    </dependencies>
+iuy1
+>>>>>>> 63e232345d15a63d946628d8620828cae650e007
 </project>
