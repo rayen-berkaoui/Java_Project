@@ -26,7 +26,9 @@
                     <Button text="&#x1f4ca; Tableau Activ." onAction="#goTableauActivites" styleClass="nav-tab"/>
                 </HBox>
                 <Pane HBox.hgrow="ALWAYS"/>
-                <Button text="+ Nouveau" onAction="#goEtablissements" styleClass="btn-primary pill"/>
+                <Button text="+ Nouveau" onAction="#goEtablissements" styleClass="nav-tab"/>
+                <Region prefWidth="8"/>
+                <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
             </HBox>
         </VBox>
     </top>

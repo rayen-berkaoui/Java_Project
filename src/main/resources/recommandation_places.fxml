@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+
+<StackPane fx:id="rootStack" xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.esprit.controllers.RecommandationPlacesController"
+           stylesheets="@style.css">
+<BorderPane styleClass="app-root">
+
+    <!-- NAV BAR -->
+    <top>
+        <HBox styleClass="nav-bar" alignment="CENTER_LEFT" spacing="0">
+            <Label text="&#x1f525; Premium Dashboard" styleClass="nav-logo"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <HBox styleClass="nav-tabs">
+                <Button text="&#x1f3e0; Accueil" onAction="#goHome" styleClass="nav-tab"/>
+                <Button text="&#x1f4ca; Tableau &#xc9;tab." onAction="#goTableau" styleClass="nav-tab"/>
+                <Button text="&#x1f5bc; Galerie &#xc9;tab." onAction="#goEtablissements" styleClass="nav-tab"/>
+                <Button text="&#x1f3af; Galerie Activ." onAction="#goActivites" styleClass="nav-tab"/>
+                <Button text="&#x1f4ca; Tableau Activ." onAction="#goTableauActivites" styleClass="nav-tab"/>
+                <Button text="&#x1f4cd; Nearby" styleClass="nav-tab-active"/>
+            </HBox>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
+        </HBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                    styleClass="content-scroll">
+        <VBox styleClass="page-body" spacing="0">
+            <padding>
+                <Insets top="20" right="28" bottom="28" left="28"/>
+            </padding>
+
+            <!-- PAGE HEADER -->
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="&#x1f4cd;" style="-fx-font-size: 24px;"/>
+                <Label text="Recommandations &#xe0; Proximit&#xe9;" styleClass="h1"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Label fx:id="statusLabel" text="" styleClass="reco-status-label"/>
+            </HBox>
+
+            <Region prefHeight="14"/>
+
+            <!-- MAP + CONTROLS SIDE BY SIDE -->
+            <HBox spacing="18" VBox.vgrow="NEVER">
+
+                <!-- LEFT: mini-map -->
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <Label text="&#x1f5fa; CLIQUEZ SUR LA CARTE OU S&#xc9;LECTIONNEZ UN &#xc9;TABLISSEMENT" styleClass="sidebar-section-label"/>
+                    <WebView fx:id="mapWebView" prefHeight="320" minHeight="280"
+                             style="-fx-border-color: rgba(255,193,7,0.15); -fx-border-radius: 10;"/>
+                    <!-- Coordinates display -->
+                    <HBox spacing="8" alignment="CENTER_LEFT"
+                          style="-fx-background-color: #161616; -fx-background-radius: 8; -fx-padding: 6 12;">
+                        <Label text="Lat:" style="-fx-text-fill: #888; -fx-font-size: 11px;"/>
+                        <Label fx:id="latLabel" text="—" style="-fx-text-fill: #FFC107; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                        <Label text="Lng:" style="-fx-text-fill: #888; -fx-font-size: 11px;"/>
+                        <Label fx:id="lngLabel" text="—" style="-fx-text-fill: #FFC107; -fx-font-size: 11px; -fx-font-weight: bold;"/>
+                    </HBox>
+                </VBox>
+
+                <!-- RIGHT: controls -->
+                <VBox spacing="14" minWidth="300" maxWidth="320">
+                    <!-- Establishment selector -->
+                    <VBox spacing="6">
+                        <Label text="&#xc9;TABLISSEMENT DE R&#xc9;F&#xc9;RENCE" styleClass="sidebar-section-label"/>
+                        <ComboBox fx:id="etabCombo" promptText="Choisir un &#xe9;tablissement..."
+                                  styleClass="sidebar-combo" maxWidth="Infinity"/>
+                    </VBox>
+
+                    <!-- Type filter -->
+                    <VBox spacing="6">
+                        <Label text="TYPE DE LIEU" styleClass="sidebar-section-label"/>
+                        <ComboBox fx:id="typeCombo" promptText="Tous les types"
+                                  styleClass="sidebar-combo" maxWidth="Infinity"/>
+                    </VBox>
+
+                    <!-- Radius -->
+                    <VBox spacing="6">
+                        <Label text="RAYON DE RECHERCHE" styleClass="sidebar-section-label"/>
+                        <HBox spacing="8" alignment="CENTER_LEFT">
+                            <Slider fx:id="radiusSlider" min="500" max="10000" value="3000"
+                                    showTickLabels="false" showTickMarks="false"
+                                    HBox.hgrow="ALWAYS" styleClass="reco-slider"/>
+                            <Label fx:id="radiusLabel" text="3.0 km" styleClass="reco-radius-label" minWidth="55"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- Search button -->
+                    <Button fx:id="searchBtn" text="&#x1f50d; Rechercher"
+                            onAction="#onSearch" styleClass="btn-yellow"
+                            prefHeight="42" maxWidth="Infinity"/>
+
+                    <!-- Info about selected establishment -->
+                    <HBox fx:id="selectedInfoBox" spacing="8" alignment="CENTER_LEFT" managed="false" visible="false"
+                          style="-fx-background-color: rgba(255,193,7,0.08); -fx-background-radius: 10; -fx-padding: 10 14;">
+                        <Label fx:id="selectedInfoLabel" wrapText="true" styleClass="reco-card-address"
+                               style="-fx-font-size: 12px;"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+
+            <Region prefHeight="16"/>
+
+            <!-- RESULTS HEADER -->
+            <HBox alignment="CENTER_LEFT" spacing="8">
+                <Label fx:id="resultsTitle" text="" styleClass="reco-results-title"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Label fx:id="countLabel" text="" style="-fx-text-fill: #888; -fx-font-size: 12px;"/>
+            </HBox>
+            <Region prefHeight="8"/>
+
+            <!-- RESULTS TABLE -->
+            <TableView fx:id="resultsTable" styleClass="table-view"
+                       VBox.vgrow="ALWAYS" minHeight="250" prefHeight="400">
+                <columns>
+                    <TableColumn fx:id="colRank"     text="#"         prefWidth="45"  sortable="false"/>
+                    <TableColumn fx:id="colName"     text="Nom"      prefWidth="220" sortable="true"/>
+                    <TableColumn fx:id="colType"     text="Type"     prefWidth="130" sortable="true"/>
+                    <TableColumn fx:id="colDistance" text="Distance" prefWidth="100" sortable="true"/>
+                    <TableColumn fx:id="colAddress"  text="Adresse"  prefWidth="250" sortable="true"/>
+                    <TableColumn fx:id="colPhone"    text="T&#xe9;l&#xe9;phone" prefWidth="130" sortable="false"/>
+                    <TableColumn fx:id="colHours"    text="Horaires" prefWidth="160" sortable="false"/>
+                    <TableColumn fx:id="colSource"   text="Source"   prefWidth="110" sortable="true"/>
+                </columns>
+                <placeholder>
+                    <Label text="Cliquez sur la carte ou s&#xe9;lectionnez un &#xe9;tablissement pour d&#xe9;couvrir les lieux &#xe0; proximit&#xe9;"
+                           style="-fx-text-fill: #666; -fx-font-size: 14px;"/>
+                </placeholder>
+            </TableView>
+
+        </VBox>
+        </ScrollPane>
+    </center>
+
+</BorderPane>
+</StackPane>

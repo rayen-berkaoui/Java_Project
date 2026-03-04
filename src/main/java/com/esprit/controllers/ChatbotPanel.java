@@ -36,12 +36,14 @@ public class ChatbotPanel {
     private static ScrollPane messagesScroll;
     private static TextField inputField;
     private static Button fabButton;
+    private static Button aiToggleBtn;
     private static boolean isOpen = false;
 
     // ─── Quick suggestions ───
     private static final String[][] QUICK_SUGGESTIONS_FR = {
             {"🔍 Restaurants", "restaurant"},
             {"🏨 Hôtels", "hotel"},
+            {"📍 À proximité", "restaurants proches"},
             {"⚽ Sport", "activités sport"},
             {"🌿 Nature", "activités nature"},
             {"📅 Planning", "planning"},
@@ -141,6 +143,13 @@ public class ChatbotPanel {
             else chatbot.setLang(Lang.FR);
         });
 
+        // AI mode toggle button
+        aiToggleBtn = new Button("🤖 AI");
+        aiToggleBtn.getStyleClass().addAll("chatbot-ai-toggle", "chatbot-ai-off");
+        aiToggleBtn.setCursor(Cursor.HAND);
+        aiToggleBtn.setTooltip(new Tooltip("Activer/Désactiver le mode IA (OpenAI)"));
+        aiToggleBtn.setOnAction(e -> toggleAiMode());
+
         Pane spacer = new Pane();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
@@ -149,11 +158,39 @@ public class ChatbotPanel {
         closeBtn.setCursor(Cursor.HAND);
         closeBtn.setOnAction(e -> toggleChat());
 
-        HBox header = new HBox(10, title, spacer, langCombo, closeBtn);
+        HBox header = new HBox(10, title, spacer, aiToggleBtn, langCombo, closeBtn);
         header.getStyleClass().add("chatbot-header");
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(12, 16, 12, 16));
         return header;
+    }
+
+    private static void toggleAiMode() {
+        boolean nowActive = chatbot.toggleAiMode();
+
+        // Update button style
+        if (nowActive) {
+            aiToggleBtn.getStyleClass().remove("chatbot-ai-off");
+            aiToggleBtn.getStyleClass().add("chatbot-ai-on");
+            aiToggleBtn.setText("✨ AI");
+
+            if (!chatbot.isAiConfigured()) {
+                addBotMessage("⚠️ **Clé API non configurée.** Veuillez définir votre clé OpenAI dans `OpenAIService.java`.");
+                // revert
+                chatbot.toggleAiMode();
+                aiToggleBtn.getStyleClass().remove("chatbot-ai-on");
+                aiToggleBtn.getStyleClass().add("chatbot-ai-off");
+                aiToggleBtn.setText("🤖 AI");
+                return;
+            }
+
+            addBotMessage("✨ **Mode IA activé !**\nJe suis maintenant alimenté par OpenAI. Posez-moi n'importe quelle question sur les voyages en Tunisie !");
+        } else {
+            aiToggleBtn.getStyleClass().remove("chatbot-ai-on");
+            aiToggleBtn.getStyleClass().add("chatbot-ai-off");
+            aiToggleBtn.setText("🤖 AI");
+            addBotMessage("🔄 **Mode local activé.**\nJe fonctionne maintenant avec le moteur de réponses intégré.");
+        }
     }
 
     private static FlowPane buildSuggestions() {

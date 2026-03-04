@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -35,6 +36,8 @@
                             <Button text="← Retour"
                                     onAction="#onAnnuler"
                                     styleClass="home-btn-small"/>
+                            <Region prefWidth="8"/>
+                            <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
                         </HBox>
 
                         <Region styleClass="accent-line-thin"/>
@@ -167,9 +170,42 @@
 
                         </GridPane>
 
+                        <Region prefHeight="6"/>
+
+                        <!-- Section: Localisation sur la carte -->
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Localisation sur la carte" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
+                        <VBox spacing="8" styleClass="map-picker-card">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label text="&#x1f4cd; Cliquez sur la carte pour s&#xe9;lectionner l'emplacement"
+                                   styleClass="muted"/>
+                            <WebView fx:id="mapWebView" prefHeight="500" minHeight="500" maxHeight="600"/>
+                            <HBox spacing="14" alignment="CENTER_LEFT">
+                                <Label text="Lat:" styleClass="form-field-label"/>
+                                <Label fx:id="latLabel" text="&#x2014;" styleClass="map-coord-value"/>
+                                <Label text="Lng:" styleClass="form-field-label"/>
+                                <Label fx:id="lngLabel" text="&#x2014;" styleClass="map-coord-value"/>
+                            </HBox>
+                        </VBox>
+
+                        <Region prefHeight="6"/>
+
                         <!-- DESCRIPTION -->
                         <VBox spacing="4">
-                            <Label text="Description (max 200)" styleClass="form-field-label"/>
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Description (max 200)" styleClass="form-field-label" HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="generateDescBtn" text="✨ Generate with AI"
+                                        styleClass="btn-ai-generate"
+                                        onAction="#handleGenerateDescription"
+                                        mnemonicParsing="false"/>
+                            </HBox>
                             <TextArea fx:id="descriptionArea"
                                       promptText="Décris l'établissement..."
                                       prefRowCount="4"

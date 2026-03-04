@@ -6,6 +6,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import com.esprit.utils.ThemeManager;
+
 import java.net.URL;
 
 public class MainFX extends Application {
@@ -25,6 +27,9 @@ public class MainFX extends Application {
 
         URL cssUrl = getClass().getResource("/style.css");
         if (cssUrl != null) scene.getStylesheets().add(cssUrl.toExternalForm());
+
+        // Appliquer le thème mémorisé (clair/sombre)
+        ThemeManager.applyTheme(scene);
 
         stage.setTitle("Dashboard");
         stage.setScene(scene);

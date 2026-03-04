@@ -3,7 +3,10 @@ package com.esprit.controllers;
 import com.esprit.entities.Activite;
 import com.esprit.entities.ActiviteImage;
 import com.esprit.services.ActiviteImageServices;
+import com.esprit.utils.ThemeManager;
 import com.esprit.services.ActiviteServices;
+import com.esprit.services.ActivitySuggestionService;
+import com.esprit.services.DescriptionGeneratorService;
 import com.esprit.services.EtablissementServices;
 import com.esprit.entities.Etablissement;
 
@@ -47,6 +50,7 @@ public class AjouterActiviteController {
     @FXML private ComboBox<String> niveauBox;
     @FXML private TextField dureeField;
     @FXML private TextArea descArea;
+    @FXML private Button generateDescBtn;
 
     // Nouveaux champs
     @FXML private ComboBox<String> statutBox;
@@ -86,8 +90,14 @@ public class AjouterActiviteController {
     private final ActiviteServices service = new ActiviteServices();
     private final ActiviteImageServices imageService = new ActiviteImageServices();
     private final EtablissementServices etabService = new EtablissementServices();
+    private final DescriptionGeneratorService descriptionGenerator = new DescriptionGeneratorService();
+    private final ActivitySuggestionService suggestionService = new ActivitySuggestionService();
 
     private final List<File> selectedImageFiles = new ArrayList<>();
+
+    // ====== ComboBox pour listes prédéfinies ======
+    @FXML private ComboBox<String> equipementCombo;
+    @FXML private ComboBox<String> conditionsCombo;
 
     @FXML
     public void initialize() {
@@ -139,20 +149,139 @@ public class AjouterActiviteController {
             }
         }
 
-        // validation live
-        nomField.textProperty().addListener((o, a, b) -> validateAll());
-        categorieBox.valueProperty().addListener((o, a, b) -> validateAll());
-        niveauBox.valueProperty().addListener((o, a, b) -> validateAll());
-        dureeField.textProperty().addListener((o, a, b) -> validateAll());
-        descArea.textProperty().addListener((o, a, b) -> validateAll());
-        etablissementBox.valueProperty().addListener((o, a, b) -> validateAll());
-        if (prixField != null) prixField.textProperty().addListener((o, a, b) -> validateAll());
-        if (nbPlacesField != null) nbPlacesField.textProperty().addListener((o, a, b) -> validateAll());
-        if (placesDispoField != null) placesDispoField.textProperty().addListener((o, a, b) -> validateAll());
-        if (ageMinField != null) ageMinField.textProperty().addListener((o, a, b) -> validateAll());
+        // ====== Listeners pour listes prédéfinies ======
+        setupPredefinedListListeners();
 
-        validateAll();
+        // Validation only on save — no live listeners
+        clearErrors();
         rebuildImagesStrip();
+    }
+
+    // ================= LISTES PRÉDÉFINIES =================
+
+    /**
+     * Configure les listeners pour remplir les ComboBox d'équipement et de conditions
+     * en fonction de la catégorie sélectionnée, et pour copier le choix dans le TextArea.
+     */
+    private void setupPredefinedListListeners() {
+        // Cell factories pour afficher le texte long correctement dans les dropdowns
+        setupWrappingCellFactory(equipementCombo);
+        setupWrappingCellFactory(conditionsCombo);
+
+        // Quand la catégorie change → mettre à jour les listes des ComboBox
+        categorieBox.valueProperty().addListener((obs, oldVal, newVal) -> {
+            updatePredefinedLists(newVal);
+        });
+
+        // Quand l'utilisateur choisit un équipement dans la liste → remplir le TextArea
+        if (equipementCombo != null) {
+            equipementCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && !newVal.isBlank() && equipementArea != null) {
+                    equipementArea.setText(newVal);
+                    autoResizeTextArea(equipementArea);
+                }
+            });
+        }
+
+        // Quand l'utilisateur choisit des conditions dans la liste → remplir le TextArea
+        if (conditionsCombo != null) {
+            conditionsCombo.valueProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal != null && !newVal.isBlank() && conditionsArea != null) {
+                    conditionsArea.setText(newVal);
+                    autoResizeTextArea(conditionsArea);
+                }
+            });
+        }
+
+        // Auto-resize quand l'utilisateur tape du texte manuellement
+        if (equipementArea != null) {
+            equipementArea.textProperty().addListener((obs, o, n) -> autoResizeTextArea(equipementArea));
+        }
+        if (conditionsArea != null) {
+            conditionsArea.textProperty().addListener((obs, o, n) -> autoResizeTextArea(conditionsArea));
+        }
+    }
+
+    /**
+     * Met à jour les options des ComboBox équipement et conditions
+     * selon la catégorie sélectionnée.
+     */
+    private void updatePredefinedLists(String categorie) {
+        if (equipementCombo != null) {
+            equipementCombo.setValue(null);
+            equipementCombo.setItems(FXCollections.observableArrayList(
+                    suggestionService.getEquipementOptions(categorie)));
+            equipementCombo.setPromptText(categorie != null
+                    ? "← Choisir un équipement (" + categorie + ")"
+                    : "← Choisir un équipement prédéfini");
+        }
+        if (conditionsCombo != null) {
+            conditionsCombo.setValue(null);
+            conditionsCombo.setItems(FXCollections.observableArrayList(
+                    suggestionService.getConditionsOptions(categorie)));
+            conditionsCombo.setPromptText(categorie != null
+                    ? "← Choisir des conditions (" + categorie + ")"
+                    : "← Choisir des conditions prédéfinies");
+        }
+    }
+
+    /**
+     * Configure une cell factory pour qu'un ComboBox affiche le texte long
+     * avec retour à la ligne dans le dropdown et un tooltip complet.
+     */
+    private void setupWrappingCellFactory(ComboBox<String> combo) {
+        if (combo == null) return;
+        combo.setCellFactory(cb -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setTooltip(null);
+                } else {
+                    // Afficher le label court (avant le " : ") dans la cellule
+                    String label = item.contains(" : ") ? item.substring(0, item.indexOf(" : ")) : item;
+                    setText(label);
+                    setTooltip(new Tooltip(item));
+                }
+            }
+        });
+        combo.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    String label = item.contains(" : ") ? item.substring(0, item.indexOf(" : ")) : item;
+                    setText(label);
+                }
+            }
+        });
+    }
+
+    /**
+     * Ajuste la hauteur du TextArea pour afficher tout le texte sans barre de défilement.
+     */
+    private void autoResizeTextArea(TextArea textArea) {
+        if (textArea == null) return;
+        String text = textArea.getText();
+        if (text == null || text.isEmpty()) {
+            textArea.setPrefHeight(120);
+            textArea.setMinHeight(120);
+            return;
+        }
+        // Estimer le nombre de lignes en fonction de la longueur du texte et du wrapping
+        int charPerLine = 60; // estimation pour la largeur du formulaire
+        int lines = 0;
+        for (String line : text.split("\n")) {
+            lines += Math.max(1, (int) Math.ceil((double) line.length() / charPerLine));
+        }
+        double lineHeight = 24.0;
+        double padding = 30.0;
+        double newHeight = Math.max(120, lines * lineHeight + padding);
+        textArea.setPrefHeight(newHeight);
+        textArea.setMinHeight(newHeight);
     }
 
     // ================== ETABLISSEMENTS (FK) ==================
@@ -730,5 +859,59 @@ public class AjouterActiviteController {
 
         @Override
         public String toString() { return nom; }
+    }
+
+    @FXML
+    private void handleGenerateDescription(ActionEvent event) {
+        if (!descriptionGenerator.isConfigured()) {
+            AlertUtils.error("API key not configured",
+                    "Groq API key missing",
+                    "Please set your Groq API key in config.properties (groq.api.key).\nGet a free key at: https://console.groq.com/keys");
+            return;
+        }
+
+        String name = nomField.getText();
+        if (name == null || name.isBlank()) {
+            AlertUtils.error("Missing information",
+                    "Name required",
+                    "Please fill in the activity name before generating a description.");
+            return;
+        }
+
+        generateDescBtn.setDisable(true);
+        generateDescBtn.setText("⏳ Generating...");
+
+        String category = categorieBox.getValue() != null ? categorieBox.getValue() : "";
+        String level = niveauBox.getValue() != null ? niveauBox.getValue() : "";
+        String duration = dureeField.getText() != null ? dureeField.getText() : "";
+        String price = prixField.getText() != null ? prixField.getText() : "";
+        String currency = deviseBox.getValue() != null ? deviseBox.getValue() : "";
+        String minAge = ageMinField.getText() != null ? ageMinField.getText() : "";
+        String equipment = equipementArea.getText() != null ? equipementArea.getText() : "";
+        String address = adresseDepartField.getText() != null ? adresseDepartField.getText() : "";
+        String etabName = etablissementBox.getValue() != null ? etablissementBox.getValue().getNom() : "";
+
+        descriptionGenerator.generateActivityDescription(
+                name, category, level, duration, price, currency,
+                minAge, equipment, address, etabName
+        ).thenAccept(description -> javafx.application.Platform.runLater(() -> {
+            descArea.setText(description);
+            generateDescBtn.setDisable(false);
+            generateDescBtn.setText("✨ Generate with AI");
+        })).exceptionally(ex -> {
+            javafx.application.Platform.runLater(() -> {
+                generateDescBtn.setDisable(false);
+                generateDescBtn.setText("✨ Generate with AI");
+                AlertUtils.error("Generation failed",
+                        "AI generation error",
+                        ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+            });
+            return null;
+        });
+    }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
     }
 }

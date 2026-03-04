@@ -37,8 +37,8 @@ public class EtablissementServices implements ICrud<Etablissement> {
     // ✅ CREATE + retourne l'id (utile pour ajouter images après)
     public int ajouterEtRetournerId(Etablissement e) throws SQLException {
         String sql = "INSERT INTO etablissement " +
-                "(nom, description, adresse, ville, telephone, email, horaires, gammePrix, type) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(nom, description, adresse, ville, telephone, email, horaires, gammePrix, type, latitude, longitude) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement ps = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -51,6 +51,12 @@ public class EtablissementServices implements ICrud<Etablissement> {
             ps.setString(7, nullIfBlank(e.getHoraires()));
             ps.setString(8, nullIfBlank(e.getGammePrix()));
             ps.setString(9, normalizeType(e.getType()));
+
+            if (e.getLatitude() == null) ps.setNull(10, Types.DOUBLE);
+            else ps.setDouble(10, e.getLatitude());
+
+            if (e.getLongitude() == null) ps.setNull(11, Types.DOUBLE);
+            else ps.setDouble(11, e.getLongitude());
 
             ps.executeUpdate();
 
@@ -99,7 +105,7 @@ public class EtablissementServices implements ICrud<Etablissement> {
     @Override
     public void modifier(Etablissement e) throws SQLException {
         String sql = "UPDATE etablissement SET " +
-                "nom=?, description=?, adresse=?, ville=?, telephone=?, email=?, horaires=?, gammePrix=?, type=? " +
+                "nom=?, description=?, adresse=?, ville=?, telephone=?, email=?, horaires=?, gammePrix=?, type=?, latitude=?, longitude=? " +
                 "WHERE idEtablissement=?";
 
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
@@ -113,7 +119,13 @@ public class EtablissementServices implements ICrud<Etablissement> {
             ps.setString(8, nullIfBlank(e.getGammePrix()));
             ps.setString(9, normalizeType(e.getType()));
 
-            ps.setInt(10, e.getIdEtablissement());
+            if (e.getLatitude() == null) ps.setNull(10, Types.DOUBLE);
+            else ps.setDouble(10, e.getLatitude());
+
+            if (e.getLongitude() == null) ps.setNull(11, Types.DOUBLE);
+            else ps.setDouble(11, e.getLongitude());
+
+            ps.setInt(12, e.getIdEtablissement());
 
             ps.executeUpdate();
         }
@@ -167,6 +179,12 @@ public class EtablissementServices implements ICrud<Etablissement> {
         e.setHoraires(rs.getString("horaires"));
         e.setGammePrix(rs.getString("gammePrix"));
         e.setType(rs.getString("type"));
+
+        double lat = rs.getDouble("latitude");
+        e.setLatitude(rs.wasNull() ? null : lat);
+
+        double lon = rs.getDouble("longitude");
+        e.setLongitude(rs.wasNull() ? null : lon);
 
         return e;
     }

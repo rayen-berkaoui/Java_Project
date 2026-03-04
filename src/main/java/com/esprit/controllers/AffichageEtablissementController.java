@@ -3,6 +3,7 @@ package com.esprit.controllers;
 import com.esprit.entities.Etablissement;
 import com.esprit.entities.EtablissementImage;
 import com.esprit.services.EtablissementImageServices;
+import com.esprit.utils.ThemeManager;
 import com.esprit.services.EtablissementServices;
 import com.esprit.services.PdfExportService;
 import com.esprit.services.TranslationService;
@@ -192,6 +193,8 @@ public class AffichageEtablissementController {
     private void goTableauActivites(ActionEvent event) {
         NavigationUtils.goTo("/activite_tableau.fxml", event);
     }
+
+
 
     // ====== DATA ======
     private void loadData() {
@@ -588,4 +591,9 @@ public class AffichageEtablissementController {
     }
 
     private String safe(String s) { return s == null ? "" : s; }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
+    }
 }

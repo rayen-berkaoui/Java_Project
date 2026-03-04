@@ -3,6 +3,7 @@ package com.esprit.controllers;
 import com.esprit.entities.Activite;
 import com.esprit.entities.ActiviteImage;
 import com.esprit.services.ActiviteImageServices;
+import com.esprit.utils.ThemeManager;
 import com.esprit.services.ActiviteServices;
 import com.esprit.services.PdfExportService;
 import com.esprit.services.TranslationService;
@@ -509,6 +510,8 @@ public class AffichageActiviteController {
         NavigationUtils.goTo("/activite_tableau.fxml", event);
     }
 
+
+
     // ===== STATIC LABEL TRANSLATION =====
     private void collectStaticLabels() {
         if (staticLabelsCollected || rootPane == null) return;
@@ -558,4 +561,9 @@ public class AffichageActiviteController {
     }
 
     private String safe(String s) { return s == null ? "" : s; }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
+    }
 }

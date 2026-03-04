@@ -27,6 +27,8 @@
             <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportPdf" styleClass="btn-export-pdf"/>
             <Region prefWidth="12"/>
             <Button text="&#x2190; Retour" onAction="#goBack" styleClass="btn-primary pill"/>
+            <Region prefWidth="8"/>
+            <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
         </HBox>
     </top>
 

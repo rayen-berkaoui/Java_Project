@@ -2,6 +2,7 @@ package com.esprit.services;
 
 import com.esprit.entities.Activite;
 import com.esprit.entities.Etablissement;
+import com.esprit.services.GooglePlacesService.PlaceResult;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
@@ -18,6 +19,8 @@ public class ChatbotService {
 
     private final EtablissementServices etabService = new EtablissementServices();
     private final ActiviteServices actService = new ActiviteServices();
+    private final OpenAIService openAIService = new OpenAIService();
+    private final GooglePlacesService placesService = new GooglePlacesService();
 
     // ─── Cached data (refreshed per session) ───
     private List<Etablissement> allEtablissements = Collections.emptyList();
@@ -27,15 +30,55 @@ public class ChatbotService {
     public enum Lang { FR, EN, AR }
     private Lang currentLang = Lang.FR;
 
-    public void setLang(Lang lang) { this.currentLang = lang; }
+    public void setLang(Lang lang) {
+        this.currentLang = lang;
+        // Update OpenAI context with new language
+        if (aiMode) {
+            String langStr = switch (lang) { case FR -> "Français"; case EN -> "English"; case AR -> "العربية"; };
+            openAIService.updateContext(allEtablissements, allActivites, langStr);
+        }
+    }
     public Lang getLang() { return currentLang; }
+
+    // ─── AI Mode ───
+    private boolean aiMode = false;
+
+    public boolean isAiMode() { return aiMode; }
+
+    /**
+     * Toggle AI mode on/off. When enabled, messages are sent to OpenAI.
+     * When disabled, the local keyword-based engine is used.
+     * @return true if AI mode is now ON, false if OFF
+     */
+    public boolean toggleAiMode() {
+        aiMode = !aiMode;
+        if (aiMode) {
+            String langStr = switch (currentLang) { case FR -> "Français"; case EN -> "English"; case AR -> "العربية"; };
+            openAIService.updateContext(allEtablissements, allActivites, langStr);
+        }
+        return aiMode;
+    }
+
+    /**
+     * @return true if the OpenAI API key is configured
+     */
+    public boolean isAiConfigured() {
+        return openAIService.isConfigured();
+    }
+
+    /**
+     * @return true if the Google Places API key is configured
+     */
+    public boolean isPlacesConfigured() {
+        return placesService.isConfigured();
+    }
 
     // ─── Intent ───
     public enum Intent {
         SEARCH_ETABLISSEMENT, SEARCH_ACTIVITE,
         FILTER_BY_CITY, FILTER_BY_TYPE, FILTER_BY_CATEGORY,
         FILTER_BY_BUDGET, FILTER_BY_LEVEL,
-        RECOMMEND, PLANNING,
+        RECOMMEND, NEARBY_PLACES, PLANNING,
         STATS, HELP, GREETING, UNKNOWN
     }
 
@@ -48,6 +91,11 @@ public class ChatbotService {
         public String level;        // débutant, intermédiaire, avancé
         public BigDecimal maxBudget;
         public String rawQuery;
+        // Nearby / proximity
+        public double refLat = Double.NaN;
+        public double refLng = Double.NaN;
+        public String nearbyType;   // Google place type for nearby search
+        public String refEtabName;  // name of the reference establishment ("near the hotel X")
     }
 
     /** A chatbot response */
@@ -55,6 +103,7 @@ public class ChatbotService {
         public String text;
         public List<Etablissement> etablissements = new ArrayList<>();
         public List<Activite> activites = new ArrayList<>();
+        public List<PlaceResult> nearbyPlaces = new ArrayList<>(); // Google Places results
         public String navigateTo; // optional FXML path to open
         public Map<String, String> filterHints = new LinkedHashMap<>(); // filter key→value for UI
 
@@ -68,12 +117,50 @@ public class ChatbotService {
     public void refreshData() {
         try { allEtablissements = etabService.afficher(); } catch (SQLException e) { allEtablissements = Collections.emptyList(); }
         try { allActivites = actService.afficher(); } catch (SQLException e) { allActivites = Collections.emptyList(); }
+        // Update OpenAI context with fresh data
+        if (aiMode) {
+            String langStr = switch (currentLang) { case FR -> "Français"; case EN -> "English"; case AR -> "العربية"; };
+            openAIService.updateContext(allEtablissements, allActivites, langStr);
+        }
     }
 
     /** Main entry: process a user message and return a response */
     public ChatResponse process(String userMessage) {
         if (allEtablissements.isEmpty() && allActivites.isEmpty()) refreshData();
 
+        // ── AI Mode: send to OpenAI ──
+        if (aiMode) {
+            return processWithAI(userMessage);
+        }
+
+        // ── Local Mode: keyword-based engine ──
+        return processLocally(userMessage);
+    }
+
+    /**
+     * Process message using OpenAI API.
+     * Falls back to local engine on error.
+     */
+    private ChatResponse processWithAI(String userMessage) {
+        try {
+            String aiResponse = openAIService.chat(userMessage);
+            return new ChatResponse(aiResponse);
+        } catch (Exception e) {
+            System.err.println("OpenAI error: " + e.getMessage());
+            // Fall back to local engine
+            ChatResponse fallbackResp = processLocally(userMessage);
+            String prefix = t(
+                    "⚠️ _Mode IA indisponible, réponse locale :_\n\n",
+                    "⚠️ _AI mode unavailable, local response:_\n\n",
+                    "⚠️ _وضع الذكاء الاصطناعي غير متاح، رد محلي:_\n\n"
+            );
+            fallbackResp.text = prefix + fallbackResp.text;
+            return fallbackResp;
+        }
+    }
+
+    /** Process using the local keyword-based engine */
+    private ChatResponse processLocally(String userMessage) {
         ParsedQuery pq = parse(userMessage);
 
         return switch (pq.intent) {
@@ -88,6 +175,7 @@ public class ChatbotService {
             case FILTER_BY_BUDGET   -> filterByBudget(pq);
             case FILTER_BY_LEVEL    -> filterByLevel(pq);
             case RECOMMEND          -> recommend(pq);
+            case NEARBY_PLACES      -> nearbyPlaces(pq);
             case PLANNING           -> generatePlanning(pq);
             case UNKNOWN            -> fallback(pq);
         };
@@ -133,6 +221,17 @@ public class ChatbotService {
                 "best", "top", "أفضل", "أنصح", "propose")) {
             pq.intent = Intent.RECOMMEND;
             extractEntities(q, pq);
+            extractNearbyContext(q, pq);
+            return pq;
+        }
+
+        // ── Nearby / Proximity ──
+        if (matches(q, "proche", "autour", "around", "nearby", "near",
+                "à côté", "a cote", "à proximité", "a proximite",
+                "pas loin", "in the area", "قريب", "حول", "بالقرب")) {
+            pq.intent = Intent.NEARBY_PLACES;
+            extractEntities(q, pq);
+            extractNearbyContext(q, pq);
             return pq;
         }
 
@@ -244,6 +343,74 @@ public class ChatbotService {
         }
     }
 
+    /**
+     * Extract nearby/proximity context from the query.
+     * Tries to resolve a reference establishment ("near hotel X")
+     * and extract its coordinates, or fall back to a city center.
+     */
+    private void extractNearbyContext(String q, ParsedQuery pq) {
+        // Determine the type the user wants to find nearby
+        if (pq.type != null) {
+            pq.nearbyType = pq.type;
+        } else if (containsAny(q, "restaurant", "مطعم"))    pq.nearbyType = "restaurant";
+        else if (containsAny(q, "cafe", "café", "مقهى"))     pq.nearbyType = "cafe";
+        else if (containsAny(q, "hotel", "hôtel", "فندق"))   pq.nearbyType = "hotel";
+        else if (containsAny(q, "museum", "musée", "متحف"))  pq.nearbyType = "museum";
+        else if (containsAny(q, "bar"))                       pq.nearbyType = "bar";
+        else if (containsAny(q, "pharmacy", "pharmacie"))     pq.nearbyType = "pharmacy";
+        else if (containsAny(q, "parc", "park", "حديقة"))    pq.nearbyType = "park";
+        else if (containsAny(q, "spa", "hammam"))             pq.nearbyType = "spa";
+
+        // Try to find a reference establishment by name match
+        // e.g. "restaurant proche de l'hôtel Abou Nawas"  →  find "Abou Nawas" in DB
+        for (Etablissement etab : allEtablissements) {
+            if (etab.getLatitude() == null || etab.getLongitude() == null) continue;
+            String name = etab.getNom().toLowerCase();
+            if (name.length() >= 3 && q.contains(name)) {
+                pq.refLat = etab.getLatitude();
+                pq.refLng = etab.getLongitude();
+                pq.refEtabName = etab.getNom();
+                return;
+            }
+        }
+
+        // Fall back: if a city is detected, use the average coordinates of that city's establishments
+        if (pq.city != null) {
+            resolveCoordinatesFromCity(pq, pq.city);
+            return;
+        }
+
+        // Last resort: use the centroid of all geolocated establishments
+        OptionalDouble avgLat = allEtablissements.stream()
+                .filter(e -> e.getLatitude() != null)
+                .mapToDouble(Etablissement::getLatitude).average();
+        OptionalDouble avgLng = allEtablissements.stream()
+                .filter(e -> e.getLongitude() != null)
+                .mapToDouble(Etablissement::getLongitude).average();
+        if (avgLat.isPresent() && avgLng.isPresent()) {
+            pq.refLat = avgLat.getAsDouble();
+            pq.refLng = avgLng.getAsDouble();
+        }
+    }
+
+    /**
+     * Resolve average coordinates for a given city name from DB establishments.
+     */
+    private void resolveCoordinatesFromCity(ParsedQuery pq, String city) {
+        OptionalDouble avgLat = allEtablissements.stream()
+                .filter(e -> city.equalsIgnoreCase(safe(e.getVille()).trim()))
+                .filter(e -> e.getLatitude() != null)
+                .mapToDouble(Etablissement::getLatitude).average();
+        OptionalDouble avgLng = allEtablissements.stream()
+                .filter(e -> city.equalsIgnoreCase(safe(e.getVille()).trim()))
+                .filter(e -> e.getLongitude() != null)
+                .mapToDouble(Etablissement::getLongitude).average();
+        if (avgLat.isPresent() && avgLng.isPresent()) {
+            pq.refLat = avgLat.getAsDouble();
+            pq.refLng = avgLng.getAsDouble();
+        }
+    }
+
     // ═══════════════════════════════════════════
     //  RESPONSE BUILDERS
     // ═══════════════════════════════════════════
@@ -272,6 +439,7 @@ public class ChatbotService {
                     💰 **Budget** : "activités moins de 50 TND", "restaurant budget 30 DT"
                     🎯 **Catégorie** : "activités nature", "sport débutant"
                     ⭐ **Recommandation** : "recommande un restaurant", "meilleur hôtel"
+                    📍 **Proximité** : "restaurants proches", "cafés autour de Tunis"
                     📅 **Planning** : "planning à Tunis", "programme sport nature"
                     📊 **Stats** : "combien de restaurants", "statistiques"
                     🌍 **Langues** : français, english, العربية
@@ -284,6 +452,7 @@ public class ChatbotService {
                     💰 **Budget**: "activities under 50 TND", "restaurant budget 30"
                     🎯 **Category**: "nature activities", "beginner sport"
                     ⭐ **Recommend**: "recommend a restaurant", "best hotel"
+                    📍 **Nearby**: "restaurants near hotel X", "cafes around Tunis"
                     📅 **Planning**: "plan in Tunis", "sport nature schedule"
                     📊 **Stats**: "how many restaurants", "statistics"
                     🌍 **Languages**: français, english, العربية
@@ -296,6 +465,7 @@ public class ChatbotService {
                     💰 **ميزانية**: "أنشطة أقل من 50 دينار"
                     🎯 **فئة**: "أنشطة طبيعة"، "رياضة مبتدئ"
                     ⭐ **توصية**: "أنصحني بمطعم"
+                    📍 **قريب**: "مطاعم قريبة من الفندق"، "مقاهي حول تونس"
                     📅 **برنامج**: "برنامج في تونس"
                     📊 **إحصائيات**: "كم عدد المطاعم"
                     """;
@@ -516,6 +686,192 @@ public class ChatbotService {
         resp.etablissements = etabs;
         resp.activites = acts;
         return resp;
+    }
+
+    // ── Nearby Places (Google Places) ──
+
+    private ChatResponse nearbyPlaces(ParsedQuery pq) {
+        // Ensure we have coordinates
+        if (Double.isNaN(pq.refLat) || Double.isNaN(pq.refLng)) {
+            return new ChatResponse(t(
+                    "📍 Je n'ai pas pu déterminer votre position de référence.\n" +
+                    "Précisez un établissement ou une ville, par exemple :\n" +
+                    "  • _\"restaurants proches de l'hôtel X\"_\n" +
+                    "  • _\"cafés autour de Tunis\"_",
+                    "📍 I couldn't determine your reference location.\n" +
+                    "Please specify an establishment or city, for example:\n" +
+                    "  • _\"restaurants near hotel X\"_\n" +
+                    "  • _\"cafes around Tunis\"_",
+                    "📍 لم أتمكن من تحديد موقعك المرجعي.\n" +
+                    "حدد مؤسسة أو مدينة، مثال:\n" +
+                    "  • _\"مطاعم قريبة من الفندق\"_\n" +
+                    "  • _\"مقاهي حول تونس\"_"
+            ));
+        }
+
+        // Check if Google Places API is configured
+        if (!placesService.isConfigured()) {
+            // Fall back to DB-based proximity search
+            return nearbyFromDatabase(pq);
+        }
+
+        // Call Google Places API
+        try {
+            List<PlaceResult> places = placesService.searchNearby(
+                    pq.refLat, pq.refLng, 5000, pq.nearbyType);
+
+            if (places.isEmpty()) {
+                // Fall back to DB
+                return nearbyFromDatabase(pq);
+            }
+
+            return formatNearbyResults(places, pq);
+
+        } catch (Exception e) {
+            System.err.println("Google Places error: " + e.getMessage());
+            // Fall back to DB-based proximity
+            ChatResponse fallback = nearbyFromDatabase(pq);
+            String prefix = t(
+                    "⚠️ _API Google Places indisponible, recherche dans notre base :_\n\n",
+                    "⚠️ _Google Places API unavailable, searching our database:_\n\n",
+                    "⚠️ _واجهة Google Places غير متاحة، بحث في قاعدتنا:_\n\n"
+            );
+            fallback.text = prefix + fallback.text;
+            return fallback;
+        }
+    }
+
+    /**
+     * Format Google Places API results into a rich chatbot response.
+     */
+    private ChatResponse formatNearbyResults(List<PlaceResult> places, ParsedQuery pq) {
+        StringBuilder sb = new StringBuilder();
+
+        // Header
+        String typeLabel = pq.nearbyType != null ? capitalize(pq.nearbyType) + "s" :
+                t("Lieux", "Places", "أماكن");
+        sb.append(t("📍 **" + typeLabel + " à proximité",
+                "📍 **Nearby " + typeLabel,
+                "📍 **" + typeLabel + " القريبة"));
+        if (pq.refEtabName != null) {
+            sb.append(t(" de " + pq.refEtabName, " from " + pq.refEtabName, " من " + pq.refEtabName));
+        } else if (pq.city != null) {
+            sb.append(t(" — " + capitalize(pq.city), " — " + capitalize(pq.city), " — " + capitalize(pq.city)));
+        }
+        sb.append("** (Google Places)\n\n");
+
+        // Ranking explanation
+        sb.append(t("_Classés par note + popularité + proximité_\n\n",
+                "_Ranked by rating + popularity + proximity_\n\n",
+                "_مرتبة حسب التقييم + الشعبية + القرب_\n\n"));
+
+        int rank = 1;
+        for (PlaceResult place : places) {
+            String emoji = GooglePlacesService.typeEmoji(
+                    place.types != null && !place.types.isEmpty() ? place.types.get(0) : null);
+
+            sb.append(rank).append(". ").append(emoji).append(" **").append(place.name).append("**\n");
+            sb.append("   ");
+
+            // Rating stars
+            sb.append(ratingStars(place.rating));
+            sb.append(" ").append(String.format("%.1f", place.rating));
+            sb.append(" (").append(place.userRatingsTotal).append(t(" avis", " reviews", " تقييم")).append(")");
+
+            // Distance
+            sb.append(" · 📏 ").append(String.format("%.1f", place.distanceKm)).append(" km");
+
+            // Price level
+            if (place.priceLevel != null && !place.priceLevel.isEmpty()) {
+                sb.append(" · 💰").append(place.priceLevel);
+            }
+
+            // Open now
+            if (place.openNow) {
+                sb.append(t(" · ✅ Ouvert", " · ✅ Open", " · ✅ مفتوح"));
+            }
+
+            sb.append("\n");
+
+            // Address
+            if (place.address != null && !place.address.isEmpty()) {
+                sb.append("   📫 _").append(place.address).append("_\n");
+            }
+
+            sb.append("\n");
+            rank++;
+        }
+
+        // Footer tip
+        sb.append(t("💡 _Résultats enrichis par Google Places API_",
+                "💡 _Results enhanced by Google Places API_",
+                "💡 _النتائج مدعومة من Google Places API_"));
+
+        ChatResponse resp = new ChatResponse(sb.toString());
+        resp.nearbyPlaces = places;
+        return resp;
+    }
+
+    /**
+     * Fallback: search nearby using our own database (distance-based sort).
+     */
+    private ChatResponse nearbyFromDatabase(ParsedQuery pq) {
+        // Sort all establishments by distance from reference point
+        List<Etablissement> nearby = allEtablissements.stream()
+                .filter(e -> e.getLatitude() != null && e.getLongitude() != null)
+                .filter(e -> pq.nearbyType == null || safe(e.getType()).equalsIgnoreCase(pq.nearbyType)
+                        || safe(e.getType()).equalsIgnoreCase(pq.type))
+                .sorted(Comparator.comparingDouble(e ->
+                        GooglePlacesService.haversineKm(pq.refLat, pq.refLng,
+                                e.getLatitude(), e.getLongitude())))
+                .limit(8)
+                .collect(Collectors.toList());
+
+        if (nearby.isEmpty()) return noResults(pq);
+
+        StringBuilder sb = new StringBuilder();
+        String typeLabel = pq.nearbyType != null ? capitalize(pq.nearbyType) + "s" :
+                t("Établissements", "Establishments", "المؤسسات");
+        sb.append(t("📍 **" + typeLabel + " les plus proches",
+                "📍 **Nearest " + typeLabel,
+                "📍 **أقرب " + typeLabel));
+        if (pq.refEtabName != null) {
+            sb.append(t(" de " + pq.refEtabName, " from " + pq.refEtabName, " من " + pq.refEtabName));
+        }
+        sb.append("** :\n\n");
+
+        int rank = 1;
+        for (Etablissement e : nearby) {
+            double dist = GooglePlacesService.haversineKm(pq.refLat, pq.refLng,
+                    e.getLatitude(), e.getLongitude());
+            String emoji = getTypeEmoji(e.getType());
+            sb.append(rank).append(". ").append(emoji).append(" **").append(safe(e.getNom())).append("**");
+            sb.append(" — 📏 ").append(String.format("%.1f", dist)).append(" km");
+            if (e.getVille() != null) sb.append(" · ").append(e.getVille());
+            if (e.getGammePrix() != null) sb.append(" · 💰").append(e.getGammePrix());
+            sb.append("\n");
+            rank++;
+        }
+
+        sb.append(t("\n💡 _Résultats de notre base de données, triés par distance_",
+                "\n💡 _Results from our database, sorted by distance_",
+                "\n💡 _النتائج من قاعدتنا، مرتبة حسب المسافة_"));
+
+        ChatResponse resp = new ChatResponse(sb.toString());
+        resp.etablissements = nearby;
+        return resp;
+    }
+
+    /**
+     * Convert a numeric rating (0-5) to star emojis.
+     */
+    private String ratingStars(double rating) {
+        int full = (int) rating;
+        boolean half = (rating - full) >= 0.3;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < full; i++) sb.append("⭐");
+        if (half) sb.append("✨");
+        return sb.toString();
     }
 
     // ── Planning ──

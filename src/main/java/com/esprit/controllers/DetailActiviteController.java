@@ -3,6 +3,7 @@ package com.esprit.controllers;
 import com.esprit.entities.Activite;
 import com.esprit.entities.ActiviteImage;
 import com.esprit.services.ActiviteImageServices;
+import com.esprit.utils.ThemeManager;
 import com.esprit.services.ActiviteServices;
 import com.esprit.services.PdfExportService;
 import com.esprit.services.TranslationService;
@@ -416,10 +417,17 @@ public class DetailActiviteController {
         NavigationUtils.goTo("/activite_affichage.fxml", event);
     }
 
+
+
     // ===== Helpers =====
     private String safe(String s) { return s == null ? "" : s; }
     private String emptyAsDash(String s) {
         String v = safe(s).trim();
         return v.isEmpty() ? "\u2014" : v;
+    }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
     }
 }

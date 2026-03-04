@@ -22,8 +22,8 @@
                     <Label fx:id="subtitleLabel" text="Remplissez les informations de l'activit&#xe9;" styleClass="page-subtitle"/>
                 </VBox>
                 <Pane HBox.hgrow="ALWAYS"/>
-                <Button text="&#x2190; Retour" onAction="#onCancel" styleClass="home-btn-small"/>
-            </HBox>
+                <Button text="&#x2190; Retour" onAction="#onCancel" styleClass="home-btn-small"/>                <Region prefWidth="8"/>
+                <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>            </HBox>
 
             <Region prefHeight="14"/>
             <Region styleClass="accent-line-thin"/>
@@ -125,7 +125,13 @@
                         </GridPane>
 
                         <VBox spacing="4">
-                            <Label text="Description" styleClass="form-field-label"/>
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Description" styleClass="form-field-label" HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="generateDescBtn" text="✨ Generate with AI"
+                                        styleClass="btn-ai-generate"
+                                        onAction="#handleGenerateDescription"
+                                        mnemonicParsing="false"/>
+                            </HBox>
                             <TextArea fx:id="descArea"
                                       promptText="Description de l'activit&#xe9;..."
                                       prefRowCount="4"
@@ -242,21 +248,35 @@
 
                         <VBox spacing="4">
                             <Label text="&#xc9;quipement inclus" styleClass="form-field-label"/>
+                            <ComboBox fx:id="equipementCombo"
+                                      promptText="&#x2190; Choisir un &#xe9;quipement pr&#xe9;d&#xe9;fini"
+                                      styleClass="form-combo"
+                                      maxWidth="Infinity"/>
                             <TextArea fx:id="equipementArea"
-                                      promptText="&#xc9;quipements fournis..."
-                                      prefRowCount="3"
+                                      promptText="&#xc9;quipements fournis... (s&#xe9;lectionnez dans la liste ou saisissez manuellement)"
+                                      prefRowCount="6"
+                                      minHeight="120"
+                                      prefHeight="120"
                                       wrapText="true"
-                                      styleClass="form-textarea"/>
+                                      styleClass="form-textarea"
+                                      editable="true"/>
                             <Label fx:id="equipementError" styleClass="field-error-label"/>
                         </VBox>
 
                         <VBox spacing="4">
                             <Label text="Conditions d'annulation" styleClass="form-field-label"/>
+                            <ComboBox fx:id="conditionsCombo"
+                                      promptText="&#x2190; Choisir des conditions pr&#xe9;d&#xe9;finies"
+                                      styleClass="form-combo"
+                                      maxWidth="Infinity"/>
                             <TextArea fx:id="conditionsArea"
-                                      promptText="Conditions d'annulation..."
-                                      prefRowCount="3"
+                                      promptText="Conditions d'annulation... (s&#xe9;lectionnez dans la liste ou saisissez manuellement)"
+                                      prefRowCount="6"
+                                      minHeight="120"
+                                      prefHeight="120"
                                       wrapText="true"
-                                      styleClass="form-textarea"/>
+                                      styleClass="form-textarea"
+                                      editable="true"/>
                             <Label fx:id="conditionsError" styleClass="field-error-label"/>
                         </VBox>
 

@@ -3,6 +3,7 @@ package com.esprit.controllers;
 import com.esprit.entities.Etablissement;
 import com.esprit.services.EtablissementServices;
 import com.esprit.services.PdfExportService;
+import com.esprit.utils.ThemeManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -486,4 +487,9 @@ public class EtablissementController {
     }
 
     private String safe(String s) { return s == null ? "" : s; }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
+    }
 }

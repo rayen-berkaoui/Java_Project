@@ -22,8 +22,10 @@
                     <Label text="Gestion des établissements" styleClass="page-title"/>
                     <Label text="Vue détaillée avec formulaire intégré" styleClass="page-subtitle"/>
                 </VBox>
-                <Pane HBox.hgrow="ALWAYS"/>                <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportAllPdf" styleClass="btn-export-pdf"/>                <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+                <Pane HBox.hgrow="ALWAYS"/>                <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportAllPdf" styleClass="btn-export-pdf"/>                <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="nav-tab"/>
                 <Button text="↻ Rafraîchir" onAction="#onRefresh" styleClass="btn-secondary"/>
+                <Region prefWidth="8"/>
+                <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
             </HBox>
 
             <Region prefHeight="12"/>

@@ -2,8 +2,11 @@ package com.esprit.controllers;
 
 import com.esprit.entities.Etablissement;
 import com.esprit.entities.EtablissementImage;
+import com.esprit.services.DescriptionGeneratorService;
 import com.esprit.services.EtablissementImageServices;
+import com.esprit.utils.ThemeManager;
 import com.esprit.services.EtablissementServices;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -14,8 +17,11 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import netscape.javascript.JSObject;
 
 import java.io.File;
 import java.sql.SQLException;
@@ -44,9 +50,17 @@ public class AjouterEtablissementController {
     @FXML private TextField horairesField;
 
     @FXML private TextArea descriptionArea;
+    @FXML private Button generateDescBtn;
 
     @FXML private HBox imagesStrip;
     @FXML private Button saveBtn;
+
+    // ====== Map picker ======
+    @FXML private WebView mapWebView;
+    @FXML private Label latLabel;
+    @FXML private Label lngLabel;
+    private Double selectedLat = null;
+    private Double selectedLng = null;
 
     // ====== Error labels ======
     @FXML private Label nomError;
@@ -63,6 +77,7 @@ public class AjouterEtablissementController {
     // ====== Data ======
     private final List<File> selectedImages = new ArrayList<>();
     private final Map<String, List<String>> villesParGouvernorat = new LinkedHashMap<>();
+    private final DescriptionGeneratorService descriptionGenerator = new DescriptionGeneratorService();
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
@@ -78,6 +93,7 @@ public class AjouterEtablissementController {
         setupListeners();
         clearErrors();
         refreshGallery();
+        initMapPicker();
 
         // ===== MODE EDIT =====
         if (AffichageEtablissementController.etablissementToEdit != null) {
@@ -120,7 +136,59 @@ public class AjouterEtablissementController {
             gammePrixStarsBox.setValue(safe(e.getGammePrix()));
             horairesField.setText(safe(e.getHoraires()));
             descriptionArea.setText(safe(e.getDescription()));
+
+            // Restore map position if available
+            if (e.getLatitude() != null && e.getLongitude() != null) {
+                selectedLat = e.getLatitude();
+                selectedLng = e.getLongitude();
+                latLabel.setText(String.valueOf(selectedLat));
+                lngLabel.setText(String.valueOf(selectedLng));
+                // Will set map position once loaded (see initMapPicker)
+            }
         }
+    }
+
+    // ----------------- Map Picker -----------------
+    /**
+     * JavaScript-to-Java bridge: receives location clicks from the Leaflet map.
+     */
+    public class MapBridge {
+        public void onLocationSelected(double lat, double lng) {
+            Platform.runLater(() -> {
+                selectedLat = lat;
+                selectedLng = lng;
+                latLabel.setText(String.format("%.6f", lat));
+                lngLabel.setText(String.format("%.6f", lng));
+            });
+        }
+    }
+
+    private void initMapPicker() {
+        if (mapWebView == null) return;
+        WebEngine engine = mapWebView.getEngine();
+        engine.setJavaScriptEnabled(true);
+
+        // Load the map HTML
+        String mapUrl = getClass().getResource("/map_picker.html").toExternalForm();
+        engine.load(mapUrl);
+
+        // When page loaded, inject the Java bridge + set initial position if editing
+        engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
+            if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
+                JSObject window = (JSObject) engine.executeScript("window");
+                window.setMember("javaBridge", new MapBridge());
+
+                // Force Leaflet to recalculate its size (JavaFX WebView fix)
+                engine.executeScript("setTimeout(function(){ map.invalidateSize(); }, 300);");
+
+                // If editing, move map to the saved position
+                if (selectedLat != null && selectedLng != null) {
+                    engine.executeScript(
+                        String.format("setPosition(%f, %f)", selectedLat, selectedLng)
+                    );
+                }
+            }
+        });
     }
 
     // ----------------- Setup -----------------
@@ -370,6 +438,8 @@ public class AjouterEtablissementController {
         e.setEmail(email);
         e.setHoraires(horaires);
         e.setGammePrix(gamme);
+        e.setLatitude(selectedLat);
+        e.setLongitude(selectedLng);
         e.setDescription(desc);
 
         EtablissementServices etabService = new EtablissementServices();
@@ -451,11 +521,16 @@ public class AjouterEtablissementController {
         }
         query = sb.toString();
 
+        // Fall back to map-selected coordinates
+        if (query.isBlank() && selectedLat != null && selectedLng != null) {
+            query = selectedLat + "," + selectedLng;
+        }
+
         if (query.isBlank()) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Localisation manquante");
             alert.setHeaderText(null);
-            alert.setContentText("Veuillez saisir une adresse avant d'ouvrir Google Maps.");
+            alert.setContentText("Veuillez saisir une adresse ou sélectionner un emplacement sur la carte.");
             alert.showAndWait();
             return;
         }
@@ -784,5 +859,54 @@ public class AjouterEtablissementController {
         refreshGallery();
 
         clearErrors();
+    }
+
+    @FXML
+    private void handleGenerateDescription(ActionEvent event) {
+        if (!descriptionGenerator.isConfigured()) {
+            AlertUtils.error("API key not configured",
+                    "Groq API key missing",
+                    "Please set your Groq API key in config.properties (groq.api.key).\nGet a free key at: https://console.groq.com/keys");
+            return;
+        }
+
+        String name = nomField.getText();
+        if (name == null || name.isBlank()) {
+            AlertUtils.error("Missing information",
+                    "Name required",
+                    "Please fill in the establishment name before generating a description.");
+            return;
+        }
+
+        generateDescBtn.setDisable(true);
+        generateDescBtn.setText("⏳ Generating...");
+
+        String type = typeField.getValue() != null ? typeField.getValue() : "";
+        String city = villeBox.getValue() != null ? villeBox.getValue() : "";
+        String address = adresseField.getText() != null ? adresseField.getText() : "";
+        String price = gammePrixStarsBox.getValue() != null ? gammePrixStarsBox.getValue() : "";
+        String hours = horairesField.getText() != null ? horairesField.getText() : "";
+
+        descriptionGenerator.generateEstablishmentDescription(
+                name, type, city, address, price, hours
+        ).thenAccept(description -> javafx.application.Platform.runLater(() -> {
+            descriptionArea.setText(description);
+            generateDescBtn.setDisable(false);
+            generateDescBtn.setText("✨ Generate with AI");
+        })).exceptionally(ex -> {
+            javafx.application.Platform.runLater(() -> {
+                generateDescBtn.setDisable(false);
+                generateDescBtn.setText("✨ Generate with AI");
+                AlertUtils.error("Generation failed",
+                        "AI generation error",
+                        ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+            });
+            return null;
+        });
+    }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
     }
 }

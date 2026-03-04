@@ -288,6 +288,12 @@ public class PdfExportService {
         addInfoRow(table, "Gamme Prix", safe(e.getGammePrix()), bold, regular);
         addInfoRow(table, "Type", safe(e.getType()), bold, regular);
 
+        if (e.getLatitude() != null && e.getLongitude() != null) {
+            addInfoRow(table, "Coordonnées GPS",
+                    String.format("%.6f, %.6f", e.getLatitude(), e.getLongitude()),
+                    bold, regular);
+        }
+
         doc.add(table);
     }
 
@@ -433,7 +439,7 @@ public class PdfExportService {
         // Left: Map image
         Cell mapCell = new Cell().setBorder(Border.NO_BORDER);
 
-        byte[] mapImage = downloadStaticMap(null, null,
+        byte[] mapImage = downloadStaticMap(etab.getLatitude(), etab.getLongitude(),
                 safe(etab.getAdresse()) + ", " + safe(etab.getVille()));
         if (mapImage != null) {
             try {
@@ -453,7 +459,7 @@ public class PdfExportService {
         // Right: QR Code + address
         Cell qrCell = new Cell().setBorder(Border.NO_BORDER).setTextAlignment(TextAlignment.CENTER).setPadding(8);
 
-        String mapsUrl = buildMapsUrl(null, null,
+        String mapsUrl = buildMapsUrl(etab.getLatitude(), etab.getLongitude(),
                 safe(etab.getAdresse()) + ", " + safe(etab.getVille()));
 
         qrCell.add(new Paragraph("Scannez pour\nouvrir Google Maps")

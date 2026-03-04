@@ -1,0 +1,1293 @@
+/* =======================================================
+   LIGHT THEME OVERRIDE — Applied on top of style.css
+   Palette: #F8F9FA · #FFFFFF · #F0F0F0 · #D4A106 · #333333
+   ======================================================= */
+
+/* ═══════════════════════════════════════════
+   1) ROOT — Design tokens override
+   ═══════════════════════════════════════════ */
+.root, .app-root {
+    -fx-bg:        #F0F2F5;
+    -fx-surface:   #FFFFFF;
+    -fx-surface-2: #F5F5F5;
+    -fx-surface-3: #EEEEEE;
+    -fx-gold:      #D4A106;
+    -fx-gold-2:    #C49500;
+    -fx-gold-dark: #B8860B;
+    -fx-gold-glow: rgba(212,161,6,0.30);
+    -fx-border:    rgba(0,0,0,0.08);
+    -fx-text:      #333333;
+    -fx-text-sec:  #666666;
+    -fx-muted:     #999999;
+    -fx-danger:    #D32F2F;
+    -fx-success:   #388E3C;
+    -fx-shadow:    dropshadow(gaussian, rgba(0,0,0,0.08), 12, 0.15, 0, 4);
+    -fx-gold-shadow: dropshadow(gaussian, rgba(212,161,6,0.15), 12, 0.3, 0, 2);
+    -fx-background-color: -fx-bg;
+}
+
+/* — Global label — */
+.label {
+    -fx-text-fill: #333333;
+}
+.muted {
+    -fx-text-fill: #999999;
+}
+
+/* ═══════════════════════════════════════════
+   2) TITLES
+   ═══════════════════════════════════════════ */
+.page-title {
+    -fx-text-fill: #B8860B;
+    -fx-effect: none;
+}
+.page-subtitle {
+    -fx-text-fill: #888888;
+}
+.section-title {
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   3) SCROLLPANE
+   ═══════════════════════════════════════════ */
+.scroll-bar .track,
+.scroll-bar:vertical .track,
+.scroll-bar:horizontal .track {
+    -fx-background-color: rgba(0,0,0,0.04);
+}
+.scroll-bar .thumb,
+.scroll-bar:vertical .thumb,
+.scroll-bar:horizontal .thumb {
+    -fx-background-color: rgba(0,0,0,0.12);
+}
+.scroll-bar .thumb:hover,
+.scroll-bar:vertical .thumb:hover,
+.scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: rgba(0,0,0,0.22);
+}
+
+/* ═══════════════════════════════════════════
+   4) CARDS
+   ═══════════════════════════════════════════ */
+.form-section {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0.15, 0, 3);
+}
+.form-section:hover {
+    -fx-border-color: rgba(212,161,6,0.25);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 16, 0.2, 0, 4);
+}
+
+.image-preview-card {
+    -fx-background-color: #FAFAFA;
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 6, 0.1, 0, 2);
+}
+.image-preview-card:hover {
+    -fx-border-color: rgba(212,161,6,0.20);
+}
+
+.map-picker-card {
+    -fx-background-color: #FAFAFA;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.map-coord-value {
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   5) FORM LABELS / ERRORS
+   ═══════════════════════════════════════════ */
+.form-field-label {
+    -fx-text-fill: #B8860B;
+}
+.field-error-label,
+.error-label {
+    -fx-text-fill: #D32F2F;
+}
+.hint-label {
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   6) TEXT FIELDS
+   ═══════════════════════════════════════════ */
+.text-field,
+.text-area,
+.form-input {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #AAAAAA;
+    -fx-highlight-fill: rgba(212,161,6,0.30);
+    -fx-border-color: rgba(0,0,0,0.12);
+}
+.text-field:hover,
+.text-area:hover,
+.form-input:hover {
+    -fx-border-color: rgba(212,161,6,0.30);
+    -fx-background-color: #FAFAFA;
+}
+.text-field:focused,
+.text-area:focused,
+.form-input:focused {
+    -fx-border-color: #D4A106;
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.15), 10, 0.3, 0, 0);
+    -fx-background-color: #FFFFFF;
+}
+.text-area .content {
+    -fx-background-color: transparent;
+}
+.input-error {
+    -fx-border-color: #D32F2F;
+    -fx-effect: dropshadow(gaussian, rgba(211,47,47,0.20), 8, 0.3, 0, 0);
+}
+.input-valid {
+    -fx-border-color: #388E3C;
+    -fx-effect: dropshadow(gaussian, rgba(56,142,60,0.15), 8, 0.3, 0, 0);
+}
+.field-error {
+    -fx-border-color: #D32F2F;
+    -fx-effect: dropshadow(gaussian, rgba(211,47,47,0.20), 8, 0.3, 0, 0);
+}
+
+/* ═══════════════════════════════════════════
+   7) COMBOBOX
+   ═══════════════════════════════════════════ */
+.combo-box,
+.combo-box-base,
+.form-combo {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.12);
+}
+.form-combo .list-cell,
+.combo-box .list-cell {
+    -fx-text-fill: #333333;
+    -fx-background-color: #FFFFFF;
+}
+.form-combo:hover,
+.combo-box:hover {
+    -fx-border-color: rgba(212,161,6,0.35);
+    -fx-background-color: #FAFAFA;
+}
+.form-combo:focused,
+.form-combo:showing,
+.combo-box:focused,
+.combo-box:showing {
+    -fx-border-color: #D4A106;
+    -fx-background-color: #FFFFFF;
+}
+.combo-box .arrow {
+    -fx-background-color: #B8860B;
+}
+.combo-box-popup .list-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.10);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 14, 0.2, 0, 4);
+}
+.combo-box-popup .list-view .list-cell {
+    -fx-text-fill: #333333;
+    -fx-background-color: #FFFFFF;
+}
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: rgba(212,161,6,0.08);
+    -fx-text-fill: #B8860B;
+}
+.combo-box-popup .list-view .list-cell:selected {
+    -fx-background-color: rgba(212,161,6,0.15);
+    -fx-text-fill: #B8860B;
+}
+.combo-placeholder {
+    -fx-text-fill: #AAAAAA;
+}
+
+/* ═══════════════════════════════════════════
+   8) BUTTONS
+   ═══════════════════════════════════════════ */
+.btn-primary {
+    -fx-text-fill: #FFFFFF;
+    -fx-background-color: linear-gradient(to bottom right, #D4A106, #B8860B);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.25), 10, 0.3, 0, 3);
+}
+.btn-primary:hover {
+    -fx-background-color: linear-gradient(to bottom right, #E0B000, #D4A106);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.40), 16, 0.4, 0, 3);
+}
+.btn-primary:pressed {
+    -fx-background-color: linear-gradient(to bottom right, #A67C00, #8B6914);
+}
+
+.btn-secondary {
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.35);
+}
+.btn-secondary:hover {
+    -fx-background-color: rgba(212,161,6,0.06);
+    -fx-border-color: #B8860B;
+}
+
+.home-btn-small {
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.30);
+}
+.home-btn-small:hover {
+    -fx-background-color: rgba(212,161,6,0.06);
+    -fx-border-color: #B8860B;
+}
+
+.btn-browse {
+    -fx-background-color: rgba(212,161,6,0.06);
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.25);
+}
+.btn-browse:hover {
+    -fx-background-color: #D4A106;
+    -fx-text-fill: #FFFFFF;
+}
+
+.btn-yellow {
+    -fx-background-color: linear-gradient(to bottom right, #D4A106, #B8860B);
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.20), 10, 0.3, 0, 3);
+}
+.btn-yellow:hover {
+    -fx-background-color: linear-gradient(to bottom right, #E0B000, #D4A106);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.40), 16, 0.4, 0, 3);
+}
+.btn-yellow:pressed {
+    -fx-background-color: #A67C00;
+}
+
+.btn-warning {
+    -fx-background-color: linear-gradient(to bottom right, #D4A106, #B8860B);
+    -fx-text-fill: #FFFFFF;
+}
+.btn-warning:hover {
+    -fx-background-color: linear-gradient(to bottom right, #E0B000, #D4A106);
+}
+
+.btn-danger {
+    -fx-background-color: linear-gradient(to bottom right, #D32F2F, #C62828);
+    -fx-text-fill: #FFFFFF;
+}
+.btn-danger:hover {
+    -fx-background-color: linear-gradient(to bottom right, #E53935, #D32F2F);
+}
+
+/* ═══════════════════════════════════════════
+   9) GALLERY STRIP
+   ═══════════════════════════════════════════ */
+.gallery-thumb-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0.1, 0, 2);
+}
+.gallery-thumb-card:hover {
+    -fx-border-color: rgba(212,161,6,0.30);
+}
+
+/* ═══════════════════════════════════════════
+   10) TABLE VIEW
+   ═══════════════════════════════════════════ */
+.table-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-table-cell-border-color: rgba(0,0,0,0.04);
+}
+.table-view .column-header-background {
+    -fx-background-color: #F5F5F5;
+}
+.table-view .column-header {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.08) transparent;
+}
+.table-view .filler {
+    -fx-background-color: #F5F5F5;
+}
+.table-view .column-header .label {
+    -fx-text-fill: #B8860B;
+}
+.table-row-cell {
+    -fx-background-color: #FFFFFF;
+}
+.table-row-cell:odd {
+    -fx-background-color: #FAFAFA;
+}
+.table-row-cell:hover {
+    -fx-background-color: rgba(212,161,6,0.06);
+}
+.table-row-cell:selected {
+    -fx-background-color: rgba(212,161,6,0.12);
+}
+.table-cell {
+    -fx-text-fill: #333333;
+}
+.table-row-cell:selected .text,
+.table-row-cell:selected .label {
+    -fx-fill: #B8860B;
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   11) TOOLTIPS / DIALOGS
+   ═══════════════════════════════════════════ */
+.tooltip {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-border-color: rgba(0,0,0,0.10);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.10), 8, 0.15, 0, 3);
+}
+.dialog-pane {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.10);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0, 0, 6);
+}
+.dialog-pane > .header-panel {
+    -fx-background-color: #F5F5F5;
+}
+.dialog-pane > .header-panel > .label {
+    -fx-text-fill: #B8860B;
+}
+.dialog-pane > .content.label {
+    -fx-text-fill: #333333;
+}
+.dialog-pane .label {
+    -fx-text-fill: #333333;
+}
+.dialog-pane .button {
+    -fx-background-color: linear-gradient(to bottom right, #D4A106, #B8860B);
+    -fx-text-fill: #FFFFFF;
+}
+.dialog-pane .button:hover {
+    -fx-background-color: linear-gradient(to bottom right, #E0B000, #D4A106);
+}
+
+/* ═══════════════════════════════════════════
+   12) PREMIUM CARDS
+   ═══════════════════════════════════════════ */
+.premium-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.07), 10, 0.15, 0, 4);
+}
+.premium-card:hover {
+    -fx-background-color: #FAFAFA;
+    -fx-border-color: rgba(212,161,6,0.25);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.10), 16, 0.25, 0, 4);
+}
+.card-title {
+    -fx-text-fill: #B8860B;
+}
+.card-meta {
+    -fx-text-fill: #888888;
+}
+.card-info {
+    -fx-text-fill: #666666;
+}
+.card-desc {
+    -fx-text-fill: #777777;
+}
+.card-actions {
+    -fx-border-color: rgba(0,0,0,0.06) transparent transparent transparent;
+}
+.icon-edit {
+    -fx-text-fill: #B8860B;
+}
+.icon-edit:hover {
+    -fx-text-fill: #D4A106;
+    -fx-background-color: rgba(212,161,6,0.06);
+}
+.icon-delete {
+    -fx-text-fill: #D32F2F;
+}
+.icon-delete:hover {
+    -fx-text-fill: #E53935;
+    -fx-background-color: rgba(211,47,47,0.06);
+}
+.icon-pdf {
+    -fx-text-fill: #B8860B;
+}
+.icon-pdf:hover {
+    -fx-text-fill: #D4A106;
+    -fx-background-color: rgba(212,161,6,0.08);
+}
+
+/* ═══════════════════════════════════════════
+   13) TOPBAR / LAYOUT
+   ═══════════════════════════════════════════ */
+.topbar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+.topbar-subtitle {
+    -fx-text-fill: #888888;
+}
+.page-body {
+    -fx-background-color: #F0F2F5;
+}
+.border-pane {
+    -fx-background-color: #F0F2F5;
+}
+.stack-pane {
+    -fx-background-color: #F0F2F5;
+}
+
+/* ═══════════════════════════════════════════
+   14) SEARCH / FILTER
+   ═══════════════════════════════════════════ */
+.toolbar-container {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 8, 0.1, 0, 2);
+}
+.search-container {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.search-container:hover {
+    -fx-border-color: rgba(212,161,6,0.25);
+}
+.search-icon {
+    -fx-text-fill: #B8860B;
+}
+.search-field {
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #AAAAAA;
+}
+.filter-group-label {
+    -fx-text-fill: #999999;
+}
+.filter-combo {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.filter-combo .list-cell {
+    -fx-text-fill: #333333;
+    -fx-background-color: #FFFFFF;
+}
+.filter-combo:hover {
+    -fx-border-color: rgba(212,161,6,0.30);
+    -fx-background-color: #EEEEEE;
+}
+.filter-combo .arrow {
+    -fx-background-color: #B8860B;
+}
+.toolbar-divider {
+    -fx-background-color: rgba(0,0,0,0.08);
+}
+.results-badge {
+    -fx-background-color: rgba(212,161,6,0.08);
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   15) HOME PAGE
+   ═══════════════════════════════════════════ */
+.home-hero {
+    -fx-background-color: #F0F2F5;
+}
+.home-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 16, 0.15, 0, 6);
+}
+.home-card:hover {
+    -fx-border-color: rgba(212,161,6,0.20);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 20, 0.2, 0, 6);
+}
+.home-title {
+    -fx-text-fill: #B8860B;
+    -fx-effect: none;
+}
+.home-subtitle {
+    -fx-text-fill: #888888;
+}
+.home-welcome-label {
+    -fx-text-fill: #AAAAAA;
+}
+.module-card {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0.1, 0, 2);
+}
+.module-card:hover {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(212,161,6,0.20);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.08), 12, 0.2, 0, 3);
+}
+.module-title {
+    -fx-text-fill: #B8860B;
+}
+.module-desc {
+    -fx-text-fill: #888888;
+}
+
+/* ═══════════════════════════════════════════
+   16) SIDE PANELS
+   ═══════════════════════════════════════════ */
+.sidepanel {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: transparent rgba(0,0,0,0.06) transparent transparent;
+}
+.formpanel {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: transparent transparent transparent rgba(0,0,0,0.06);
+}
+.cards-list {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+}
+.h1 {
+    -fx-text-fill: #B8860B;
+}
+.h2 {
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   17) SEPARATOR
+   ═══════════════════════════════════════════ */
+.separator .line {
+    -fx-border-color: rgba(0,0,0,0.06);
+}
+
+/* ═══════════════════════════════════════════
+   18) TextArea
+   ═══════════════════════════════════════════ */
+.form-textarea,
+.form-textarea .content {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-border-color: rgba(0,0,0,0.12);
+}
+.form-textarea:focused,
+.form-textarea:focused .content {
+    -fx-border-color: #D4A106;
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.15), 10, 0.3, 0, 0);
+}
+
+/* ═══════════════════════════════════════════
+   19) SUCCESS NOTIFICATION
+   ═══════════════════════════════════════════ */
+.notif-overlay {
+    -fx-background-color: rgba(0, 0, 0, 0.30);
+}
+.notif-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(212,161,6,0.18);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 24, 0.2, 0, 8);
+}
+.notif-message {
+    -fx-text-fill: #333333;
+}
+.notif-hint {
+    -fx-text-fill: #BBBBBB;
+}
+
+/* ═══════════════════════════════════════════
+   20) SECTION HEADERS & BADGES
+   ═══════════════════════════════════════════ */
+.section-header-bar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.05);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.04), 4, 0.1, 0, 1);
+}
+.count-badge {
+    -fx-background-color: rgba(212,161,6,0.10);
+    -fx-text-fill: #B8860B;
+}
+.gold-dot {
+    -fx-background-color: #D4A106;
+}
+
+/* ═══════════════════════════════════════════
+   21) EMPTY STATE
+   ═══════════════════════════════════════════ */
+.empty-state-icon {
+    -fx-text-fill: #CCCCCC;
+}
+.empty-state-text {
+    -fx-text-fill: #888888;
+}
+.empty-state-hint {
+    -fx-text-fill: #BBBBBB;
+}
+
+/* ═══════════════════════════════════════════
+   22) NAVIGATION BAR
+   ═══════════════════════════════════════════ */
+.nav-bar {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+.nav-logo {
+    -fx-text-fill: #B8860B;
+    -fx-effect: none;
+}
+.nav-tab {
+    -fx-text-fill: #777777;
+}
+.nav-tab:hover {
+    -fx-text-fill: #333333;
+    -fx-background-color: rgba(0,0,0,0.03);
+}
+.nav-tab-active {
+    -fx-text-fill: #B8860B;
+    -fx-background-color: rgba(212,161,6,0.06);
+    -fx-border-color: rgba(212,161,6,0.30);
+}
+
+/* ═══════════════════════════════════════════
+   23) GALLERY PREMIUM CARDS
+   ═══════════════════════════════════════════ */
+.gallery-premium-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0.15, 0, 4);
+}
+.gallery-premium-card:hover {
+    -fx-border-color: rgba(212,161,6,0.30);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.12), 18, 0.2, 0, 4);
+}
+.card-category-badge {
+    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #D4A106;
+}
+
+/* ═══════════════════════════════════════════
+   24) PREMIUM TABLE
+   ═══════════════════════════════════════════ */
+.premium-table-container {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 10, 0.15, 0, 4);
+}
+.table-header-row {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+.table-header-label {
+    -fx-text-fill: #B8860B;
+}
+.table-data-row {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.04) transparent;
+}
+.table-data-row:hover {
+    -fx-background-color: rgba(212,161,6,0.04);
+}
+.table-cell-text {
+    -fx-text-fill: #333333;
+}
+.table-cell-bold {
+    -fx-text-fill: #333333;
+}
+.table-action-btn {
+    -fx-background-color: rgba(0,0,0,0.04);
+}
+.table-action-btn:hover {
+    -fx-background-color: rgba(0,0,0,0.08);
+}
+.table-action-edit {
+    -fx-text-fill: #B8860B;
+}
+.table-action-delete {
+    -fx-text-fill: #D32F2F;
+}
+.table-action-pdf {
+    -fx-text-fill: #B8860B;
+}
+.table-action-pdf:hover {
+    -fx-background-color: rgba(212,161,6,0.12);
+}
+
+/* ═══════════════════════════════════════════
+   25) FILTER SIDEBAR
+   ═══════════════════════════════════════════ */
+.filter-sidebar {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: transparent rgba(0,0,0,0.06) transparent transparent;
+}
+.sidebar-toggle-btn {
+    -fx-background-color: #F0F0F0;
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.sidebar-toggle-btn:hover {
+    -fx-background-color: rgba(212,161,6,0.08);
+    -fx-text-fill: #D4A106;
+}
+.sidebar-title {
+    -fx-text-fill: #B8860B;
+}
+.sidebar-section-label {
+    -fx-text-fill: #888888;
+}
+.sidebar-separator {
+    -fx-border-color: rgba(0,0,0,0.05);
+}
+.sidebar-combo {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.sidebar-combo .list-cell {
+    -fx-text-fill: #333333;
+    -fx-background-color: #FFFFFF;
+}
+.sidebar-combo:hover {
+    -fx-border-color: rgba(212,161,6,0.30);
+    -fx-background-color: #FAFAFA;
+}
+.sidebar-combo .arrow {
+    -fx-background-color: #B8860B;
+}
+.sidebar-search {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #AAAAAA;
+}
+.sidebar-search:focused {
+    -fx-border-color: #D4A106;
+    -fx-background-color: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.12), 8, 0.3, 0, 0);
+}
+.sidebar-btn {
+    -fx-background-color: rgba(212,161,6,0.06);
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.20);
+}
+.sidebar-btn:hover {
+    -fx-background-color: rgba(212,161,6,0.10);
+    -fx-border-color: rgba(184,134,11,0.35);
+}
+
+/* ═══════════════════════════════════════════
+   26) CARD ACTION BUTTONS ROW
+   ═══════════════════════════════════════════ */
+.card-actions-row {
+    -fx-border-color: rgba(0,0,0,0.06) transparent transparent transparent;
+}
+.card-btn-edit {
+    -fx-background-color: rgba(212,161,6,0.06);
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.25);
+}
+.card-btn-edit:hover {
+    -fx-background-color: #D4A106;
+    -fx-text-fill: #FFFFFF;
+}
+.card-btn-delete {
+    -fx-background-color: rgba(211,47,47,0.06);
+    -fx-text-fill: #D32F2F;
+    -fx-border-color: rgba(211,47,47,0.20);
+}
+.card-btn-delete:hover {
+    -fx-background-color: #D32F2F;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* ═══════════════════════════════════════════
+   27) DETAIL PAGE
+   ═══════════════════════════════════════════ */
+.detail-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 10, 0.15, 0, 3);
+}
+.detail-card-title {
+    -fx-text-fill: #B8860B;
+}
+.detail-info-label {
+    -fx-text-fill: #888888;
+}
+.detail-info-value {
+    -fx-text-fill: #333333;
+}
+.detail-desc-text {
+    -fx-text-fill: #555555;
+}
+.detail-gallery-thumb {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: rgba(0,0,0,0.06);
+}
+.detail-gallery-thumb:hover {
+    -fx-border-color: rgba(212,161,6,0.20);
+}
+
+/* ═══════════════════════════════════════════
+   28) GOOGLE MAPS / EXPORT PDF
+   ═══════════════════════════════════════════ */
+.btn-google-maps {
+    -fx-background-color: rgba(66,133,244,0.08);
+    -fx-text-fill: #4285F4;
+    -fx-border-color: rgba(66,133,244,0.25);
+}
+.btn-google-maps:hover {
+    -fx-background-color: #4285F4;
+    -fx-text-fill: #FFFFFF;
+}
+.btn-export-pdf {
+    -fx-background-color: rgba(212,161,6,0.08);
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.25);
+}
+.btn-export-pdf:hover {
+    -fx-background-color: #D4A106;
+    -fx-text-fill: #FFFFFF;
+}
+.btn-export-pdf-small {
+    -fx-background-color: rgba(212,161,6,0.10);
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.30);
+}
+.btn-export-pdf-small:hover {
+    -fx-background-color: #D4A106;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* ═══════════════════════════════════════════
+   CAROUSEL
+   ═══════════════════════════════════════════ */
+.carousel-arrow {
+    -fx-background-color: rgba(212,161,6,0.06);
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.20);
+}
+.carousel-arrow:hover {
+    -fx-background-color: rgba(212,161,6,0.12);
+    -fx-border-color: rgba(184,134,11,0.40);
+    -fx-text-fill: #D4A106;
+}
+.carousel-dot {
+    -fx-fill: rgba(0,0,0,0.12);
+}
+.carousel-dot:hover {
+    -fx-fill: rgba(212,161,6,0.40);
+}
+.carousel-dot-active {
+    -fx-fill: #D4A106;
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.40), 4, 0.3, 0, 0);
+}
+.carousel-counter {
+    -fx-text-fill: rgba(0,0,0,0.35);
+}
+
+/* ═══════════════════════════════════════════
+   LANGUAGE SELECTOR
+   ═══════════════════════════════════════════ */
+.lang-selector {
+    -fx-background-color: rgba(212,161,6,0.08);
+    -fx-border-color: rgba(184,134,11,0.25);
+    -fx-text-fill: #B8860B;
+}
+.lang-selector .list-cell {
+    -fx-text-fill: #B8860B;
+}
+.lang-selector .arrow {
+    -fx-background-color: #B8860B;
+}
+.lang-selector:hover {
+    -fx-background-color: rgba(212,161,6,0.14);
+    -fx-border-color: rgba(184,134,11,0.40);
+}
+.lang-selector .list-view {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.10);
+}
+.lang-selector .list-view .list-cell {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+}
+.lang-selector .list-view .list-cell:hover {
+    -fx-background-color: rgba(212,161,6,0.10);
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   STATISTICS CHARTS & CARDS
+   ═══════════════════════════════════════════ */
+.stats-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+.stats-card:hover {
+    -fx-background-color: #FAFAFA;
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.12), 8, 0, 0, 2);
+}
+.stats-card-title {
+    -fx-text-fill: #888888;
+}
+.stats-card-value {
+    -fx-text-fill: #B8860B;
+}
+.stats-chart-container {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.06);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 6, 0, 0, 2);
+}
+.stats-pie-chart {
+    -fx-background-color: transparent;
+}
+.stats-pie-chart > .chart-title {
+    -fx-text-fill: #333333;
+}
+.stats-pie-chart > .chart-legend > .chart-legend-item > .chart-legend-item-text {
+    -fx-text-fill: #666666;
+}
+.stats-pie-chart .chart-pie-label {
+    -fx-fill: #333333;
+}
+.stats-pie-chart .chart-pie-label-line {
+    -fx-stroke: rgba(0,0,0,0.15);
+}
+.stats-bar-chart > .chart-title {
+    -fx-text-fill: #333333;
+}
+.stats-bar-chart > .chart-plot-background {
+    -fx-background-color: #FAFAFA;
+}
+.stats-bar-chart .axis {
+    -fx-tick-label-fill: #888888;
+}
+.stats-bar-chart .axis-label {
+    -fx-text-fill: #666666;
+}
+.stats-bar-chart .chart-vertical-grid-lines,
+.stats-bar-chart .chart-horizontal-grid-lines {
+    -fx-stroke: rgba(0,0,0,0.06);
+}
+.stats-bar-chart .chart-vertical-zero-line,
+.stats-bar-chart .chart-horizontal-zero-line {
+    -fx-stroke: rgba(0,0,0,0.10);
+}
+.stats-bar-chart .chart-bar {
+    -fx-bar-fill: #D4A106;
+}
+.stats-count-label {
+    -fx-text-fill: #888888;
+    -fx-background-color: rgba(212,161,6,0.08);
+    -fx-border-color: rgba(184,134,11,0.20);
+}
+
+/* ═══════════════════════════════════════════
+   CHATBOT FLOATING PANEL
+   ═══════════════════════════════════════════ */
+.chatbot-fab {
+    -fx-background-color: linear-gradient(to bottom right, #D4A106, #B8860B);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.35), 12, 0.15, 0, 3);
+}
+.chatbot-fab:hover {
+    -fx-background-color: linear-gradient(to bottom right, #E0B000, #D4A106);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.50), 16, 0.2, 0, 4);
+}
+.chatbot-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.10);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 18, 0.1, 0, 6);
+}
+.chatbot-header {
+    -fx-background-color: linear-gradient(to right, #F8F9FA, #F0F0F0);
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+.chatbot-header-title {
+    -fx-text-fill: #B8860B;
+}
+.chatbot-close-btn {
+    -fx-text-fill: #999999;
+}
+.chatbot-close-btn:hover {
+    -fx-background-color: rgba(0,0,0,0.05);
+    -fx-text-fill: #333333;
+}
+.chatbot-lang-combo {
+    -fx-background-color: #F0F0F0;
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.20);
+}
+.chatbot-lang-combo .list-cell {
+    -fx-text-fill: #B8860B;
+}
+.chatbot-lang-combo .arrow {
+    -fx-background-color: #B8860B;
+}
+.chatbot-scroll {
+    -fx-background: #FAFAFA;
+}
+.chatbot-scroll > .viewport {
+    -fx-background-color: #FAFAFA;
+}
+.chatbot-messages {
+    -fx-background-color: #FAFAFA;
+}
+.chatbot-msg-user {
+    -fx-background-color: linear-gradient(to bottom right, #D4A106, #B8860B);
+    -fx-text-fill: #FFFFFF;
+}
+.chatbot-msg-bot {
+    -fx-background-color: #F0F0F0;
+    -fx-border-color: rgba(0,0,0,0.06);
+}
+.chatbot-text-normal {
+    -fx-fill: #333333;
+}
+.chatbot-text-bold {
+    -fx-fill: #B8860B;
+}
+.chatbot-typing {
+    -fx-background-color: #F0F0F0;
+}
+.chatbot-typing-dot {
+    -fx-text-fill: #B8860B;
+}
+.chatbot-suggestions {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent transparent rgba(0,0,0,0.05) transparent;
+}
+.chatbot-suggestion-btn {
+    -fx-background-color: rgba(212,161,6,0.08);
+    -fx-text-fill: #B8860B;
+    -fx-border-color: rgba(184,134,11,0.18);
+}
+.chatbot-suggestion-btn:hover {
+    -fx-background-color: rgba(212,161,6,0.16);
+    -fx-border-color: rgba(184,134,11,0.35);
+}
+.chatbot-input-bar {
+    -fx-background-color: #F8F9FA;
+    -fx-border-color: rgba(0,0,0,0.05) transparent transparent transparent;
+}
+.chatbot-input {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+    -fx-prompt-text-fill: #AAAAAA;
+    -fx-border-color: rgba(0,0,0,0.10);
+}
+.chatbot-input:focused {
+    -fx-border-color: rgba(212,161,6,0.40);
+    -fx-background-color: #FFFFFF;
+}
+.chatbot-send-btn {
+    -fx-background-color: linear-gradient(to bottom right, #D4A106, #B8860B);
+    -fx-text-fill: #FFFFFF;
+}
+.chatbot-send-btn:hover {
+    -fx-background-color: linear-gradient(to bottom right, #E0B000, #D4A106);
+}
+.chatbot-action-btn {
+    -fx-background-color: rgba(102,126,234,0.08);
+    -fx-text-fill: #5C6BC0;
+    -fx-border-color: rgba(92,107,192,0.25);
+}
+.chatbot-action-btn:hover {
+    -fx-background-color: rgba(102,126,234,0.16);
+    -fx-text-fill: #3F51B5;
+}
+
+/* ═══════════════════════════════════════════
+   RECOMMANDATION À PROXIMITÉ
+   ═══════════════════════════════════════════ */
+.reco-map-container {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.reco-map-hint {
+    -fx-text-fill: #999999;
+}
+.reco-coord-label {
+    -fx-text-fill: #888888;
+}
+.reco-coord-value {
+    -fx-text-fill: #B8860B;
+}
+.reco-controls-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.reco-slider .track {
+    -fx-background-color: #DDD;
+}
+.reco-slider .thumb {
+    -fx-background-color: #D4A106;
+}
+.reco-radius-label {
+    -fx-text-fill: #B8860B;
+}
+.reco-info-label {
+    -fx-text-fill: #999999;
+}
+.reco-status-label {
+    -fx-text-fill: #333333;
+}
+.reco-results-title {
+    -fx-text-fill: #333333;
+}
+.reco-card {
+    -fx-background-color: linear-gradient(to bottom right, #FFFFFF, #F8F9FA);
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0, 0, 2);
+}
+.reco-card:hover {
+    -fx-border-color: rgba(212,161,6,0.30);
+    -fx-effect: dropshadow(gaussian, rgba(212,161,6,0.10), 10, 0, 0, 3);
+    -fx-background-color: linear-gradient(to bottom right, #FAFAFA, #F5F5F5);
+}
+.reco-card-db {
+    -fx-border-color: rgba(52,152,219,0.12);
+}
+.reco-card-db:hover {
+    -fx-border-color: rgba(52,152,219,0.35);
+}
+.reco-rank-badge {
+    -fx-background-color: #D4A106;
+    -fx-text-fill: #FFFFFF;
+}
+.reco-card-name {
+    -fx-text-fill: #333333;
+}
+.reco-rating-num {
+    -fx-text-fill: #B8860B;
+}
+.reco-review-count {
+    -fx-text-fill: #999999;
+}
+.reco-chip {
+    -fx-background-color: rgba(0,0,0,0.04);
+    -fx-text-fill: #666666;
+    -fx-border-color: rgba(0,0,0,0.06);
+}
+.reco-card-address {
+    -fx-text-fill: #888888;
+}
+.reco-type-badge {
+    -fx-background-color: rgba(212,161,6,0.08);
+    -fx-text-fill: #B8860B;
+}
+.reco-score-bar .bar {
+    -fx-background-color: linear-gradient(to right, #D4A106, #B8860B);
+}
+.reco-score-bar .track {
+    -fx-background-color: #E0E0E0;
+}
+.reco-score-label {
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   ACCENT LINES — Lighter versions
+   ═══════════════════════════════════════════ */
+.accent-line-thin {
+    -fx-background-color: linear-gradient(to right, rgba(184,134,11,0.30), rgba(184,134,11,0.06), transparent);
+}
+.accent-line-full {
+    -fx-background-color: linear-gradient(to right, transparent, rgba(184,134,11,0.18), transparent);
+}
+
+/* ═══════════════════════════════════════════
+   THEME TOGGLE BUTTON
+   ═══════════════════════════════════════════ */
+.theme-toggle-btn {
+    -fx-font-size: 18px;
+    -fx-min-width: 42;
+    -fx-max-width: 42;
+    -fx-min-height: 42;
+    -fx-max-height: 42;
+    -fx-background-radius: 50;
+    -fx-border-radius: 50;
+    -fx-background-color: rgba(0,0,0,0.04);
+    -fx-border-color: rgba(0,0,0,0.10);
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+.theme-toggle-btn:hover {
+    -fx-background-color: rgba(212,161,6,0.10);
+    -fx-border-color: rgba(184,134,11,0.30);
+}
+
+/* ═══════════════════════════════════════════
+   ListView for light mode
+   ═══════════════════════════════════════════ */
+.list-view {
+    -fx-background-color: #FFFFFF;
+}
+.list-cell {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #333333;
+}
+.list-cell:hover {
+    -fx-background-color: #F5F5F5;
+}
+.list-cell:selected {
+    -fx-background-color: rgba(212,161,6,0.10);
+    -fx-text-fill: #B8860B;
+}
+
+/* ═══════════════════════════════════════════
+   MISSING CRITICAL — Page body / content area
+   ═══════════════════════════════════════════ */
+.page-body {
+    -fx-background-color: #F0F2F5;
+}
+.content-root {
+    -fx-background-color: #F0F2F5;
+}
+
+/* ═══════════════ Badge default fix ═══════════════ */
+.badge-default {
+    -fx-background-color: rgba(0,0,0,0.06);
+    -fx-text-fill: #888888;
+}
+
+/* ═══════════════ Subtitle label ═══════════════ */
+.subtitle-label {
+    -fx-text-fill: #888888;
+}
+
+/* ═══════════════ Chatbot AI toggle ═══════════════ */
+.chatbot-ai-toggle {
+    -fx-background-color: #F0F0F0;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.chatbot-ai-off {
+    -fx-background-color: #F0F0F0;
+    -fx-text-fill: #888888;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+.chatbot-ai-off:hover {
+    -fx-background-color: #E0E0E0;
+    -fx-text-fill: #666666;
+}
+
+/* ═══════════════ ScrollPane viewport ═══════════════ */
+.scroll-pane,
+.scroll-pane > .viewport {
+    -fx-background-color: #F0F2F5;
+}
+
+/* ═══════════════════════════════════════════
+   AI GENERATE BUTTON (Light Theme)
+   ═══════════════════════════════════════════ */
+.btn-ai-generate {
+    -fx-background-color: linear-gradient(to right, #6C63FF, #AB47BC);
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 5 14 5 14;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(108,99,255,0.25), 6, 0.15, 0, 2);
+}
+.btn-ai-generate:hover {
+    -fx-background-color: linear-gradient(to right, #5A52E0, #9C27B0);
+    -fx-effect: dropshadow(gaussian, rgba(108,99,255,0.40), 10, 0.25, 0, 3);
+}
+.btn-ai-generate:pressed {
+    -fx-background-color: linear-gradient(to right, #4A43C8, #8E24AA);
+    -fx-effect: dropshadow(gaussian, rgba(108,99,255,0.15), 4, 0.1, 0, 1);
+}
+.btn-ai-generate:disabled {
+    -fx-opacity: 0.6;
+    -fx-cursor: default;
+}
+

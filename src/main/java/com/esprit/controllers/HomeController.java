@@ -1,5 +1,6 @@
 package com.esprit.controllers;
 
+import com.esprit.utils.ThemeManager;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.layout.StackPane;
@@ -32,4 +33,10 @@ public class HomeController {
     private void goTableauActivites(ActionEvent event) {
         NavigationUtils.goTo("/activite_tableau.fxml", event);
     }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
+    }
+
 }

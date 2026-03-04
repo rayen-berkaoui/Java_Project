@@ -26,7 +26,9 @@
                 </HBox>
                 <Pane HBox.hgrow="ALWAYS"/>
                 <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportAllPdf" styleClass="btn-export-pdf"/>
-                <Button text="+ Nouvelle activit&#xe9;" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+                <Button text="+ Nouvelle activit&#xe9;" onAction="#onShowAjouter" styleClass="nav-tab"/>
+                <Region prefWidth="8"/>
+                <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
             </HBox>
 
             <!-- COMPACT SEARCH -->
@@ -62,7 +64,8 @@
             <!-- ════════ STATISTICS SECTION ════════ -->
             <HBox alignment="CENTER_LEFT" spacing="12">
                 <Label text="&#x1f4ca;" style="-fx-font-size: 24px;"/>
-                <Label text="Statistiques par Cat&#xe9;gorie" styleClass="h1"/>
+                <Label text="Statistiques par" styleClass="h1"/>
+                <ComboBox fx:id="chartFieldSelector" styleClass="filter-combo" prefWidth="200"/>
                 <Pane HBox.hgrow="ALWAYS"/>
                 <Button fx:id="btnToggleChart" text="&#x1f504; Changer de vue" onAction="#onToggleChart" styleClass="btn-secondary"/>
                 <Button fx:id="btnToggleStats" text="&#x25b2; Masquer" onAction="#onToggleStats" styleClass="btn-secondary"/>

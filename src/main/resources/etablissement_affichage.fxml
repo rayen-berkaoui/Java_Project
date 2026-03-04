@@ -25,7 +25,9 @@
             <Pane HBox.hgrow="ALWAYS"/>
             <ComboBox fx:id="langSelector" styleClass="lang-selector" promptText="Langue"/>
             <Region prefWidth="12"/>
-            <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+            <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="nav-tab"/>
+            <Region prefWidth="8"/>
+            <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
         </HBox>
     </top>
 

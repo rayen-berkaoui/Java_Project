@@ -7,6 +7,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import com.esprit.utils.ThemeManager;
+
 import java.net.URL;
 
 public class NavigationUtils {
@@ -32,6 +34,9 @@ public class NavigationUtils {
 
             // ✅ force maximized après changement de root
             stage.setMaximized(true);
+
+            // ✅ Appliquer le thème mémorisé
+            javafx.application.Platform.runLater(() -> ThemeManager.applyTheme(stage.getScene()));
 
         } catch (Exception e) {
             e.printStackTrace();

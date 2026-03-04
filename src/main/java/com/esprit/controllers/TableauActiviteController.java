@@ -3,6 +3,7 @@ package com.esprit.controllers;
 import com.esprit.entities.Activite;
 import com.esprit.services.ActiviteServices;
 import com.esprit.services.PdfExportService;
+import com.esprit.utils.ThemeManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -48,6 +49,7 @@ public class TableauActiviteController {
     @FXML private Button btnToggleChart;
     @FXML private Button btnToggleStats;
     @FXML private Label countLabel;
+    @FXML private ComboBox<String> chartFieldSelector;
 
     private boolean showingPie = true;
     private boolean statsVisible = true;
@@ -81,6 +83,12 @@ public class TableauActiviteController {
         loadData();
 
         filteredData = new FilteredList<>(masterData, a -> true);
+
+        // Field selector for statistics
+        chartFieldSelector.setItems(FXCollections.observableArrayList(
+                "Catégorie", "Niveau", "Statut", "Durée", "Prix", "Devise", "Places", "Données remplies"));
+        chartFieldSelector.setValue("Catégorie");
+        chartFieldSelector.valueProperty().addListener((obs, o, n) -> updateCharts());
 
         searchField.textProperty().addListener((obs, o, n) -> { applyFilters(); rebuildTable(); updateCharts(); });
         filterCategorie.valueProperty().addListener((obs, o, n) -> { applyFilters(); rebuildTable(); updateCharts(); });
@@ -291,85 +299,214 @@ public class TableauActiviteController {
 
     // ====== CHARTS & STATISTICS ======
     private void updateCharts() {
-        // Count by category
-        Map<String, Long> categoryCounts = filteredData.stream()
-                .collect(Collectors.groupingBy(
-                        a -> safe(a.getCategorie()).toLowerCase().isBlank() ? "autre" : safe(a.getCategorie()).toLowerCase(),
-                        Collectors.counting()));
+        String field = chartFieldSelector.getValue();
+        if (field == null) field = "Catégorie";
 
         int total = filteredData.size();
-        countLabel.setText(total + " activit\u00e9" + (total > 1 ? "s" : ""));
+        countLabel.setText(total + " activité" + (total > 1 ? "s" : ""));
 
-        // ── Summary cards ──
-        buildStatsCards(categoryCounts, total);
+        Map<String, Long> counts;
+        String chartTitle;
 
-        // ── Pie Chart ──
+        switch (field) {
+            case "Niveau" -> {
+                counts = filteredData.stream().collect(Collectors.groupingBy(
+                        a -> safe(a.getNiveau()).isBlank() ? "(vide)" : safe(a.getNiveau()).trim(),
+                        Collectors.counting()));
+                chartTitle = "Niveau";
+            }
+            case "Statut" -> {
+                counts = filteredData.stream().collect(Collectors.groupingBy(
+                        a -> safe(a.getStatut()).isBlank() ? "(vide)" : safe(a.getStatut()).trim(),
+                        Collectors.counting()));
+                chartTitle = "Statut";
+            }
+            case "Durée" -> {
+                counts = filteredData.stream().collect(Collectors.groupingBy(
+                        a -> {
+                            if (a.getDuree() == null) return "Non défini";
+                            int d = a.getDuree();
+                            if (d <= 30) return "0-30 min";
+                            if (d <= 60) return "31-60 min";
+                            if (d <= 120) return "1h-2h";
+                            return "> 2h";
+                        },
+                        Collectors.counting()));
+                chartTitle = "Durée";
+            }
+            case "Prix" -> {
+                counts = filteredData.stream().collect(Collectors.groupingBy(
+                        a -> {
+                            if (a.getPrix() == null || a.getPrix().compareTo(BigDecimal.ZERO) == 0) return "Gratuit";
+                            double p = a.getPrix().doubleValue();
+                            if (p <= 20) return "1-20 TND";
+                            if (p <= 50) return "21-50 TND";
+                            if (p <= 100) return "51-100 TND";
+                            return "> 100 TND";
+                        },
+                        Collectors.counting()));
+                chartTitle = "Prix";
+            }
+            case "Devise" -> {
+                counts = filteredData.stream().collect(Collectors.groupingBy(
+                        a -> safe(a.getDevise()).isBlank() ? "(vide)" : safe(a.getDevise()).trim().toUpperCase(),
+                        Collectors.counting()));
+                chartTitle = "Devise";
+            }
+            case "Places" -> {
+                counts = filteredData.stream().collect(Collectors.groupingBy(
+                        a -> {
+                            if (a.getNbPlaces() == null) return "Non défini";
+                            if (a.getPlacesDispo() == null || a.getPlacesDispo() == 0) return "Complet";
+                            double ratio = (double) a.getPlacesDispo() / a.getNbPlaces();
+                            if (ratio <= 0.25) return "Presque complet";
+                            if (ratio <= 0.75) return "Partiellement dispo";
+                            return "Largement dispo";
+                        },
+                        Collectors.counting()));
+                chartTitle = "Occupation Places";
+            }
+            case "Données remplies" -> {
+                counts = buildFieldCompletion();
+                chartTitle = "Données remplies";
+            }
+            default -> { // Catégorie
+                counts = filteredData.stream().collect(Collectors.groupingBy(
+                        a -> safe(a.getCategorie()).toLowerCase().isBlank() ? "autre" : safe(a.getCategorie()).toLowerCase(),
+                        Collectors.counting()));
+                chartTitle = "Catégorie";
+            }
+        }
+
+        buildStatsCards(counts, total, field);
+        buildPieChart(counts, total, chartTitle);
+        buildBarChart(counts, total, chartTitle);
+    }
+
+    private Map<String, Long> buildFieldCompletion() {
+        long nom = filteredData.stream().filter(a -> !safe(a.getNomActivite()).isBlank()).count();
+        long desc = filteredData.stream().filter(a -> !safe(a.getDescription()).isBlank()).count();
+        long cat = filteredData.stream().filter(a -> !safe(a.getCategorie()).isBlank()).count();
+        long duree = filteredData.stream().filter(a -> a.getDuree() != null).count();
+        long niveau = filteredData.stream().filter(a -> !safe(a.getNiveau()).isBlank()).count();
+        long prix = filteredData.stream().filter(a -> a.getPrix() != null && a.getPrix().compareTo(BigDecimal.ZERO) > 0).count();
+        long dates = filteredData.stream().filter(a -> a.getDateDebut() != null).count();
+        long places = filteredData.stream().filter(a -> a.getNbPlaces() != null).count();
+        long adresse = filteredData.stream().filter(a -> !safe(a.getAdresseDepart()).isBlank()).count();
+        long equip = filteredData.stream().filter(a -> !safe(a.getEquipementInclus()).isBlank()).count();
+
+        Map<String, Long> m = new LinkedHashMap<>();
+        m.put("Nom", nom);
+        m.put("Description", desc);
+        m.put("Catégorie", cat);
+        m.put("Durée", duree);
+        m.put("Niveau", niveau);
+        m.put("Prix", prix);
+        m.put("Dates", dates);
+        m.put("Places", places);
+        m.put("Adresse", adresse);
+        m.put("Équipement", equip);
+        return m;
+    }
+
+    private void buildPieChart(Map<String, Long> counts, int total, String chartTitle) {
         ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
-        categoryCounts.entrySet().stream()
+        counts.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .forEach(entry -> {
                     String label = capitalize(entry.getKey()) + " (" + entry.getValue() + ")";
                     pieData.add(new PieChart.Data(label, entry.getValue()));
                 });
         pieChart.setData(pieData);
-        pieChart.setTitle("R\u00e9partition par Cat\u00e9gorie (" + total + ")");
+        pieChart.setTitle("Répartition par " + chartTitle + " (" + total + ")");
 
-        // Style pie slices with category colors
+        String[] palette = {"#667eea", "#f5576c", "#43e97b", "#FFB300", "#a18cd1",
+                "#30cfd0", "#fa709a", "#4facfe", "#ff9a9e", "#fbc2eb"};
+        int idx = 0;
         for (PieChart.Data d : pieChart.getData()) {
-            String catName = d.getName().split(" \\(")[0].toLowerCase();
-            String color = getCategoryColor(catName);
+            String color;
+            if ("Catégorie".equals(chartTitle)) {
+                String catName = d.getName().split(" \\(")[0].toLowerCase();
+                color = getCategoryColor(catName);
+            } else {
+                color = idx < palette.length ? palette[idx] : palette[idx % palette.length];
+            }
             d.getNode().setStyle("-fx-pie-color: " + color + ";");
-
             double pct = total > 0 ? (d.getPieValue() / total * 100) : 0;
             Tooltip tip = new Tooltip(d.getName() + "\n" + String.format("%.1f%%", pct));
             tip.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
             Tooltip.install(d.getNode(), tip);
+            idx++;
         }
+    }
 
-        // ── Bar Chart ──
+    private void buildBarChart(Map<String, Long> counts, int total, String chartTitle) {
         XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Activit\u00e9s");
-        categoryCounts.entrySet().stream()
+        series.setName("Activités");
+        counts.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .forEach(entry -> series.getData().add(
                         new XYChart.Data<>(capitalize(entry.getKey()), entry.getValue())));
 
         barChart.getData().clear();
         barChart.getData().add(series);
-        barChart.setTitle("Nombre par Cat\u00e9gorie (" + total + ")");
+        barChart.setTitle("Nombre par " + chartTitle + " (" + total + ")");
 
-        // Style bar colors
+        String[] palette = {"#667eea", "#f5576c", "#43e97b", "#FFB300", "#a18cd1",
+                "#30cfd0", "#fa709a", "#4facfe", "#ff9a9e", "#fbc2eb"};
         javafx.application.Platform.runLater(() -> {
+            int i = 0;
             for (XYChart.Data<String, Number> d : series.getData()) {
                 if (d.getNode() != null) {
-                    String color = getCategoryColor(d.getXValue().toLowerCase());
+                    String color;
+                    if ("Catégorie".equals(chartTitle)) {
+                        color = getCategoryColor(d.getXValue().toLowerCase());
+                    } else {
+                        color = i < palette.length ? palette[i] : palette[i % palette.length];
+                    }
                     d.getNode().setStyle("-fx-bar-fill: " + color + ";");
                     Tooltip tip = new Tooltip(d.getXValue() + ": " + d.getYValue());
                     tip.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
                     Tooltip.install(d.getNode(), tip);
                 }
+                i++;
             }
         });
     }
 
-    private void buildStatsCards(Map<String, Long> categoryCounts, int total) {
+    private void buildStatsCards(Map<String, Long> counts, int total, String field) {
         statsCardsRow.getChildren().clear();
 
         // Total card
         statsCardsRow.getChildren().add(buildStatCard("\uD83D\uDCCA", "Total", String.valueOf(total), "#FFC107"));
 
-        // Per-category cards (sorted by count desc)
-        categoryCounts.entrySet().stream()
+        String[] palette = {"#667eea", "#f5576c", "#43e97b", "#FFB300", "#a18cd1",
+                "#30cfd0", "#fa709a", "#4facfe", "#ff9a9e", "#fbc2eb"};
+        int idx = 0;
+        for (var entry : counts.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
-                .forEach(entry -> {
-                    String cat = entry.getKey();
-                    long count = entry.getValue();
-                    double pct = total > 0 ? (count * 100.0 / total) : 0;
-                    String[] cfg = CATEGORY_CONFIG.getOrDefault(cat, CATEGORY_CONFIG.get("autre"));
-                    statsCardsRow.getChildren().add(
-                            buildStatCard(cfg[0], capitalize(cat),
-                                    count + " (" + String.format("%.0f%%", pct) + ")", cfg[1]));
-                });
+                .collect(Collectors.toList())) {
+            String key = entry.getKey();
+            long count = entry.getValue();
+            double pct = total > 0 ? (count * 100.0 / total) : 0;
+            String color;
+            String emoji;
+            if ("Catégorie".equals(field)) {
+                String[] cfg = CATEGORY_CONFIG.getOrDefault(key.toLowerCase(), CATEGORY_CONFIG.get("autre"));
+                emoji = cfg[0];
+                color = cfg[1];
+            } else if ("Données remplies".equals(field)) {
+                emoji = "✅";
+                color = idx < palette.length ? palette[idx] : palette[idx % palette.length];
+            } else {
+                emoji = "📌";
+                color = idx < palette.length ? palette[idx] : palette[idx % palette.length];
+            }
+            statsCardsRow.getChildren().add(
+                    buildStatCard(emoji, capitalize(key),
+                            count + " (" + String.format("%.0f%%", pct) + ")", color));
+            idx++;
+        }
     }
 
     private VBox buildStatCard(String emoji, String title, String value, String accentColor) {
@@ -531,6 +668,8 @@ public class TableauActiviteController {
         NavigationUtils.goTo("/activite_affichage.fxml", event);
     }
 
+
+
     @FXML
     private void onShowAjouter(ActionEvent event) {
         AffichageActiviteController.activiteToEdit = null;
@@ -542,5 +681,10 @@ public class TableauActiviteController {
         loadData();
         applyFilters();
         rebuildTable();
+    }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
     }
 }

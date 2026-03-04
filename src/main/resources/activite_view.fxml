@@ -24,6 +24,8 @@
                     <Label text="Explorez et organisez toutes vos activités" styleClass="page-subtitle"/>
                 </VBox>
                 <Pane HBox.hgrow="ALWAYS"/>                <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportAllPdf" styleClass="btn-export-pdf"/>                <Button text="← Home" onAction="#goHome" styleClass="home-btn-small"/>
+                <Region prefWidth="8"/>
+                <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
             </HBox>
 
             <Region prefHeight="14"/>
@@ -82,7 +84,7 @@
                     <Region styleClass="gold-dot"/>
                     <Label text="Galerie des activités" styleClass="section-title"/>
                     <Pane HBox.hgrow="ALWAYS"/>
-                    <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="btn-primary pill"/>
+                    <Button text="+ Nouveau" onAction="#onShowAjouter" styleClass="nav-tab"/>
                 </HBox>
 
                 <!-- Cards grid -->

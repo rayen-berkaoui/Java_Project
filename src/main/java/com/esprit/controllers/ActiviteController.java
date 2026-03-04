@@ -3,6 +3,7 @@ package com.esprit.controllers;
 import com.esprit.entities.Activite;
 import com.esprit.services.ActiviteImageServices;
 import com.esprit.services.ActiviteServices;
+import com.esprit.utils.ThemeManager;
 import com.esprit.services.PdfExportService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -358,4 +359,9 @@ public class ActiviteController {
     }
 
     private String safe(String s) { return s == null ? "" : s; }
+
+    @FXML
+    private void toggleTheme(ActionEvent event) {
+        ThemeManager.handleToggleTheme(event);
+    }
 }
