@@ -3,6 +3,7 @@ package com.esprit.controllers;
 import com.esprit.entities.Etablissement;
 import com.esprit.services.EtablissementServices;
 import com.esprit.services.PdfExportService;
+import com.esprit.services.ExcelExportService;
 import com.esprit.utils.ThemeManager;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -556,6 +557,24 @@ public class TableauEtablissementController {
             if (java.awt.Desktop.isDesktopSupported())
                 new Thread(() -> { try { java.awt.Desktop.getDesktop().open(file); } catch (Exception ignored) {} }).start();
         } catch (Exception ex) { showError("Erreur PDF : " + ex.getMessage()); ex.printStackTrace(); }
+    }
+
+    @FXML
+    private void onExportExcel(ActionEvent event) {
+        if (filteredData == null || filteredData.isEmpty()) { showError("Aucun \u00e9tablissement \u00e0 exporter."); return; }
+        javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+        fc.setTitle("Exporter en Excel");
+        fc.setInitialFileName("etablissements.xlsx");
+        fc.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("Excel (*.xlsx)", "*.xlsx"));
+        javafx.stage.Window window = tableBody.getScene().getWindow();
+        java.io.File file = fc.showSaveDialog(window);
+        if (file == null) return;
+        try {
+            ExcelExportService.exportAllEtablissements(new java.util.ArrayList<>(filteredData), file);
+            showInfo("Excel g\u00e9n\u00e9r\u00e9 !\n" + filteredData.size() + " \u00e9tablissement(s) export\u00e9(s).\n" + file.getAbsolutePath());
+            if (java.awt.Desktop.isDesktopSupported())
+                new Thread(() -> { try { java.awt.Desktop.getDesktop().open(file); } catch (Exception ignored) {} }).start();
+        } catch (Exception ex) { showError("Erreur Excel : " + ex.getMessage()); ex.printStackTrace(); }
     }
 
     private void showInfo(String msg) {

@@ -111,7 +111,9 @@ public class AffichageEtablissementController {
         filterVille.setItems(FXCollections.observableArrayList("Tous"));
         filterVille.getSelectionModel().selectFirst();
 
-        filterGamme.setItems(FXCollections.observableArrayList("Tous", "€", "€€", "€€€"));
+        filterGamme.setItems(FXCollections.observableArrayList(
+                "Tous", "⭐", "⭐⭐", "⭐⭐⭐", "⭐⭐⭐⭐", "⭐⭐⭐⭐⭐"
+        ));
         filterGamme.getSelectionModel().selectFirst();
 
         filterType.setItems(FXCollections.observableArrayList(

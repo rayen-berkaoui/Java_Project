@@ -26,6 +26,7 @@
                 </HBox>
                 <Pane HBox.hgrow="ALWAYS"/>
                 <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportAllPdf" styleClass="btn-export-pdf"/>
+                <Button text="&#x1F4CA; Exporter Excel" onAction="#onExportExcel" styleClass="btn-export-pdf"/>
                 <Button text="+ Nouvelle activit&#xe9;" onAction="#onShowAjouter" styleClass="nav-tab"/>
                 <Region prefWidth="8"/>
                 <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
