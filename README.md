@@ -289,7 +289,7 @@ Contributions are welcome! Feel free to:
 <p align="center">
   <b>Built with ❤️ by the TABAANI Team</b>
   <br/>
-  <sub>Esprit School of Engineering — 3A17</sub>
+  <sub>Esprit School of Engineering — 3A31</sub>
 </p>
 
 <p align="center">
