@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane minHeight="400.0" minWidth="600.0" styleClass="root" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.ChatController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="16.0" style="-fx-background-color: #111; -fx-padding: 12 20;">
+            <Label styleClass="connect-card-title" text="Espace Chat" />
+            <Label fx:id="statusLabel" style="-fx-text-fill: #888; -fx-font-size: 12;" text="Connexion..." />
+            <Label fx:id="userCountLabel" style="-fx-text-fill: #FFD700; -fx-font-size: 12;" text="0 connecté(s)" />
+            <Label style="-fx-text-fill: #666; -fx-font-size: 11;" text="Pseudo :" />
+            <TextField fx:id="usernameField" promptText="Entrez votre pseudo" prefWidth="160.0" styleClass="text-field" />
+            <Button fx:id="joinButton" mnemonicParsing="false" onAction="#joinSalon" styleClass="dashboard-button" text="Rejoindre le salon" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button mnemonicParsing="false" onAction="#goBack" styleClass="dashboard-button" text="Quitter" />
+            <padding>
+                <Insets bottom="12.0" left="20.0" right="20.0" top="12.0" />
+            </padding>
+        </HBox>
+    </top>
+    <center>
+        <HBox HBox.hgrow="ALWAYS">
+            <ScrollPane fx:id="scrollPane" fitToWidth="true" styleClass="scroll-pane-modern" HBox.hgrow="ALWAYS" BorderPane.alignment="CENTER">
+                <VBox fx:id="messagesContainer" spacing="8.0" style="-fx-padding: 16;" />
+            </ScrollPane>
+            <!-- Sidebar: connected users list -->
+            <VBox prefWidth="180.0" minWidth="160.0" maxWidth="200.0" style="-fx-background-color: #0a0a0a; -fx-border-color: #333; -fx-border-width: 0 0 0 1;">
+                <Label text="👥 En ligne" style="-fx-text-fill: #FFD700; -fx-font-size: 13; -fx-font-weight: bold; -fx-padding: 12 12 8 12;" />
+                <ScrollPane fitToWidth="true" style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;" VBox.vgrow="ALWAYS">
+                    <VBox fx:id="usersListContainer" spacing="4.0" style="-fx-padding: 4 8;" />
+                </ScrollPane>
+            </VBox>
+        </HBox>
+    </center>
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: #0d0d0d; -fx-padding: 12 20;">
+            <TextField fx:id="messageInput" onAction="#sendMessage" prefWidth="400.0" promptText="Rejoignez le salon pour écrire..." styleClass="text-field" HBox.hgrow="ALWAYS" />
+            <Button fx:id="sendButton" mnemonicParsing="false" onAction="#sendMessage" styleClass="dashboard-button" text="Envoyer" />
+            <padding>
+                <Insets bottom="12.0" left="20.0" right="20.0" top="12.0" />
+            </padding>
+        </HBox>
+    </bottom>
+</BorderPane>

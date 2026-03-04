@@ -1,0 +1,27 @@
+# Liste de mots inappropriés (FR + EN)
+# Une ligne par mot, lignes vides et # ignorées
+# Format: mot
+merde
+pute
+putain
+connard
+connasse
+enculé
+enculer
+salaud
+salope
+nique
+niquer
+bordel
+con
+conne
+fuck
+shit
+damn
+bitch
+ass
+dick
+crap
+hell
+idiot
+stupid

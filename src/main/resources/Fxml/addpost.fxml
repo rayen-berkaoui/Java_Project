@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="700.0" prefWidth="750.0" styleClass="root" stylesheets="@../css/style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.addpost">
+    <top>
+        <HBox alignment="CENTER_LEFT" styleClass="navbar" prefHeight="72.0">
+            <children>
+                <Label styleClass="login-title" text="Nouvelle publication" />
+            </children>
+            <padding>
+                <Insets left="24.0" right="24.0" />
+            </padding>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane-modern" BorderPane.alignment="CENTER">
+            <content>
+                <VBox alignment="TOP_LEFT" spacing="18.0">
+                    <!-- Identification utilisateur -->
+                    <Label styleClass="field-label" text="Identification" />
+                    <HBox spacing="12.0" alignment="CENTER_LEFT">
+                        <TextField fx:id="userKeyField" promptText="Votre pseudo" prefWidth="200.0" styleClass="text-field" />
+                        <TextField fx:id="userEmailField" promptText="Votre email" prefWidth="280.0" styleClass="text-field" />
+                    </HBox>
+                    <Label fx:id="warningStatusLabel" style="-fx-text-fill: #FF8C00; -fx-font-size: 12; -fx-font-weight: bold;" text="" />
+
+                    <Label styleClass="field-label" text="Contenu" />
+                    <TextArea fx:id="contentArea" prefHeight="200.0" minHeight="100.0" maxHeight="1.7976931348623157E308" styleClass="text-area" wrapText="true" />
+                    <Label fx:id="charCountLabel" style="-fx-text-fill: #888; -fx-font-size: 11;" text="" />
+
+                    <Label styleClass="field-label" text="Hashtags (séparez par des virgules ou espaces) :" />
+                    <TextArea fx:id="hashtagsArea" prefHeight="60.0" minHeight="40.0" maxHeight="1.7976931348623157E308" styleClass="text-area" wrapText="true" promptText="#sport, #vacances, #tech, #musique, #art..." />
+                    <Label fx:id="hashtagCountLabel" style="-fx-text-fill: #FFD700; -fx-font-size: 11;" text="" />
+
+                    <Label styleClass="field-label" text="Images :" />
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <Button fx:id="btnAddImages" mnemonicParsing="false" onAction="#handleAddImages" styleClass="dashboard-button" text="+ Ajouter des images" />
+                        <Label fx:id="imageCountLabel" style="-fx-text-fill: #FFD700; -fx-font-size: 12;" text="" />
+                    </HBox>
+                    <ScrollPane fitToWidth="true" maxHeight="300.0" styleClass="scroll-pane-modern">
+                        <FlowPane fx:id="imagesFlowPane" hgap="10.0" vgap="10.0" />
+                    </ScrollPane>
+
+                    <Label styleClass="field-label" text="Vidéos :" />
+                    <HBox alignment="CENTER_LEFT" spacing="12.0">
+                        <Button fx:id="btnAddVideos" mnemonicParsing="false" onAction="#handleAddVideos" styleClass="dashboard-button" text="+ Ajouter des vidéos" />
+                        <Label fx:id="videoCountLabel" style="-fx-text-fill: #FFD700; -fx-font-size: 12;" text="" />
+                    </HBox>
+                    <ScrollPane fitToWidth="true" maxHeight="250.0" styleClass="scroll-pane-modern">
+                        <FlowPane fx:id="videosFlowPane" hgap="10.0" vgap="10.0" />
+                    </ScrollPane>
+
+                    <HBox alignment="CENTER" spacing="20.0">
+                        <Button mnemonicParsing="false" onAction="#handleSave" styleClass="dashboard-button" text="Publier" />
+                        <Button mnemonicParsing="false" onAction="#handleCancel" styleClass="dashboard-button" text="Annuler" />
+                    </HBox>
+                    <padding>
+                        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+                    </padding>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>
