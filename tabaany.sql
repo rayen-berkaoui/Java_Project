@@ -510,8 +510,7 @@ ALTER TABLE `lieu`
 -- Constraints for table `panier`
 --
 ALTER TABLE `panier`
-  ADD CONSTRAINT `fk_panier_client` FOREIGN KEY (`id_client`) REFERENCES `utilisateur` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_panier_etablissement` FOREIGN KEY (`id_etablissement`) REFERENCES `etablissement` (`idEtablissement`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_panier_client` FOREIGN KEY (`id_client`) REFERENCES `utilisateur` (`id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `reservation`

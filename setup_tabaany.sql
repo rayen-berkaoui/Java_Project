@@ -191,8 +191,8 @@ CREATE TABLE IF NOT EXISTS `panier` (
   PRIMARY KEY (`id_panier`),
   KEY `fk_panier_client` (`id_client`),
   KEY `fk_panier_etablissement` (`id_etablissement`),
-  CONSTRAINT `fk_panier_client` FOREIGN KEY (`id_client`) REFERENCES `utilisateur` (`id`) ON UPDATE CASCADE,
-  CONSTRAINT `fk_panier_etablissement` FOREIGN KEY (`id_etablissement`) REFERENCES `etablissement` (`idEtablissement`) ON UPDATE CASCADE
+  CONSTRAINT `fk_panier_client` FOREIGN KEY (`id_client`) REFERENCES `utilisateur` (`id`) ON UPDATE CASCADE
+  -- Note: no FK on id_etablissement — it stores either etablissement ID or lieu_touristique ID (type_service distinguishes)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =============================================
