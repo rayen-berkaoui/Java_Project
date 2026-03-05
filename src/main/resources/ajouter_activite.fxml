@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.AjouterActiviteController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <top>
+        <VBox styleClass="topbar" spacing="0">
+            <padding>
+                <Insets top="20" right="28" bottom="18" left="28"/>
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="14">
+                <VBox spacing="2">
+                    <Label fx:id="titleLabel" text="Ajouter une activit&#xe9;" styleClass="page-title"/>
+                    <Label fx:id="subtitleLabel" text="Remplissez les informations de l'activit&#xe9;" styleClass="page-subtitle"/>
+                </VBox>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Button text="&#x2190; Retour" onAction="#onCancel" styleClass="home-btn-small"/>                <Region prefWidth="8"/>
+                <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>            </HBox>
+
+            <Region prefHeight="14"/>
+            <Region styleClass="accent-line-thin"/>
+        </VBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" fitToHeight="true"
+                    styleClass="content-scroll"
+                    hbarPolicy="NEVER">
+            <content>
+                <VBox alignment="TOP_CENTER">
+                    <padding>
+                        <Insets top="24" right="28" bottom="28" left="28"/>
+                    </padding>
+
+                    <VBox spacing="14" styleClass="form-section" maxWidth="750">
+                        <padding>
+                            <Insets top="22" right="26" bottom="26" left="26"/>
+                        </padding>
+
+                        <Label fx:id="messageLabel" text="" wrapText="true"/>
+
+                        <!-- ========== SECTION 1 : Informations principales ========== -->
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Informations principales" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
+                        <GridPane hgap="14" vgap="12">
+                            <columnConstraints>
+                                <ColumnConstraints percentWidth="50"/>
+                                <ColumnConstraints percentWidth="50"/>
+                            </columnConstraints>
+
+                            <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.columnSpan="2">
+                                <Label text="&#xc9;tablissement *" styleClass="form-field-label"/>
+                                <ComboBox fx:id="etablissementBox"
+                                          promptText="Choisir un &#xe9;tablissement"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                                <Label fx:id="etablissementError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="0">
+                                <Label text="Nom *" styleClass="form-field-label"/>
+                                <TextField fx:id="nomField"
+                                           promptText="Nom de l'activit&#xe9;"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="nomError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                                <Label text="Cat&#xe9;gorie *" styleClass="form-field-label"/>
+                                <ComboBox fx:id="categorieBox"
+                                          promptText="Choisir cat&#xe9;gorie"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                                <Label fx:id="categorieError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="0">
+                                <Label text="Niveau *" styleClass="form-field-label"/>
+                                <ComboBox fx:id="niveauBox"
+                                          promptText="Choisir niveau"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                                <Label fx:id="niveauError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                                <Label text="Dur&#xe9;e (minutes)" styleClass="form-field-label"/>
+                                <TextField fx:id="dureeField"
+                                           promptText="Ex: 60"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="dureeError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="0">
+                                <Label text="Statut" styleClass="form-field-label"/>
+                                <ComboBox fx:id="statutBox"
+                                          promptText="Choisir statut"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1">
+                                <Label text="&#xc2;ge minimum" styleClass="form-field-label"/>
+                                <TextField fx:id="ageMinField"
+                                           promptText="Ex: 12"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="ageMinError" styleClass="field-error-label"/>
+                            </VBox>
+                        </GridPane>
+
+                        <VBox spacing="4">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Description" styleClass="form-field-label" HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="generateDescBtn" text="✨ Generate with AI"
+                                        styleClass="btn-ai-generate"
+                                        onAction="#handleGenerateDescription"
+                                        mnemonicParsing="false"/>
+                            </HBox>
+                            <TextArea fx:id="descArea"
+                                      promptText="Description de l'activit&#xe9;..."
+                                      prefRowCount="4"
+                                      wrapText="true"
+                                      styleClass="form-textarea"/>
+                            <Label fx:id="descError" styleClass="field-error-label"/>
+                        </VBox>
+
+                        <!-- ========== SECTION 2 : Tarification ========== -->
+                        <Region prefHeight="6"/>
+
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Tarification" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
+                        <GridPane hgap="14" vgap="12">
+                            <columnConstraints>
+                                <ColumnConstraints percentWidth="50"/>
+                                <ColumnConstraints percentWidth="50"/>
+                            </columnConstraints>
+
+                            <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="0">
+                                <Label text="Prix" styleClass="form-field-label"/>
+                                <TextField fx:id="prixField"
+                                           promptText="Ex: 45.00"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="prixError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                                <Label text="Devise" styleClass="form-field-label"/>
+                                <ComboBox fx:id="deviseBox"
+                                          promptText="Devise"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                            </VBox>
+                        </GridPane>
+
+                        <!-- ========== SECTION 3 : Dates et places ========== -->
+                        <Region prefHeight="6"/>
+
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Dates et places" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
+                        <GridPane hgap="14" vgap="12">
+                            <columnConstraints>
+                                <ColumnConstraints percentWidth="50"/>
+                                <ColumnConstraints percentWidth="50"/>
+                            </columnConstraints>
+
+                            <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="0">
+                                <Label text="Date d&#xe9;but" styleClass="form-field-label"/>
+                                <DatePicker fx:id="dateDebutPicker"
+                                            promptText="Date de d&#xe9;but"
+                                            styleClass="form-combo"
+                                            maxWidth="Infinity"/>
+                                <Label fx:id="dateDebutError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                                <Label text="Date fin" styleClass="form-field-label"/>
+                                <DatePicker fx:id="dateFinPicker"
+                                            promptText="Date de fin"
+                                            styleClass="form-combo"
+                                            maxWidth="Infinity"/>
+                                <Label fx:id="dateFinError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="0">
+                                <Label text="Nombre de places" styleClass="form-field-label"/>
+                                <TextField fx:id="nbPlacesField"
+                                           promptText="Ex: 30"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="nbPlacesError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                                <Label text="Places disponibles" styleClass="form-field-label"/>
+                                <TextField fx:id="placesDispoField"
+                                           promptText="Ex: 30"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="placesDispoError" styleClass="field-error-label"/>
+                            </VBox>
+                        </GridPane>
+
+                        <!-- ========== SECTION 4 : Lieu et conditions ========== -->
+                        <Region prefHeight="6"/>
+
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Lieu et conditions" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
+                        <VBox spacing="4">
+                            <Label text="Adresse de d&#xe9;part" styleClass="form-field-label"/>
+                            <TextField fx:id="adresseDepartField"
+                                       promptText="Adresse du point de d&#xe9;part"
+                                       styleClass="form-input"
+                                       maxWidth="Infinity"/>
+                            <Label fx:id="adresseDepartError" styleClass="field-error-label"/>
+                        </VBox>
+
+                        <VBox spacing="4">
+                            <Label text="&#xc9;quipement inclus" styleClass="form-field-label"/>
+                            <ComboBox fx:id="equipementCombo"
+                                      promptText="&#x2190; Choisir un &#xe9;quipement pr&#xe9;d&#xe9;fini"
+                                      styleClass="form-combo"
+                                      maxWidth="Infinity"/>
+                            <TextArea fx:id="equipementArea"
+                                      promptText="&#xc9;quipements fournis... (s&#xe9;lectionnez dans la liste ou saisissez manuellement)"
+                                      prefRowCount="6"
+                                      minHeight="120"
+                                      prefHeight="120"
+                                      wrapText="true"
+                                      styleClass="form-textarea"
+                                      editable="true"/>
+                            <Label fx:id="equipementError" styleClass="field-error-label"/>
+                        </VBox>
+
+                        <VBox spacing="4">
+                            <Label text="Conditions d'annulation" styleClass="form-field-label"/>
+                            <ComboBox fx:id="conditionsCombo"
+                                      promptText="&#x2190; Choisir des conditions pr&#xe9;d&#xe9;finies"
+                                      styleClass="form-combo"
+                                      maxWidth="Infinity"/>
+                            <TextArea fx:id="conditionsArea"
+                                      promptText="Conditions d'annulation... (s&#xe9;lectionnez dans la liste ou saisissez manuellement)"
+                                      prefRowCount="6"
+                                      minHeight="120"
+                                      prefHeight="120"
+                                      wrapText="true"
+                                      styleClass="form-textarea"
+                                      editable="true"/>
+                            <Label fx:id="conditionsError" styleClass="field-error-label"/>
+                        </VBox>
+
+                        <!-- ========== SECTION 5 : Galerie d'images ========== -->
+                        <Region prefHeight="6"/>
+
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Galerie d'images" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
+                        <VBox spacing="10" styleClass="image-preview-card">
+                            <padding>
+                                <Insets top="12" right="14" bottom="12" left="14"/>
+                            </padding>
+
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Button text="&#x1f4f7; Choisir images"
+                                        onAction="#onChooseImages"
+                                        styleClass="btn-browse"/>
+                                <Label text="(PNG/JPG/WebP)" styleClass="subtitle-label"/>
+                            </HBox>
+
+                            <ScrollPane fitToHeight="true"
+                                        hbarPolicy="AS_NEEDED"
+                                        vbarPolicy="NEVER"
+                                        styleClass="gallery-scroll">
+                                <content>
+                                    <HBox fx:id="imagesStrip" styleClass="gallery-strip" spacing="10"/>
+                                </content>
+                            </ScrollPane>
+                        </VBox>
+
+                        <Region prefHeight="6"/>
+
+                        <HBox spacing="12" styleClass="action-bar">
+                            <Button fx:id="saveBtn" text="Enregistrer" onAction="#onSave" styleClass="btn-primary"/>
+                            <Button text="Annuler" onAction="#onCancel" styleClass="btn-secondary"/>
+                        </HBox>
+
+                    </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+</BorderPane>

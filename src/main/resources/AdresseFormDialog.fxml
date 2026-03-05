@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+<?import javafx.geometry.Insets?>
+
+<DialogPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.AdresseFormDialogController"
+            styleClass="dialog-pane" prefWidth="700" prefHeight="660">
+    <content>
+        <VBox spacing="0" styleClass="dialog-content-root" VBox.vgrow="ALWAYS">
+
+            <!-- Dialog Header + Mode Toggle -->
+            <HBox alignment="CENTER_LEFT" spacing="12" styleClass="dialog-header-section">
+                <padding><Insets top="16" right="30" bottom="16" left="30"/></padding>
+                <Label text="📍" style="-fx-font-size: 30px;"/>
+                <VBox spacing="2" HBox.hgrow="ALWAYS">
+                    <Label text="Adresse" styleClass="dialog-page-title" style="-fx-font-size: 22px;"/>
+                    <Label fx:id="lblSubtitle" text="Choisissez un mode de saisie" styleClass="dialog-page-subtitle"/>
+                </VBox>
+                <!-- Mode Toggle Buttons -->
+                <HBox spacing="0" alignment="CENTER_RIGHT" styleClass="mode-toggle-group">
+                    <Button fx:id="btnModeManual" text="✏️ Saisie manuelle" styleClass="mode-toggle-btn,mode-toggle-left,mode-toggle-active"/>
+                    <Button fx:id="btnModeMap" text="🗺️ Choisir sur la carte" styleClass="mode-toggle-btn,mode-toggle-right"/>
+                </HBox>
+                <Button fx:id="btnFullscreen" text="⛶" styleClass="btn-fullscreen" mnemonicParsing="false"/>
+            </HBox>
+
+            <!-- Gold Separator -->
+            <Region styleClass="accent-line" prefHeight="2" maxHeight="2"/>
+
+            <!-- Content: StackPane swaps between Manual and Map modes -->
+            <StackPane VBox.vgrow="ALWAYS">
+
+                <!-- ===== MANUAL MODE PANEL ===== -->
+                <VBox fx:id="manualPanel" spacing="16" visible="true">
+                    <padding><Insets top="20" right="25" bottom="20" left="25"/></padding>
+
+                    <!-- Form Fields -->
+                    <VBox spacing="16">
+
+                        <!-- Address Info Card -->
+                        <VBox spacing="14" styleClass="form-section" VBox.vgrow="NEVER">
+                            <padding><Insets top="18" right="22" bottom="18" left="22"/></padding>
+                            <Label text="🏠 Informations" styleClass="form-section-title" style="-fx-font-size: 16px; -fx-padding: 0 0 6 0;"/>
+
+                            <VBox spacing="3" styleClass="form-group">
+                                <Label text="Rue" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
+                                <TextField fx:id="tfRue" promptText="Nom de la rue..." styleClass="form-input" prefHeight="38"/>
+                                <Label fx:id="lblErrRue" text="" styleClass="error-label" visible="false" managed="false"/>
+                            </VBox>
+
+                            <VBox spacing="3" styleClass="form-group">
+                                <Label text="Ville" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
+                                <TextField fx:id="tfVille" promptText="Nom de la ville..." styleClass="form-input" prefHeight="38"/>
+                                <Label fx:id="lblErrVille" text="" styleClass="error-label" visible="false" managed="false"/>
+                            </VBox>
+                        </VBox>
+
+                        <!-- Coordinates Card -->
+                        <VBox spacing="14" styleClass="form-section" VBox.vgrow="NEVER">
+                            <padding><Insets top="18" right="22" bottom="18" left="22"/></padding>
+                            <Label text="🌍 Coordonnées GPS" styleClass="form-section-title" style="-fx-font-size: 16px; -fx-padding: 0 0 6 0;"/>
+
+                            <HBox spacing="10">
+                                <VBox spacing="3" styleClass="form-group" HBox.hgrow="ALWAYS">
+                                    <Label text="Latitude" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
+                                    <TextField fx:id="tfLatitude" promptText="36.8065" styleClass="form-input" prefHeight="38"/>
+                                    <Label fx:id="lblErrLat" text="" styleClass="error-label" visible="false" managed="false"/>
+                                </VBox>
+                                <VBox spacing="3" styleClass="form-group" HBox.hgrow="ALWAYS">
+                                    <Label text="Longitude" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
+                                    <TextField fx:id="tfLongitude" promptText="10.1815" styleClass="form-input" prefHeight="38"/>
+                                    <Label fx:id="lblErrLon" text="" styleClass="error-label" visible="false" managed="false"/>
+                                </VBox>
+                            </HBox>
+
+                            <VBox spacing="3" styleClass="form-group">
+                                <Label text="Altitude (m)" styleClass="form-field-label" style="-fx-font-size: 12px;"/>
+                                <TextField fx:id="tfAltitude" promptText="En mètres..." styleClass="form-input" prefHeight="38"/>
+                                <Label fx:id="lblErrAlt" text="" styleClass="error-label" visible="false" managed="false"/>
+                            </VBox>
+                        </VBox>
+                    </VBox>
+                </VBox>
+
+                <!-- ===== MAP MODE PANEL ===== -->
+                <VBox fx:id="mapPanel" spacing="0" visible="false">
+                    <padding><Insets top="15" right="25" bottom="15" left="25"/></padding>
+
+                    <!-- Search bar + selected info -->
+                    <HBox spacing="12" alignment="CENTER_LEFT">
+                        <padding><Insets top="0" right="0" bottom="12" left="0"/></padding>
+                        <TextField fx:id="tfSearch" promptText="🔍 Rechercher un lieu, une adresse..." styleClass="form-input"
+                                   prefHeight="40" HBox.hgrow="ALWAYS" style="-fx-font-size: 14px;"/>
+                        <Button fx:id="btnSearchMap" text="Rechercher" styleClass="btn-add" prefHeight="40"/>
+                    </HBox>
+
+                    <!-- Map fills the rest -->
+                    <VBox spacing="10" VBox.vgrow="ALWAYS" styleClass="form-section">
+                        <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label text="📌 Cliquez ou glissez le marqueur pour sélectionner votre position"
+                                   style="-fx-text-fill: rgba(191,162,0,0.8); -fx-font-size: 13px; -fx-font-weight: bold;"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblSelectedPos" text="Aucune position sélectionnée"
+                                   style="-fx-text-fill: rgba(255,255,255,0.5); -fx-font-size: 12px;"/>
+                        </HBox>
+
+                        <WebView fx:id="mapWebView" VBox.vgrow="ALWAYS" minHeight="350"/>
+
+                        <!-- Summary of auto-filled data -->
+                        <HBox spacing="20" alignment="CENTER_LEFT" styleClass="map-summary-bar">
+                            <padding><Insets top="8" right="10" bottom="4" left="10"/></padding>
+                            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                <Label text="Rue" style="-fx-text-fill: rgba(191,162,0,0.6); -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                <Label fx:id="lblMapRue" text="—" style="-fx-text-fill: white; -fx-font-size: 13px;"/>
+                            </VBox>
+                            <VBox spacing="2" HBox.hgrow="ALWAYS">
+                                <Label text="Ville" style="-fx-text-fill: rgba(191,162,0,0.6); -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                <Label fx:id="lblMapVille" text="—" style="-fx-text-fill: white; -fx-font-size: 13px;"/>
+                            </VBox>
+                            <VBox spacing="2">
+                                <Label text="Latitude" style="-fx-text-fill: rgba(191,162,0,0.6); -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                <Label fx:id="lblMapLat" text="—" style="-fx-text-fill: white; -fx-font-size: 13px;"/>
+                            </VBox>
+                            <VBox spacing="2">
+                                <Label text="Longitude" style="-fx-text-fill: rgba(191,162,0,0.6); -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                <Label fx:id="lblMapLon" text="—" style="-fx-text-fill: white; -fx-font-size: 13px;"/>
+                            </VBox>
+                            <VBox spacing="2">
+                                <Label text="Altitude" style="-fx-text-fill: rgba(191,162,0,0.6); -fx-font-size: 10px; -fx-font-weight: bold;"/>
+                                <Label fx:id="lblMapAlt" text="0 m" style="-fx-text-fill: white; -fx-font-size: 13px;"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </VBox>
+
+            </StackPane>
+        </VBox>
+    </content>
+    <buttonTypes>
+        <ButtonType fx:constant="OK"/>
+        <ButtonType fx:constant="CANCEL"/>
+    </buttonTypes>
+</DialogPane>

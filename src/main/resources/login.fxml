@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.esprit.controllers.LoginController"
+            prefWidth="1280"
+            prefHeight="820"
+            style="-fx-background-color: #000000; -fx-border-width: 0; -fx-padding: 0; -fx-background-insets: 0;"
+            styleClass="root">
+
+    <!-- Custom Title Bar -->
+    <top>
+        <HBox fx:id="titleBar" alignment="CENTER_RIGHT" spacing="0"
+              style="-fx-background-color: #060606; -fx-padding: 6 12; -fx-border-color: transparent transparent rgba(255,215,0,0.06) transparent; -fx-border-width: 0 0 1 0;">
+            <Label text="TABAANI" style="-fx-text-fill: rgba(255,215,0,0.6); -fx-font-size: 12; -fx-font-weight: bold; -fx-padding: 0 8;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button text="—" onAction="#handleMinimize" styleClass="window-button" />
+            <Button text="✕" onAction="#handleClose" styleClass="window-button-close" />
+        </HBox>
+    </top>
+
+    <center>
+        <HBox spacing="0">
+
+            <!-- ═══════ LEFT BRAND PANEL ═══════ -->
+            <VBox alignment="CENTER" spacing="0" styleClass="brand-panel" HBox.hgrow="ALWAYS"
+                  style="-fx-min-width: 520; -fx-max-width: 580;">
+
+                <VBox alignment="CENTER" spacing="16" style="-fx-padding: 30 40;">
+
+                    <!-- Header -->
+                    <VBox alignment="CENTER" spacing="4">
+                        <Label text="TABAANI"
+                               style="-fx-font-size: 28; -fx-text-fill: #FFD700; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.2), 20, 0.4, 0, 0);" />
+                        <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.35), transparent); -fx-pref-height: 1; -fx-max-width: 180;" />
+                        <Label text="Reconnaissance Biometrique"
+                               style="-fx-text-fill: #888888; -fx-font-size: 12;" />
+                    </VBox>
+
+                    <!-- Large Webcam / Face Recognition Area -->
+                    <StackPane prefWidth="340" prefHeight="340" maxWidth="340" maxHeight="340">
+                        <!-- Decorative rings (visible when camera is off) -->
+                        <Circle fx:id="outerRing" radius="165" style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.2); -fx-stroke-width: 2; -fx-stroke-dash-array: 10 5;" />
+                        <Circle fx:id="middleRing" radius="148" style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.12); -fx-stroke-width: 1.5;" />
+                        <Circle fx:id="innerCircle" radius="135" style="-fx-fill: rgba(255,215,0,0.04);" />
+
+                        <!-- Lock icon (visible when camera is off) -->
+                        <Label fx:id="lockIcon" text="&#x1F510;" style="-fx-font-size: 52;" />
+
+                        <!-- Clip for circular webcam — LARGE 300x300 -->
+                        <StackPane maxWidth="300" maxHeight="300" prefWidth="300" prefHeight="300">
+                            <StackPane>
+                                <Circle radius="148" style="-fx-fill: #111111;" />
+                            </StackPane>
+                            <ImageView fx:id="webcamView" fitWidth="300" fitHeight="300" preserveRatio="false" visible="false">
+                                <clip>
+                                    <Circle radius="148" centerX="150" centerY="150" />
+                                </clip>
+                            </ImageView>
+                        </StackPane>
+
+                        <!-- Gold border ring for webcam -->
+                        <Circle fx:id="webcamBorder" radius="150" visible="false"
+                                style="-fx-fill: transparent; -fx-stroke: rgba(255,215,0,0.5); -fx-stroke-width: 3;" />
+
+                        <!-- Face detection indicator -->
+                        <Circle fx:id="faceIndicator" radius="158" visible="false"
+                                style="-fx-fill: transparent; -fx-stroke: rgba(81,207,102,0.6); -fx-stroke-width: 2.5;" />
+                    </StackPane>
+
+                    <!-- Biometric Info Panel -->
+                    <VBox fx:id="biometricInfoPanel" spacing="6" alignment="CENTER"
+                          style="-fx-background-color: rgba(255,255,255,0.03); -fx-padding: 10 20; -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 10; -fx-border-width: 1;">
+                        <!-- Face quality indicator -->
+                        <HBox spacing="8" alignment="CENTER">
+                            <Label text="Qualite:" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
+                            <ProgressBar fx:id="faceQualityBar" progress="0" prefWidth="140" prefHeight="8"
+                                         style="-fx-accent: #FFD700;" />
+                            <Label fx:id="faceQualityLabel" text="--" style="-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;" />
+                        </HBox>
+                        <!-- Confidence score -->
+                        <HBox spacing="8" alignment="CENTER">
+                            <Label text="Confiance:" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
+                            <ProgressBar fx:id="confidenceBar" progress="0" prefWidth="140" prefHeight="8"
+                                         style="-fx-accent: #51CF66;" />
+                            <Label fx:id="confidenceLabel" text="--" style="-fx-text-fill: #888888; -fx-font-size: 11; -fx-font-weight: bold;" />
+                        </HBox>
+                        <!-- Face size / distance indicator -->
+                        <Label fx:id="faceSizeLabel" text=""
+                               style="-fx-text-fill: #555555; -fx-font-size: 10;" />
+                    </VBox>
+
+                    <!-- Face Recognition Status -->
+                    <Label fx:id="faceStatusLabel" text="" wrapText="true" textAlignment="CENTER" maxWidth="400"
+                           style="-fx-text-fill: #888888; -fx-font-size: 12;" />
+
+                    <!-- Capture Progress (visible during registration) -->
+                    <HBox fx:id="captureProgressBox" spacing="8" alignment="CENTER" visible="false" managed="false">
+                        <Label text="Echantillons:" style="-fx-text-fill: #666666; -fx-font-size: 11;" />
+                        <ProgressBar fx:id="captureProgressBar" progress="0" prefWidth="160" prefHeight="10"
+                                     style="-fx-accent: #64B5F6;" />
+                        <Label fx:id="captureProgressLabel" text="0/8" style="-fx-text-fill: #64B5F6; -fx-font-size: 12; -fx-font-weight: bold;" />
+                    </HBox>
+
+                    <!-- Face Recognition Buttons -->
+                    <HBox spacing="12" alignment="CENTER">
+                        <Button fx:id="btnStartCamera" text="&#x1F4F7; Activer Camera"
+                                onAction="#handleStartCamera"
+                                style="-fx-background-color: rgba(255,215,0,0.1); -fx-text-fill: #FFD700; -fx-font-size: 12; -fx-padding: 10 22; -fx-background-radius: 10; -fx-border-color: rgba(255,215,0,0.2); -fx-border-radius: 10; -fx-cursor: hand; -fx-font-weight: bold;" />
+                        <Button fx:id="btnFaceLogin" text="&#x1F513; Connexion Faciale"
+                                onAction="#handleFaceLogin"
+                                visible="false" managed="false"
+                                style="-fx-background-color: rgba(81,207,102,0.15); -fx-text-fill: #51CF66; -fx-font-size: 12; -fx-padding: 10 22; -fx-background-radius: 10; -fx-border-color: rgba(81,207,102,0.3); -fx-border-radius: 10; -fx-cursor: hand; -fx-font-weight: bold;" />
+                    </HBox>
+                    <Button fx:id="btnRegisterFace" text="&#x1F4BE; Enregistrer mon Visage (8 echantillons)"
+                            onAction="#handleRegisterFace"
+                            visible="false" managed="false"
+                            style="-fx-background-color: rgba(100,181,246,0.1); -fx-text-fill: #64B5F6; -fx-font-size: 11; -fx-padding: 8 18; -fx-background-radius: 10; -fx-border-color: rgba(100,181,246,0.2); -fx-border-radius: 10; -fx-cursor: hand;" />
+
+                </VBox>
+
+                <!-- Bottom accent -->
+                <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.12), transparent); -fx-pref-height: 1;" />
+            </VBox>
+
+            <!-- Vertical separator -->
+            <Region style="-fx-background-color: linear-gradient(to bottom, transparent 5%, rgba(255,215,0,0.2) 30%, rgba(255,215,0,0.08) 70%, transparent 95%); -fx-pref-width: 1; -fx-min-width: 1;" />
+
+            <!-- ═══════ RIGHT FORM PANEL ═══════ -->
+            <VBox alignment="CENTER" HBox.hgrow="ALWAYS" style="-fx-background-color: #000000; -fx-min-width: 480;">
+
+                <VBox alignment="CENTER" spacing="20" style="-fx-padding: 40 60;" maxWidth="420">
+
+                    <!-- Header -->
+                    <VBox alignment="CENTER" spacing="6">
+                        <Label text="Connexion" styleClass="login-title" style="-fx-font-size: 26;" />
+                        <Label text="Accédez à votre espace personnel" styleClass="login-subtitle" />
+                    </VBox>
+
+                    <Region styleClass="divider" prefHeight="1" maxWidth="280" />
+
+                    <!-- Form Fields -->
+                    <VBox spacing="18" styleClass="input-section">
+
+                        <!-- Email -->
+                        <VBox spacing="6">
+                            <Label text="ADRESSE EMAIL" styleClass="field-label" />
+                            <TextField fx:id="emailField"
+                                       promptText="exemple@email.com"
+                                       styleClass="text-field-modern"
+                                       prefHeight="48" />
+                        </VBox>
+
+                        <!-- Password -->
+                        <VBox spacing="6">
+                            <Label text="MOT DE PASSE" styleClass="field-label" />
+                            <StackPane>
+                                <PasswordField fx:id="passwordField"
+                                               promptText="Entrez votre mot de passe"
+                                               styleClass="text-field-modern"
+                                               prefHeight="48"
+                                               style="-fx-padding: 14 45 14 16;" />
+                                <TextField fx:id="visiblePasswordField"
+                                           promptText="Entrez votre mot de passe"
+                                           styleClass="text-field-modern"
+                                           prefHeight="48"
+                                           style="-fx-padding: 14 45 14 16;"
+                                           managed="false" visible="false" />
+                                <Button fx:id="togglePasswordButton"
+                                        text="👁" onAction="#handleTogglePassword"
+                                        styleClass="eye-button"
+                                        StackPane.alignment="CENTER_RIGHT" />
+                            </StackPane>
+                        </VBox>
+
+                    </VBox>
+
+                    <!-- Options Row -->
+                    <HBox alignment="CENTER_LEFT" spacing="0">
+                        <CheckBox fx:id="rememberMeCheckBox" text="Se souvenir de moi" styleClass="custom-checkbox" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Hyperlink text="Mot de passe oublié ?"
+                                   styleClass="hyperlink-modern"
+                                   onAction="#handleForgotPassword" />
+                    </HBox>
+
+                    <!-- Login Button -->
+                    <Button text="SE CONNECTER  ›"
+                            styleClass="login-button-modern"
+                            prefHeight="50" prefWidth="320"
+                            onAction="#handleLogin" />
+
+                    <!-- Error Label -->
+                    <Label fx:id="errorLabel"
+                           styleClass="error-label-modern"
+                           wrapText="true" textAlignment="CENTER" />
+
+                    <!-- Divider -->
+                    <Region styleClass="divider" prefHeight="1" maxWidth="280" />
+
+                    <!-- Footer -->
+                    <HBox alignment="CENTER" spacing="5">
+                        <Label text="Vous n'avez pas de compte ?" styleClass="footer-text" />
+                        <Hyperlink text="S'inscrire maintenant"
+                                   styleClass="hyperlink-modern"
+                                   onAction="#handleSignupLink" />
+                    </HBox>
+
+                </VBox>
+
+            </VBox>
+
+        </HBox>
+    </center>
+
+</BorderPane>

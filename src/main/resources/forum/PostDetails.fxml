@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="750.0" prefWidth="900.0" styleClass="root" stylesheets="@forum-style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.ForumDetailsController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="navbar" prefHeight="72.0">
+            <children>
+                <Label fx:id="pageTitle" styleClass="login-title" text="D&#x00E9;tails de la publication" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button fx:id="modifyBtn" mnemonicParsing="false" onAction="#handleModifyPost" styleClass="dashboard-button" text="Modifier" />
+                <Button fx:id="deleteBtn" mnemonicParsing="false" onAction="#handleDeletePost" styleClass="dashboard-button-danger" text="Supprimer" />
+            </children>
+            <padding>
+                <Insets left="24.0" right="24.0" />
+            </padding>
+        </HBox>
+    </top>
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane-modern" BorderPane.alignment="CENTER">
+            <content>
+                <VBox alignment="TOP_CENTER" spacing="24.0" style="-fx-background-color: transparent;">
+                    <VBox fx:id="postContentContainer" alignment="TOP_LEFT" spacing="16.0" styleClass="details-post-card" VBox.vgrow="NEVER">
+                        <padding>
+                            <Insets bottom="24.0" left="24.0" right="24.0" top="24.0" />
+                        </padding>
+                    </VBox>
+
+                    <HBox fx:id="actionButtonsBar" alignment="CENTER" spacing="16.0" styleClass="details-actions-bar">
+                        <Button fx:id="likeBtn" mnemonicParsing="false" onAction="#handleLike" styleClass="action-btn action-btn-like" text="&#x1F44D; J'aime" />
+                        <Button fx:id="dislikeBtn" mnemonicParsing="false" onAction="#handleDislike" styleClass="action-btn action-btn-dislike" text="&#x1F44E;" />
+                        <Button fx:id="shareBtn" mnemonicParsing="false" onAction="#handleShare" styleClass="action-btn action-btn-share" text="&#x1F4E4; Partager" />
+                    </HBox>
+
+                    <VBox alignment="TOP_LEFT" spacing="12.0" styleClass="details-comments-section">
+                        <Label styleClass="field-label" text="Commentaires" />
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <TextArea fx:id="commentInput" prefColumnCount="25" prefRowCount="2" promptText="&#x00C9;crire un commentaire..." styleClass="text-area details-comment-input" wrapText="true" HBox.hgrow="ALWAYS" />
+                            <Button mnemonicParsing="false" onAction="#handleAddComment" styleClass="dashboard-button" text="Publier" />
+                        </HBox>
+                        <ListView fx:id="commentsListView" prefHeight="250.0" styleClass="comments-list" VBox.vgrow="ALWAYS" />
+                        <VBox.margin>
+                            <Insets top="8.0" />
+                        </VBox.margin>
+                    </VBox>
+                    <padding>
+                        <Insets bottom="30.0" left="24.0" right="24.0" top="24.0" />
+                    </padding>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.esprit.controllers.MainController">
+
+    <!-- Main App Content -->
+    <BorderPane styleClass="root-pane">
+
+        <top>
+            <VBox spacing="0">
+                <!-- Main Navigation Bar -->
+                <HBox styleClass="nav-bar" prefHeight="72" alignment="CENTER_LEFT">
+                    <padding><Insets top="0" right="35" bottom="0" left="28"/></padding>
+
+                    <!-- Brand Logo -->
+                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="nav-brand">
+                        <Button fx:id="btnBack" text="⬅" onAction="#handleBack"
+                                style="-fx-font-size: 18px; -fx-background-color: rgba(255,215,0,0.1); -fx-text-fill: #FFD700; -fx-background-radius: 8; -fx-cursor: hand; -fx-padding: 6 12;"
+                                >
+                            <tooltip><Tooltip fx:id="backTooltip" text="Retour"/></tooltip>
+                        </Button>
+                        <Label text="🗺️" style="-fx-font-size: 30px;"/>
+                        <VBox spacing="0" alignment="CENTER_LEFT">
+                            <Label styleClass="nav-title" text="GESTION"/>
+                            <Label styleClass="nav-title-sub" text="TOURISTIQUE"/>
+                        </VBox>
+                    </HBox>
+
+                    <Region HBox.hgrow="ALWAYS"/>
+
+                    <HBox fx:id="navButtonsBox" spacing="10" alignment="CENTER">
+                        <Button styleClass="nav-button" text="📊  Dashboard" onAction="#selectDashboardTab" prefHeight="42" minWidth="150"/>
+                        <Button styleClass="nav-button" text="📂  Catégories" onAction="#selectCategoriesTab" prefHeight="42" minWidth="150"/>
+                        <Button styleClass="nav-button" text="📍  Adresses" onAction="#selectAddressesTab" prefHeight="42" minWidth="150"/>
+                        <Button styleClass="nav-button" text="🏛️  Lieux" onAction="#selectLocationsTab" prefHeight="42" minWidth="150"/>
+                    </HBox>
+
+                    <Region prefWidth="25"/>
+
+                    <Button fx:id="btnThemeToggle" styleClass="nav-button fullscreen-btn" text="☀" onAction="#toggleTheme" prefHeight="42" prefWidth="48">
+                        <tooltip><Tooltip text="Changer le thème"/></tooltip>
+                    </Button>
+                    <Button styleClass="nav-button fullscreen-btn" text="⛶" onAction="#toggleFullScreen" prefHeight="42" prefWidth="48"/>
+                </HBox>
+
+                <!-- Gold accent line -->
+                <Region styleClass="accent-line" prefHeight="3" maxHeight="3"/>
+            </VBox>
+        </top>
+
+        <center>
+            <TabPane fx:id="mainTabPane" tabClosingPolicy="UNAVAILABLE" styleClass="main-tab-pane">
+
+                <Tab text="Dashboard" closable="false">
+                    <fx:include source="DashboardView.fxml"/>
+                </Tab>
+
+                <Tab text="Catégories" closable="false">
+                    <fx:include source="CategorieView.fxml"/>
+                </Tab>
+
+                <Tab text="Adresses" closable="false">
+                    <fx:include source="AdresseView.fxml"/>
+                </Tab>
+
+                <Tab text="Lieux Touristiques" closable="false">
+                    <fx:include source="LieuTouristiqueView.fxml"/>
+                </Tab>
+
+            </TabPane>
+        </center>
+
+    </BorderPane>
+
+    <!-- Floating ChatBot Panel (right side, initially hidden) -->
+    <VBox fx:id="chatBotPanel" alignment="TOP_RIGHT" visible="false" managed="false"
+          mouseTransparent="false" pickOnBounds="false"
+          StackPane.alignment="BOTTOM_RIGHT">
+        <padding><Insets top="80" right="20" bottom="80" left="0"/></padding>
+        <fx:include source="ChatBotView.fxml"/>
+    </VBox>
+
+    <!-- Floating Chat Button -->
+    <Button fx:id="btnChatBot" text="🤖" onAction="#toggleChatBot"
+            styleClass="chatbot-fab" mnemonicParsing="false"
+            StackPane.alignment="BOTTOM_RIGHT">
+        <StackPane.margin><Insets top="0" right="25" bottom="25" left="0"/></StackPane.margin>
+        <tooltip><Tooltip text="Assistant IA Touristique"/></tooltip>
+    </Button>
+
+</StackPane>

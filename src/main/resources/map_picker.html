@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script>
+  // MUST be set BEFORE Leaflet loads to force top/left positioning instead of CSS3 transforms
+  window.L_DISABLE_3D = true;
+  window.L_NO_TOUCH = false;
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background: #111;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  #map {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 40px;
+  }
+  .info-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 40px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px;
+    border-top: 1px solid rgba(255,193,7,0.15);
+  }
+  .coords {
+    color: #FFC107; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .coords .lbl { color: #888; font-weight: 400; margin-right: 4px; }
+  .hint { color: #666; font-size: 11px; font-style: italic; }
+  #search-box {
+    position: absolute; top: 10px; left: 54px; z-index: 1000;
+    display: flex; gap: 6px;
+  }
+  #search-input {
+    width: 260px; padding: 8px 12px;
+    background: rgba(17,17,17,0.92); color: #e0e0e0;
+    border: 1px solid rgba(255,193,7,0.25); border-radius: 8px;
+    font-size: 13px; outline: none;
+  }
+  #search-input::placeholder { color: #666; }
+  #search-input:focus { border-color: #FFC107; }
+  #search-btn {
+    padding: 8px 14px; background: #FFC107; color: #111;
+    border: none; border-radius: 8px; font-weight: 700;
+    font-size: 13px; cursor: pointer;
+  }
+  #search-btn:hover { background: #FFD54F; }
+  .leaflet-container { background: #1a1a1a; }
+</style>
+</head>
+<body>
+
+<div id="search-box">
+  <input id="search-input" type="text" placeholder="Rechercher un lieu..."/>
+  <button id="search-btn">Chercher</button>
+</div>
+
+<div id="map"></div>
+
+<div class="info-bar">
+  <span class="coords">
+    <span class="lbl">Lat/Lng:</span>
+    <span id="lat-display">&mdash;</span>, <span id="lng-display">&mdash;</span>
+  </span>
+  <span class="hint">Cliquez sur la carte</span>
+</div>
+
+<script>
+  var map = L.map('map', {
+    zoomControl: true,
+    fadeAnimation: false,
+    zoomAnimation: false,
+    markerZoomAnimation: false
+  }).setView([34.0, 9.0], 7);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Repeatedly invalidate size so tiles fill the container in JavaFX WebView
+  setTimeout(function() { map.invalidateSize(); }, 100);
+  setTimeout(function() { map.invalidateSize(); }, 400);
+  setTimeout(function() { map.invalidateSize(); }, 1000);
+  setTimeout(function() { map.invalidateSize(); }, 2500);
+
+  var marker = null;
+
+  function placeMarker(lat, lng) {
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    marker.on('dragend', function(e) {
+      var pos = e.target.getLatLng();
+      updateCoords(pos.lat, pos.lng);
+    });
+    updateCoords(lat, lng);
+  }
+
+  function updateCoords(lat, lng) {
+    var latR = Math.round(lat * 1000000) / 1000000;
+    var lngR = Math.round(lng * 1000000) / 1000000;
+    document.getElementById('lat-display').textContent = latR;
+    document.getElementById('lng-display').textContent = lngR;
+    try {
+      if (window.javaBridge) {
+        window.javaBridge.onLocationSelected(latR, lngR);
+      }
+    } catch(e) {}
+  }
+
+  map.on('click', function(e) {
+    placeMarker(e.latlng.lat, e.latlng.lng);
+    map.setView(e.latlng, Math.max(map.getZoom(), 14));
+  });
+
+  function searchLocation() {
+    var query = document.getElementById('search-input').value.trim();
+    if (!query) return;
+
+    fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+          encodeURIComponent(query) + '&limit=1&countrycodes=tn',
+          { headers: { 'Accept-Language': 'fr' } })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && data.length > 0) {
+        var lat = parseFloat(data[0].lat);
+        var lng = parseFloat(data[0].lon);
+        placeMarker(lat, lng);
+        map.setView([lat, lng], 16);
+      } else {
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+              encodeURIComponent(query) + '&limit=1',
+              { headers: { 'Accept-Language': 'fr' } })
+        .then(function(r) { return r.json(); })
+        .then(function(data2) {
+          if (data2 && data2.length > 0) {
+            var lat = parseFloat(data2[0].lat);
+            var lng = parseFloat(data2[0].lon);
+            placeMarker(lat, lng);
+            map.setView([lat, lng], 16);
+          }
+        });
+      }
+    })
+    .catch(function(err) { console.error(err); });
+  }
+
+  document.getElementById('search-btn').addEventListener('click', searchLocation);
+  document.getElementById('search-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') searchLocation();
+  });
+
+  function setPosition(lat, lng) {
+    placeMarker(lat, lng);
+    map.setView([lat, lng], 15);
+    setTimeout(function() { map.invalidateSize(); }, 200);
+  }
+
+  function getCoordinates() {
+    if (marker) {
+      var pos = marker.getLatLng();
+      return pos.lat + ',' + pos.lng;
+    }
+    return '';
+  }
+
+  // ─── Result markers & search radius ───────────────────────
+
+  var resultMarkers = [];
+  var searchCircle = null;
+
+  /**
+   * Remove all result markers and the search radius circle from the map.
+   */
+  function clearResults() {
+    for (var i = 0; i < resultMarkers.length; i++) {
+      map.removeLayer(resultMarkers[i]);
+    }
+    resultMarkers = [];
+    if (searchCircle) {
+      map.removeLayer(searchCircle);
+      searchCircle = null;
+    }
+  }
+
+  /**
+   * Draw a translucent circle showing the search radius.
+   * @param {number} lat Center latitude
+   * @param {number} lng Center longitude
+   * @param {number} radiusMeters Radius in meters
+   */
+  function showSearchRadius(lat, lng, radiusMeters) {
+    if (searchCircle) map.removeLayer(searchCircle);
+    searchCircle = L.circle([lat, lng], {
+      radius: radiusMeters,
+      color: '#FFC107',
+      fillColor: '#FFC107',
+      fillOpacity: 0.07,
+      weight: 2,
+      dashArray: '6, 6'
+    }).addTo(map);
+  }
+
+  /**
+   * Coloured circle-marker icons per establishment type.
+   */
+  var typeColors = {
+    'restaurant': '#e74c3c',
+    'cafe':       '#8B4513',
+    'hotel':      '#3498db',
+    'hostel':     '#3498db',
+    'museum':     '#9b59b6',
+    'bar':        '#e67e22',
+    'pub':        '#e67e22',
+    'park':       '#27ae60',
+    'pharmacy':   '#1abc9c',
+    'spa':        '#e91e63',
+    'shop':       '#f39c12',
+    'attraction': '#ff5722',
+    'viewpoint':  '#ff5722',
+    'default':    '#FFC107'
+  };
+
+  function getMarkerColor(osmType) {
+    if (!osmType) return typeColors['default'];
+    var t = osmType.toLowerCase();
+    if (t.indexOf('shop') >= 0) return typeColors['shop'];
+    return typeColors[t] || typeColors['default'];
+  }
+
+  /**
+   * Add a single result marker to the map with a rich popup.
+   * @param {number}  lat      Latitude
+   * @param {number}  lng      Longitude
+   * @param {string}  name     Place name
+   * @param {string}  osmType  Primary OSM type (restaurant, cafe, …)
+   * @param {number}  distKm   Distance from selected point in km
+   * @param {string}  address  Address (may be empty)
+   * @param {number}  rating   Estimated rating 0-5
+   * @param {string}  extra    Extra info line (phone, cuisine, hours…)
+   * @param {boolean} isDb     True if from local DB (different styling)
+   */
+  function addResultMarker(lat, lng, name, osmType, distKm, address, rating, extra, isDb) {
+    var color = isDb ? '#00bcd4' : getMarkerColor(osmType);
+    var circleMarker = L.circleMarker([lat, lng], {
+      radius: 9,
+      fillColor: color,
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.85
+    }).addTo(map);
+
+    var source = isDb ? '<span style="color:#00bcd4;font-weight:600;">Base locale</span>'
+                      : '<span style="color:#FFC107;font-weight:600;">OpenStreetMap</span>';
+    var stars = '';
+    for (var s = 0; s < 5; s++) stars += (s < Math.round(rating)) ? '⭐' : '☆';
+
+    var popup = '<div style="font-family:sans-serif;min-width:180px;max-width:240px;">'
+      + '<b style="font-size:13px;">' + (name || '—') + '</b><br/>'
+      + '<span style="font-size:11px;color:#888;">' + (osmType || '') + ' · ' + distKm.toFixed(1) + ' km</span><br/>'
+      + '<span style="font-size:12px;">' + stars + '</span><br/>';
+    if (address) popup += '<span style="font-size:11px;">📫 ' + address + '</span><br/>';
+    if (extra)   popup += '<span style="font-size:11px;">' + extra + '</span><br/>';
+    popup += source + '</div>';
+
+    circleMarker.bindPopup(popup);
+    resultMarkers.push(circleMarker);
+  }
+
+  /**
+   * Fit the map bounds to include the search origin and all result markers.
+   */
+  function fitResultBounds() {
+    if (resultMarkers.length === 0) return;
+    var group = L.featureGroup(resultMarkers);
+    if (marker) group.addLayer(marker);
+    map.fitBounds(group.getBounds().pad(0.1));
+  }
+</script>
+</body>
+</html>

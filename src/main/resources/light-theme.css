@@ -1,0 +1,381 @@
+/* =================================================================
+   LIGHT THEME OVERRIDE Ã¢â‚¬â€ Applied on top of style.css (dark theme)
+   Maintains gold accents, switches dark backgrounds to light ones
+   ================================================================= */
+
+/* ===== ROOT & BACKGROUNDS ===== */
+.root, .root-pane {
+    -fx-background-color: #f5f5f7;
+}
+
+/* ===== NAVIGATION BAR ===== */
+.nav-bar {
+    -fx-background-color: linear-gradient(to right, rgba(255,255,255,0.97), rgba(248,248,250,0.97), rgba(255,255,255,0.97));
+    -fx-border-color: transparent transparent rgba(255,215,0,0.2) transparent;
+}
+
+.nav-title {
+    -fx-text-fill: #1a1a2e;
+}
+
+.nav-title-sub {
+    -fx-text-fill: #FFD700;
+}
+
+.nav-button {
+    -fx-background-color: rgba(0,0,0,0.04);
+    -fx-text-fill: #333340;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(255,215,0,0.12);
+    -fx-text-fill: #8a7000;
+    -fx-border-color: rgba(255,215,0,0.3);
+}
+
+.nav-button:pressed {
+    -fx-background-color: rgba(255,215,0,0.2);
+}
+
+.fullscreen-btn {
+    -fx-text-fill: #555;
+}
+
+/* ===== ACCENT LINE ===== */
+.accent-line {
+    -fx-background-color: linear-gradient(to right, transparent 0%, #FFD700 20%, #FFD700 50%, #FFD700 80%, transparent 100%);
+    -fx-opacity: 0.7;
+}
+
+/* ===== CONTENT AREA ===== */
+.content-root {
+    -fx-background-color: #f0f0f3;
+}
+
+.content-scroll {
+    -fx-background: #f0f0f3;
+    -fx-background-color: #f0f0f3;
+}
+
+.content-scroll .viewport {
+    -fx-background-color: #f0f0f3;
+}
+
+/* ===== PAGE HEADERS ===== */
+.page-header-banner {
+    -fx-background-color: linear-gradient(to right, rgba(255,255,255,0.95), rgba(248,245,230,0.9));
+    -fx-border-color: rgba(255,215,0,0.15);
+}
+
+.header-main-title {
+    -fx-text-fill: #1a1a2e;
+}
+
+.header-tag {
+    -fx-text-fill: #FFD700;
+}
+
+.header-description {
+    -fx-text-fill: #666680;
+}
+
+.header-icon-badge {
+    -fx-background-color: rgba(255,215,0,0.1);
+}
+
+/* ===== TAB PANE ===== */
+.main-tab-pane {
+    -fx-background-color: #f0f0f3;
+}
+
+.main-tab-pane .tab-header-area {
+    -fx-background-color: transparent;
+}
+
+.main-tab-pane .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.main-tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+}
+
+.main-tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: rgba(255,215,0,0.1);
+}
+
+.main-tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-text-fill: #555;
+}
+
+.main-tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: #8a7000;
+}
+
+/* ===== DASHBOARD STAT CARDS ===== */
+.dashboard-stat-card {
+    -fx-background-color: linear-gradient(to bottom right, #ffffff, #fafafa);
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 8, 0.1, 0, 2);
+}
+
+.dashboard-stat-card:hover {
+    -fx-background-color: linear-gradient(to bottom right, #fffef5, #fdf8e0);
+    -fx-border-color: rgba(255,215,0,0.25);
+    -fx-effect: dropshadow(gaussian, rgba(255,215,0,0.15), 12, 0.2, 0, 3);
+}
+
+.dashboard-stat-value {
+    -fx-text-fill: #1a1a2e;
+}
+
+.dashboard-stat-label {
+    -fx-text-fill: #777790;
+}
+
+/* ===== DASHBOARD CHART CARDS ===== */
+.dashboard-chart-card {
+    -fx-background-color: linear-gradient(to bottom right, #ffffff, #fafafa);
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0.1, 0, 2);
+}
+
+.dashboard-chart-card:hover {
+    -fx-background-color: linear-gradient(to bottom right, #fffef5, #fdf8e0);
+    -fx-border-color: rgba(255,215,0,0.2);
+}
+
+.dashboard-chart-title {
+    -fx-text-fill: #333340;
+}
+
+/* ===== TABLE VIEW ===== */
+.data-table, .table-view {
+    -fx-background-color: #ffffff;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+
+.table-view .column-header-background {
+    -fx-background-color: linear-gradient(to bottom, #f8f8fa, #f0f0f3);
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #555570;
+}
+
+.table-view .table-row-cell {
+    -fx-background-color: #ffffff;
+    -fx-border-color: transparent transparent rgba(0,0,0,0.04) transparent;
+}
+
+.table-view .table-row-cell:odd {
+    -fx-background-color: #fafafa;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: rgba(255,215,0,0.12);
+}
+
+.table-view .table-row-cell .table-cell {
+    -fx-text-fill: #333340;
+}
+
+.table-view .table-row-cell:selected .table-cell {
+    -fx-text-fill: #1a1a2e;
+}
+
+.table-view .filler {
+    -fx-background-color: #f0f0f3;
+}
+
+/* ===== BUTTONS ===== */
+.action-button {
+    -fx-background-color: linear-gradient(to bottom, #FFD700, #CC9900);
+    -fx-text-fill: white;
+}
+
+.action-button:hover {
+    -fx-background-color: linear-gradient(to bottom, #FFD700, #FFD700);
+}
+
+.action-button-outline {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,215,0,0.4);
+    -fx-text-fill: #8a7000;
+}
+
+.action-button-outline:hover {
+    -fx-background-color: rgba(255,215,0,0.08);
+}
+
+.action-button-danger {
+    -fx-text-fill: white;
+}
+
+/* ===== FORM FIELDS ===== */
+.form-field-label {
+    -fx-text-fill: #555570;
+}
+
+.text-field, .text-area, .combo-box, .date-picker {
+    -fx-background-color: #ffffff;
+    -fx-border-color: rgba(0,0,0,0.12);
+    -fx-text-fill: #333340;
+    -fx-prompt-text-fill: #aaaaaa;
+}
+
+.text-field:focused, .text-area:focused, .combo-box:focused, .date-picker:focused {
+    -fx-border-color: rgba(255,215,0,0.5);
+    -fx-background-color: #fffff5;
+}
+
+/* ===== SEARCH FIELD ===== */
+.search-field {
+    -fx-background-color: #ffffff;
+    -fx-border-color: rgba(0,0,0,0.1);
+    -fx-text-fill: #333;
+    -fx-prompt-text-fill: #999;
+}
+
+.search-field:focused {
+    -fx-border-color: rgba(255,215,0,0.4);
+}
+
+/* ===== SCROLL BAR ===== */
+.scroll-bar:vertical .track, .scroll-bar:horizontal .track {
+    -fx-background-color: rgba(0,0,0,0.03);
+}
+
+.scroll-bar:vertical .thumb, .scroll-bar:horizontal .thumb {
+    -fx-background-color: rgba(0,0,0,0.15);
+    -fx-background-radius: 10;
+}
+
+.scroll-bar:vertical .thumb:hover, .scroll-bar:horizontal .thumb:hover {
+    -fx-background-color: rgba(255,215,0,0.4);
+}
+
+/* ===== DIALOGS ===== */
+.dialog-content-root {
+    -fx-background-color: #f5f5f7;
+}
+
+.dialog-pane {
+    -fx-background-color: #f5f5f7;
+}
+
+.dialog-pane > .button-bar > .container {
+    -fx-background-color: #eeeeef;
+}
+
+/* ===== TOAST ===== */
+.toast-container {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-border-color: rgba(255,215,0,0.3);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 10, 0.2, 0, 3);
+}
+
+/* ===== CHATBOT ===== */
+.chatbot-panel {
+    -fx-background-color: linear-gradient(to bottom, #ffffff, #f8f8fa);
+    -fx-border-color: rgba(0,0,0,0.1);
+}
+
+.chatbot-header {
+    -fx-background-color: linear-gradient(to right, #f0edd8, #f5f3e5);
+}
+
+.chatbot-header .label {
+    -fx-text-fill: #1a1a2e;
+}
+
+.chat-bubble-bot {
+    -fx-background-color: #f0f0f3;
+}
+
+.chat-bubble-bot .text {
+    -fx-fill: #333340;
+}
+
+.chat-bubble-user {
+    -fx-background-color: linear-gradient(to right, #e8dfa0, #d4c870);
+}
+
+.chat-bubble-user .text {
+    -fx-fill: #1a1a2e;
+}
+
+.chatbot-input {
+    -fx-background-color: #ffffff;
+    -fx-border-color: rgba(0,0,0,0.1);
+    -fx-text-fill: #333;
+}
+
+/* ===== STATISTICS ===== */
+.stats-card {
+    -fx-background-color: linear-gradient(to bottom right, #ffffff, #fafafa);
+    -fx-border-color: rgba(0,0,0,0.08);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 6, 0.1, 0, 2);
+}
+
+.stats-card:hover {
+    -fx-background-color: linear-gradient(to bottom right, #fffef5, #fdf8e0);
+    -fx-border-color: rgba(255,215,0,0.2);
+}
+
+/* ===== CHART COLORS ===== */
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+}
+
+.chart-legend-item-text {
+    -fx-text-fill: #555;
+}
+
+.axis-label {
+    -fx-text-fill: #555;
+}
+
+.axis .tick-label {
+    -fx-fill: #666;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state-label {
+    -fx-text-fill: #999;
+}
+
+/* ===== LABEL GENERAL ===== */
+.label {
+    -fx-text-fill: #333340;
+}
+
+/* ===== COMBO BOX ===== */
+.combo-box .list-cell {
+    -fx-text-fill: #333;
+    -fx-background-color: white;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: white;
+    -fx-border-color: rgba(0,0,0,0.1);
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: rgba(255,215,0,0.1);
+}
+
+/* ===== PAGINATION ===== */
+.lblPageInfo, .lblCount {
+    -fx-text-fill: #555;
+}

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.MainInterfaceController" prefWidth="1400" prefHeight="860" style="-fx-background-color: #0a0a0a; -fx-padding: 0; -fx-border-width: 0;" styleClass="root">
+
+    <!-- TOP BAR - same style as panier/reservation -->
+    <top>
+        <VBox spacing="0">
+            <HBox fx:id="titleBar" alignment="CENTER_LEFT" spacing="0" style="-fx-background-color: #080808; -fx-padding: 12 25;">
+                <Button fx:id="menuToggleBtn" text="&#x2630;" onAction="#handleToggleDrawer" style="-fx-background-color: transparent; -fx-text-fill: #FFD700; -fx-font-size: 20; -fx-padding: 4 12; -fx-cursor: hand;" mnemonicParsing="false"/>
+                <Region prefWidth="8"/>
+                <HBox spacing="10" alignment="CENTER_LEFT">
+                    <StackPane prefWidth="36" prefHeight="36" style="-fx-background-color: rgba(255,215,0,0.12); -fx-background-radius: 10;">
+                        <Label text="&#x1F30D;" style="-fx-font-size: 16;" />
+                    </StackPane>
+                    <VBox spacing="0">
+                        <Label text="TABAANI" style="-fx-font-size: 16; -fx-text-fill: #FFD700; -fx-font-weight: bold;" />
+                        <Label text="SMARTTRAVEL" style="-fx-font-size: 9; -fx-text-fill: #666666;" />
+                    </VBox>
+                </HBox>
+                <Region prefWidth="16"/>
+                <HBox spacing="8" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.04); -fx-padding: 6 16; -fx-background-radius: 20; -fx-border-color: rgba(255,215,0,0.08); -fx-border-radius: 20;">
+                    <Label text="&#x1F50D;" style="-fx-font-size: 11;" />
+                    <TextField fx:id="globalSearchField" promptText="Rechercher lieux touristiques, etablissements..." prefWidth="260"
+                        style="-fx-background-color: transparent; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-font-size: 11; -fx-border-width: 0; -fx-padding: 2;" onAction="#handleSearch"/>
+                </HBox>
+                <Region HBox.hgrow="ALWAYS" />
+                <fx:define><Label fx:id="welcomeLabel" text="Bienvenue !"/></fx:define>
+                <!-- Panier Icon -->
+                <StackPane onMouseClicked="#handleGoToPanier" style="-fx-cursor: hand;">
+                    <Label text="&#x1F6D2;" style="-fx-font-size: 18;"/>
+                    <StackPane fx:id="panierBadge" alignment="TOP_RIGHT" translateX="10" translateY="-5" visible="false">
+                        <Label fx:id="panierCountLabel" text="0" style="-fx-background-color: #FF6B6B; -fx-text-fill: white; -fx-font-size: 9; -fx-font-weight: bold; -fx-padding: 1 5; -fx-background-radius: 10;"/>
+                    </StackPane>
+                </StackPane>
+                <Region prefWidth="12" />
+                <!-- User badge - same style as reservation -->
+                <HBox spacing="8" alignment="CENTER" style="-fx-background-color: rgba(255,215,0,0.05); -fx-padding: 6 16; -fx-background-radius: 20;">
+                    <StackPane prefWidth="26" prefHeight="26" style="-fx-background-color: rgba(255,215,0,0.15); -fx-background-radius: 13;">
+                        <Label text="&#x1F464;" style="-fx-font-size: 11;" />
+                    </StackPane>
+                    <Label fx:id="userNameLabel" text="Voyageur" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                </HBox>
+                <Region prefWidth="12" />
+                <HBox spacing="8" alignment="CENTER">
+                    <Button text="&#x1F3E0; Accueil" styleClass="dashboard-button" onAction="#handleShowAccueil" style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                    <Button text="&#x1F6AA; Deconnexion" styleClass="dashboard-button-danger" onAction="#handleLogout" style="-fx-padding: 8 16; -fx-font-size: 11;" />
+                </HBox>
+                <Region prefWidth="10" />
+                <HBox spacing="2">
+                    <Button text="&#x2014;" onAction="#handleMinimize" styleClass="window-button" />
+                    <Button fx:id="fullscreenBtn" text="&#x26F6;" onAction="#handleToggleFullscreen" styleClass="window-button" />
+                    <Button text="&#x2715;" onAction="#handleClose" styleClass="window-button-close" />
+                </HBox>
+            </HBox>
+            <Region style="-fx-background-color: linear-gradient(to right, rgba(255,215,0,0.5), rgba(255,215,0,0.15), rgba(255,215,0,0.02), transparent); -fx-pref-height: 1.5;" />
+        </VBox>
+    </top>
+
+    <!-- CENTER: DRAWER BASED LAYOUT -->
+    <center>
+        <StackPane>
+            <!-- ===== MAIN CONTENT (full width) ===== -->
+            <StackPane style="-fx-padding: 0;">
+
+                <!-- PANEL ACCUEIL -->
+                <ScrollPane fx:id="panelAccueil" fitToWidth="true" style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;" hbarPolicy="NEVER">
+                    <VBox spacing="24" style="-fx-padding: 28;">
+                        <VBox spacing="6">
+                            <Label text="&#x1F30D; Bienvenue sur SmartTravel" style="-fx-text-fill: white; -fx-font-size: 22; -fx-font-weight: bold;"/>
+                            <Label text="Decouvrez les meilleurs lieux touristiques et etablissements" style="-fx-text-fill: #666; -fx-font-size: 12;"/>
+                        </VBox>
+                        <HBox spacing="16">
+                            <VBox spacing="4" style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 12; -fx-border-width: 1;" HBox.hgrow="ALWAYS">
+                                <Label text="&#x1F30D; Lieux Touristiques" style="-fx-text-fill: #888; -fx-font-size: 10;"/>
+                                <Label fx:id="statLieuxLabel" text="0 a explorer" style="-fx-text-fill: #64B5F6; -fx-font-size: 18; -fx-font-weight: bold;"/>
+                            </VBox>
+                            <VBox spacing="4" style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 12; -fx-border-width: 1;" HBox.hgrow="ALWAYS">
+                                <Label text="&#x1F3E2; Etablissements" style="-fx-text-fill: #888; -fx-font-size: 10;"/>
+                                <Label fx:id="statEtabLabel" text="0 disponibles" style="-fx-text-fill: #FFA726; -fx-font-size: 18; -fx-font-weight: bold;"/>
+                            </VBox>
+                            <VBox spacing="4" style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 12; -fx-border-width: 1;" HBox.hgrow="ALWAYS">
+                                <Label text="&#x1F6D2; Mon Panier" style="-fx-text-fill: #888; -fx-font-size: 10;"/>
+                                <Label fx:id="statPanierLabel" text="0 articles" style="-fx-text-fill: #51CF66; -fx-font-size: 18; -fx-font-weight: bold;"/>
+                            </VBox>
+                            <VBox spacing="4" style="-fx-background-color: rgba(15,15,15,0.95); -fx-padding: 18; -fx-background-radius: 12; -fx-border-color: rgba(255,215,0,0.06); -fx-border-radius: 12; -fx-border-width: 1;" HBox.hgrow="ALWAYS">
+                                <Label text="&#x1F4B3; Paiements" style="-fx-text-fill: #888; -fx-font-size: 10;"/>
+                                <Label fx:id="statPaiementsLabel" text="0 reservations" style="-fx-text-fill: #FFD700; -fx-font-size: 18; -fx-font-weight: bold;"/>
+                            </VBox>
+                        </HBox>
+                        <VBox spacing="12">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="&#x2B50; Lieux Touristiques Populaires" style="-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="&#x25C0;" onAction="#handleLieuxAccueilPrev" styleClass="dashboard-button" style="-fx-padding: 4 10; -fx-font-size: 10;"/>
+                                <Label fx:id="lieuxAccueilPageLabel" text="1 / 1" style="-fx-text-fill: #888; -fx-font-size: 11;"/>
+                                <Button text="&#x25B6;" onAction="#handleLieuxAccueilNext" styleClass="dashboard-button" style="-fx-padding: 4 10; -fx-font-size: 10;"/>
+                            </HBox>
+                            <HBox fx:id="lieuxAccueilCarousel" spacing="16"/>
+                        </VBox>
+                        <VBox spacing="12">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="&#x1F3E8; Hotels &amp; Hebergements" style="-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="&#x25C0;" onAction="#handleHotelAccueilPrev" styleClass="dashboard-button" style="-fx-padding: 4 10; -fx-font-size: 10;"/>
+                                <Label fx:id="hotelAccueilPageLabel" text="1 / 1" style="-fx-text-fill: #888; -fx-font-size: 11;"/>
+                                <Button text="&#x25B6;" onAction="#handleHotelAccueilNext" styleClass="dashboard-button" style="-fx-padding: 4 10; -fx-font-size: 10;"/>
+                            </HBox>
+                            <HBox fx:id="hotelAccueilCarousel" spacing="16"/>
+                        </VBox>
+                        <VBox spacing="12">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="&#x1F355; Restaurants &amp; Cafes" style="-fx-text-fill: white; -fx-font-size: 16; -fx-font-weight: bold;"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="&#x25C0;" onAction="#handleRestaurantAccueilPrev" styleClass="dashboard-button" style="-fx-padding: 4 10; -fx-font-size: 10;"/>
+                                <Label fx:id="restaurantAccueilPageLabel" text="1 / 1" style="-fx-text-fill: #888; -fx-font-size: 11;"/>
+                                <Button text="&#x25B6;" onAction="#handleRestaurantAccueilNext" styleClass="dashboard-button" style="-fx-padding: 4 10; -fx-font-size: 10;"/>
+                            </HBox>
+                            <HBox fx:id="restaurantAccueilCarousel" spacing="16"/>
+                        </VBox>
+                    </VBox>
+                </ScrollPane>
+
+                <!-- PANEL LIEUX -->
+                <ScrollPane fx:id="panelLieux" fitToWidth="true" visible="false" style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;" hbarPolicy="NEVER">
+                    <VBox spacing="20" style="-fx-padding: 28;">
+                        <VBox spacing="6">
+                            <Label text="&#x1F30D; Tous les Lieux Touristiques" style="-fx-text-fill: white; -fx-font-size: 20; -fx-font-weight: bold;"/>
+                            <Label text="Explorez et ajoutez a votre panier" style="-fx-text-fill: #666; -fx-font-size: 12;"/>
+                        </VBox>
+                        <HBox alignment="CENTER" spacing="10">
+                            <Button text="&#x25C0; Precedent" onAction="#handleLieuxPrev" styleClass="dashboard-button" style="-fx-padding: 6 16; -fx-font-size: 11;"/>
+                            <Label fx:id="lieuxPageLabel" text="1 / 1" style="-fx-text-fill: #888; -fx-font-size: 12;"/>
+                            <Button text="Suivant &#x25B6;" onAction="#handleLieuxNext" styleClass="dashboard-button" style="-fx-padding: 6 16; -fx-font-size: 11;"/>
+                        </HBox>
+                        <HBox fx:id="lieuxCarousel" spacing="16"/>
+                    </VBox>
+                </ScrollPane>
+                <!-- PANEL RESTAURANTS -->
+                <ScrollPane fx:id="panelRestaurants" fitToWidth="true" visible="false" style="-fx-background: #0a0a0a; -fx-background-color: #0a0a0a;" hbarPolicy="NEVER">
+                    <VBox spacing="20" style="-fx-padding: 28;">
+                        <VBox spacing="6">
+                            <Label text="&#x1F3E2; Tous les Etablissements" style="-fx-text-fill: white; -fx-font-size: 20; -fx-font-weight: bold;"/>
+                            <Label text="Decouvrez les meilleurs etablissements" style="-fx-text-fill: #666; -fx-font-size: 12;"/>
+                        </VBox>
+                        <HBox alignment="CENTER" spacing="10">
+                            <Button text="&#x25C0; Precedent" onAction="#handleEtabPrev" styleClass="dashboard-button" style="-fx-padding: 6 16; -fx-font-size: 11;"/>
+                            <Label fx:id="etabPageLabel" text="1 / 1" style="-fx-text-fill: #888; -fx-font-size: 12;"/>
+                            <Button text="Suivant &#x25B6;" onAction="#handleEtabNext" styleClass="dashboard-button" style="-fx-padding: 6 16; -fx-font-size: 11;"/>
+                        </HBox>
+                        <HBox fx:id="etabCarousel" spacing="16"/>
+                    </VBox>
+                </ScrollPane>
+
+
+
+
+                <!-- PANEL FORUM -->
+                <fx:include fx:id="panelForum" source="forum/forum-main.fxml" visible="false"/>
+
+                <!-- AI CHATBOT OVERLAY (bottom-right) -->
+                <VBox fx:id="chatBotPanel" visible="false" managed="false"
+                      prefWidth="390" prefHeight="560" maxWidth="390" maxHeight="560"
+                      StackPane.alignment="BOTTOM_RIGHT"
+                      style="-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.6), 20, 0.3, 0, 6);">
+                    <StackPane.margin><Insets top="0" right="20" bottom="80" left="0"/></StackPane.margin>
+                    <fx:include source="ChatBotView.fxml"/>
+                </VBox>
+
+                <!-- CHATBOT FAB BUTTON -->
+                <Button fx:id="chatBotFab" text="&#x1F916;" onAction="#handleToggleChatBot"
+                        styleClass="chatbot-fab" StackPane.alignment="BOTTOM_RIGHT"
+                        mnemonicParsing="false">
+                    <StackPane.margin><Insets top="0" right="24" bottom="16" left="0"/></StackPane.margin>
+                    <tooltip><Tooltip text="Assistant IA Touristique"/></tooltip>
+                </Button>
+
+            </StackPane>
+
+            <!-- ===== DRAWER OVERLAY ===== -->
+            <Region fx:id="drawerOverlay" visible="false" onMouseClicked="#handleCloseDrawer"
+                    style="-fx-background-color: rgba(0,0,0,0.5); -fx-cursor: hand;"/>
+
+            <!-- ===== NAVIGATION DRAWER ===== -->
+            <VBox fx:id="sidebarDrawer" spacing="0" StackPane.alignment="CENTER_LEFT" translateX="-280"
+                  prefWidth="270" maxWidth="270"
+                  style="-fx-background-color: rgba(8,8,8,0.99); -fx-border-color: rgba(255,215,0,0.08); -fx-border-width: 0 1 0 0; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 15, 0, 4, 0);">
+                <!-- User Section -->
+                <VBox alignment="CENTER" spacing="8" style="-fx-padding: 28 20 16 20; -fx-background-color: rgba(255,215,0,0.03);">
+                    <StackPane prefWidth="56" prefHeight="56" style="-fx-background-color: linear-gradient(to bottom right, rgba(255,215,0,0.2), rgba(255,140,0,0.1)); -fx-background-radius: 28;">
+                        <Label fx:id="drawerInitials" text="U" style="-fx-text-fill: #FFD700; -fx-font-size: 20; -fx-font-weight: bold;"/>
+                    </StackPane>
+                    <Label fx:id="drawerUserName" text="Voyageur" style="-fx-text-fill: white; -fx-font-size: 13; -fx-font-weight: bold;"/>
+                    <Label fx:id="drawerUserRole" text="Membre" style="-fx-text-fill: #888; -fx-font-size: 10;"/>
+                </VBox>
+                <Region style="-fx-background-color: linear-gradient(to right, transparent, rgba(255,215,0,0.12), transparent); -fx-pref-height: 1;"/>
+                <!-- Nav Buttons -->
+                <VBox spacing="3" style="-fx-padding: 16 12;" VBox.vgrow="ALWAYS">
+                    <Label text="NAVIGATION" style="-fx-text-fill: #444; -fx-font-size: 9; -fx-font-weight: bold; -fx-padding: 0 0 8 8;"/>
+                    <Button fx:id="navAccueil" text="&#x1F3E0;  Accueil" onAction="#handleShowAccueil" maxWidth="Infinity" alignment="CENTER_LEFT" styleClass="sidebar-button"/>
+                    <Button fx:id="navLieux" text="&#x1F30D;  Lieux Touristiques" onAction="#handleShowLieux" maxWidth="Infinity" alignment="CENTER_LEFT" styleClass="sidebar-button"/>
+                    <Button fx:id="navRestaurants" text="&#x1F3E2;  Etablissements" onAction="#handleShowRestaurants" maxWidth="Infinity" alignment="CENTER_LEFT" styleClass="sidebar-button"/>
+
+
+                    <Region prefHeight="10"/>
+                    <Label text="SERVICES" style="-fx-text-fill: #444; -fx-font-size: 9; -fx-font-weight: bold; -fx-padding: 0 0 8 8;"/>
+                    <Button fx:id="navPaiements" text="&#x1F4B3;  Mes Paiements" onAction="#handleGoToMesPaiements" maxWidth="Infinity" alignment="CENTER_LEFT" styleClass="sidebar-button"/>
+
+                    <Button fx:id="navProfil" text="&#x1F464;  Mon Profil" onAction="#handleShowProfil" maxWidth="Infinity" alignment="CENTER_LEFT" styleClass="sidebar-button"/>
+                    <Region prefHeight="10"/>
+                    <Label text="COMMUNAUT&#xC9;" style="-fx-text-fill: #444; -fx-font-size: 9; -fx-font-weight: bold; -fx-padding: 0 0 8 8;"/>
+                    <Button fx:id="navForum" text="&#x1F4AC;  Forum" onAction="#handleShowForum" maxWidth="Infinity" alignment="CENTER_LEFT" styleClass="sidebar-button"/>
+                    <Region VBox.vgrow="ALWAYS"/>
+                </VBox>
+                <VBox spacing="6" style="-fx-padding: 12;">
+                    <Region style="-fx-background-color: rgba(255,255,255,0.03); -fx-pref-height: 1;"/>
+                </VBox>
+            </VBox>
+        </StackPane>
+    </center>
+</BorderPane>

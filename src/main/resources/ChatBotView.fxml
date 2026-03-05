@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.ChatBotController"
+      styleClass="chatbot-panel" spacing="0" prefWidth="380" prefHeight="550">
+
+    <!-- Chat Header -->
+    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="chatbot-header">
+        <padding><Insets top="12" right="16" bottom="12" left="16"/></padding>
+        <Label text="🤖" style="-fx-font-size: 22px;"/>
+        <VBox spacing="1" HBox.hgrow="ALWAYS">
+            <Label text="Assistant Touristique IA" styleClass="chatbot-title"/>
+            <Label fx:id="lblStatus" text="En ligne — Gemini AI" styleClass="chatbot-status"/>
+        </VBox>
+        <Button fx:id="btnClear" text="🗑️" onAction="#clearChat" styleClass="chatbot-clear-btn" mnemonicParsing="false">
+            <tooltip><Tooltip text="Effacer la conversation"/></tooltip>
+        </Button>
+    </HBox>
+
+    <Region styleClass="accent-line" prefHeight="2" maxHeight="2"/>
+
+    <!-- Messages Area -->
+    <ScrollPane fx:id="scrollPane" fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="chatbot-scroll"
+                hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+        <VBox fx:id="messagesContainer" spacing="10" styleClass="chatbot-messages">
+            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+        </VBox>
+    </ScrollPane>
+
+    <!-- Suggested Questions -->
+    <FlowPane fx:id="suggestionsPane" styleClass="chatbot-suggestions" hgap="6" vgap="6" alignment="CENTER_LEFT">
+        <padding><Insets top="8" right="12" bottom="8" left="12"/></padding>
+    </FlowPane>
+
+    <!-- Input Area -->
+    <HBox spacing="8" styleClass="chatbot-input-bar" alignment="CENTER">
+        <padding><Insets top="10" right="12" bottom="10" left="12"/></padding>
+        <TextField fx:id="tfMessage" promptText="Posez votre question..." styleClass="chatbot-input"
+                   prefHeight="40" onAction="#sendMessage" HBox.hgrow="ALWAYS"/>
+        <Button fx:id="btnSend" text="➤" onAction="#sendMessage" styleClass="chatbot-send-btn"
+                prefWidth="42" prefHeight="40" mnemonicParsing="false"/>
+    </HBox>
+</VBox>

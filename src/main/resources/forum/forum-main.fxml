@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane minHeight="600.0" minWidth="1000.0" prefHeight="700.0" prefWidth="1200.0" styleClass="root" stylesheets="@forum-style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.ForumNavController">
+    <center>
+        <VBox>
+            <HBox alignment="CENTER_LEFT" spacing="12.0" styleClass="filter-bar" prefHeight="44.0">
+                <padding>
+                    <Insets left="20.0" right="20.0" top="6.0" bottom="6.0" />
+                </padding>
+                <Button fx:id="backBtn" mnemonicParsing="false" onAction="#handleBack" styleClass="dashboard-button" text="← Retour" visible="false" managed="false" />
+                <Region HBox.hgrow="ALWAYS" minWidth="0.0" />
+                <Button fx:id="adminBtn" mnemonicParsing="false" onAction="#handleAdmin" styleClass="dashboard-button" text="Administration" />
+                <Button fx:id="addPostBtn" mnemonicParsing="false" onAction="#handleAddPost" styleClass="dashboard-button" text="+ Nouvelle publication" />
+            </HBox>
+            <StackPane fx:id="contentPane" VBox.vgrow="ALWAYS" />
+        </VBox>
+    </center>
+</BorderPane>

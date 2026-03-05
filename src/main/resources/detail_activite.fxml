@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="rootPane" xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.DetailActiviteController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <!-- HEADER -->
+    <top>
+        <HBox styleClass="nav-bar" alignment="CENTER_LEFT" spacing="0">
+            <Label text="TABAANI" styleClass="nav-logo"/>
+            <Pane HBox.hgrow="ALWAYS"/>
+            <Button text="&#x1F4C4; Exporter PDF" onAction="#onExportPdf" styleClass="btn-export-pdf"/>
+            <Region prefWidth="12"/>
+            <Button text="&#x2190; Retour" onAction="#goBack" styleClass="btn-primary pill"/>
+        </HBox>
+    </top>
+
+    <!-- CENTER CONTENT -->
+    <center>
+        <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                    styleClass="content-scroll">
+            <content>
+                <VBox spacing="24" styleClass="page-body">
+                    <padding>
+                        <Insets top="28" right="40" bottom="40" left="40"/>
+                    </padding>
+
+                    <!-- HERO SECTION -->
+                    <StackPane fx:id="heroPane" styleClass="detail-hero">
+                        <VBox alignment="BOTTOM_LEFT" spacing="4" StackPane.alignment="BOTTOM_LEFT">
+                            <padding>
+                                <Insets top="20" right="30" bottom="26" left="30"/>
+                            </padding>
+                            <Label fx:id="heroTitle" text="Nom" styleClass="detail-hero-title"/>
+                            <Label fx:id="heroSubtitle" text="Cat&#xe9;gorie" styleClass="detail-hero-subtitle"/>
+                        </VBox>
+                    </StackPane>
+
+                    <!-- INFO CARDS ROW -->
+                    <HBox spacing="20">
+
+                        <!-- Left column -->
+                        <VBox spacing="20" HBox.hgrow="ALWAYS">
+
+                            <!-- Card: Informations G&#xe9;n&#xe9;rales -->
+                            <VBox styleClass="detail-card">
+                                <HBox styleClass="detail-card-header" alignment="CENTER_LEFT" spacing="8">
+                                    <Region styleClass="gold-dot"/>
+                                    <Label text="Informations G&#xe9;n&#xe9;rales" styleClass="detail-card-title"/>
+                                </HBox>
+                                <GridPane styleClass="detail-card-body" hgap="16" vgap="10">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="35"/>
+                                        <ColumnConstraints percentWidth="65"/>
+                                    </columnConstraints>
+
+                                    <Label text="CAT&#xc9;GORIE" styleClass="detail-info-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblCategorie" text="-" styleClass="detail-info-value" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                    <Label text="NIVEAU" styleClass="detail-info-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblNiveau" text="-" styleClass="detail-info-value" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                    <Label text="DUR&#xc9;E" styleClass="detail-info-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblDuree" text="-" styleClass="detail-info-value" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                                    <Label text="STATUT" styleClass="detail-info-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblStatut" text="-" styleClass="detail-info-value" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                                    <Label text="ADRESSE D&#xc9;PART" styleClass="detail-info-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblAdresse" text="-" styleClass="detail-info-value" wrapText="true" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+                                </GridPane>
+                                <HBox alignment="CENTER_LEFT" styleClass="detail-card-body">
+                                    <Button text="&#x1f4cd; Voir sur Google Maps" onAction="#onOpenGoogleMaps" styleClass="btn-google-maps"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Card: Description -->
+                            <VBox styleClass="detail-card">
+                                <HBox styleClass="detail-card-header" alignment="CENTER_LEFT" spacing="8">
+                                    <Region styleClass="gold-dot"/>
+                                    <Label text="Description" styleClass="detail-card-title"/>
+                                </HBox>
+                                <VBox styleClass="detail-card-body">
+                                    <Label fx:id="lblDescription" text="-" wrapText="true" styleClass="detail-desc-text"/>
+                                </VBox>
+                            </VBox>
+
+                            <!-- Card: Conditions -->
+                            <VBox styleClass="detail-card">
+                                <HBox styleClass="detail-card-header" alignment="CENTER_LEFT" spacing="8">
+                                    <Region styleClass="gold-dot"/>
+                                    <Label text="&#xc9;quipement &#x26; Conditions" styleClass="detail-card-title"/>
+                                </HBox>
+                                <GridPane styleClass="detail-card-body" hgap="16" vgap="10">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="40"/>
+                                        <ColumnConstraints percentWidth="60"/>
+                                    </columnConstraints>
+
+                                    <Label text="&#xc9;QUIPEMENT INCLUS" styleClass="detail-info-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblEquipement" text="-" styleClass="detail-info-value" wrapText="true" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                    <Label text="CONDITIONS ANNULATION" styleClass="detail-info-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblConditions" text="-" styleClass="detail-info-value" wrapText="true" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                    <Label text="&#xc2;GE MINIMUM" styleClass="detail-info-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblAgeMin" text="-" styleClass="detail-info-value" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                                </GridPane>
+                            </VBox>
+
+                        </VBox>
+
+                        <!-- Right column -->
+                        <VBox spacing="20" prefWidth="340" minWidth="300">
+
+                            <!-- Card: Tarification & Places -->
+                            <VBox styleClass="detail-card">
+                                <HBox styleClass="detail-card-header" alignment="CENTER_LEFT" spacing="8">
+                                    <Region styleClass="gold-dot"/>
+                                    <Label text="Tarification &#x26; Places" styleClass="detail-card-title"/>
+                                </HBox>
+                                <GridPane styleClass="detail-card-body" hgap="16" vgap="10">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="45"/>
+                                        <ColumnConstraints percentWidth="55"/>
+                                    </columnConstraints>
+
+                                    <Label text="PRIX" styleClass="detail-info-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblPrix" text="-" styleClass="detail-info-value" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                    <Label text="PLACES TOTALES" styleClass="detail-info-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblNbPlaces" text="-" styleClass="detail-info-value" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                                    <Label text="PLACES DISPO" styleClass="detail-info-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblPlacesDispo" text="-" styleClass="detail-info-value" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                                </GridPane>
+                            </VBox>
+
+                            <!-- Card: Dates -->
+                            <VBox styleClass="detail-card">
+                                <HBox styleClass="detail-card-header" alignment="CENTER_LEFT" spacing="8">
+                                    <Region styleClass="gold-dot"/>
+                                    <Label text="Dates" styleClass="detail-card-title"/>
+                                </HBox>
+                                <GridPane styleClass="detail-card-body" hgap="16" vgap="10">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="45"/>
+                                        <ColumnConstraints percentWidth="55"/>
+                                    </columnConstraints>
+
+                                    <Label text="DATE D&#xc9;BUT" styleClass="detail-info-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblDateDebut" text="-" styleClass="detail-info-value" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                                    <Label text="DATE FIN" styleClass="detail-info-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                    <Label fx:id="lblDateFin" text="-" styleClass="detail-info-value" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                                </GridPane>
+                            </VBox>
+
+                            <!-- Card: Images -->
+                            <VBox styleClass="detail-card">
+                                <HBox styleClass="detail-card-header" alignment="CENTER_LEFT" spacing="8">
+                                    <Region styleClass="gold-dot"/>
+                                    <Label text="Galerie Photos" styleClass="detail-card-title"/>
+                                </HBox>
+                                <VBox styleClass="detail-card-body">
+                                    <HBox fx:id="galleryBox" spacing="10" alignment="CENTER_LEFT"/>
+                                </VBox>
+                            </VBox>
+
+                        </VBox>
+                    </HBox>
+
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+</BorderPane>

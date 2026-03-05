@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="780.0" prefWidth="1200.0" styleClass="root" stylesheets="@forum-style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.esprit.controllers.ForumAdminDashboardController">
+    <top>
+        <HBox alignment="CENTER_LEFT" styleClass="navbar" prefHeight="72.0">
+            <children>
+                <Label styleClass="login-title" text="TABAANI &#x00B7; Administration" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Label fx:id="lblLastRefresh" style="-fx-text-fill: #666; -fx-font-size: 11;" text="" />
+                <Region prefWidth="16" />
+                <Button mnemonicParsing="false" onAction="#refreshAll" styleClass="dashboard-button" text="&#x1F504; Rafra&#x00EE;chir" />
+                <Region prefWidth="8" />
+                <Button mnemonicParsing="false" onAction="#handleRetour" styleClass="dashboard-button" text="&#x2190; Retour" />
+            </children>
+            <padding>
+                <Insets left="24.0" right="24.0" />
+            </padding>
+        </HBox>
+    </top>
+    <center>
+        <TabPane fx:id="tabPane" tabClosingPolicy="UNAVAILABLE" styleClass="tab-pane-admin">
+            <tabs>
+                <!-- TAB 1: DASHBOARD OVERVIEW -->
+                <Tab text="&#x1F4CA; Dashboard">
+                    <ScrollPane fitToWidth="true" styleClass="scroll-pane-modern">
+                        <VBox alignment="TOP_CENTER" spacing="20.0">
+                            <HBox alignment="CENTER" spacing="16.0">
+                                <VBox styleClass="admin-stat-card" minWidth="150" prefHeight="100">
+                                    <Label fx:id="lblPostsCount" styleClass="admin-stat-value" text="0" />
+                                    <Label style="-fx-text-fill: #888; -fx-font-size: 13;" text="&#x1F4DD; Publications" />
+                                </VBox>
+                                <VBox styleClass="admin-stat-card" minWidth="150" prefHeight="100">
+                                    <Label fx:id="lblCommentsCount" styleClass="admin-stat-value" text="0" />
+                                    <Label style="-fx-text-fill: #888; -fx-font-size: 13;" text="&#x1F4AC; Commentaires" />
+                                </VBox>
+                                <VBox styleClass="admin-stat-card" minWidth="150" prefHeight="100">
+                                    <Label fx:id="lblHashtagsCount" styleClass="admin-stat-value" text="0" />
+                                    <Label style="-fx-text-fill: #888; -fx-font-size: 13;" text="# Hashtags" />
+                                </VBox>
+                                <VBox styleClass="admin-stat-card" minWidth="150" prefHeight="100">
+                                    <Label fx:id="lblSharesCount" styleClass="admin-stat-value" text="0" />
+                                    <Label style="-fx-text-fill: #888; -fx-font-size: 13;" text="&#x1F517; Partages" />
+                                </VBox>
+                                <VBox styleClass="admin-stat-card" minWidth="150" prefHeight="100">
+                                    <Label fx:id="lblReportsCount" styleClass="admin-stat-value" text="0" />
+                                    <Label style="-fx-text-fill: #888; -fx-font-size: 13;" text="&#x1F6A9; Signalements" />
+                                </VBox>
+                                <VBox styleClass="admin-stat-card" minWidth="150" prefHeight="100">
+                                    <Label fx:id="lblBlockedCount" styleClass="admin-stat-value" text="0" style="-fx-text-fill: #FF4444;" />
+                                    <Label style="-fx-text-fill: #888; -fx-font-size: 13;" text="&#x1F6AB; Bloqu&#x00E9;s" />
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="16.0" alignment="TOP_CENTER">
+                                <VBox styleClass="admin-chart-card" HBox.hgrow="ALWAYS">
+                                    <Label text="&#x1F4C8; Activit&#x00E9; des 30 derniers jours" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 0;" />
+                                    <LineChart fx:id="chartPostsPerDay" prefHeight="280" animated="false" createSymbols="true" legendVisible="true">
+                                        <xAxis><CategoryAxis label="Date" side="BOTTOM" /></xAxis>
+                                        <yAxis><NumberAxis label="Nombre" side="LEFT" /></yAxis>
+                                    </LineChart>
+                                </VBox>
+                                <VBox styleClass="admin-chart-card" minWidth="300" maxWidth="340">
+                                    <Label text="&#x1F44D; R&#x00E9;partition des r&#x00E9;actions" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 0;" />
+                                    <PieChart fx:id="chartReactions" prefHeight="260" prefWidth="300" labelsVisible="true" legendVisible="true" animated="true" />
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="16.0" alignment="TOP_CENTER">
+                                <VBox styleClass="admin-chart-card" HBox.hgrow="ALWAYS">
+                                    <Label text="&#x1F3F7;&#xFE0F; Top 10 Hashtags" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 0;" />
+                                    <BarChart fx:id="chartTopHashtags" prefHeight="280" animated="true" legendVisible="false" barGap="2" categoryGap="8">
+                                        <xAxis><CategoryAxis label="Hashtag" side="BOTTOM" /></xAxis>
+                                        <yAxis><NumberAxis label="Occurrences" side="LEFT" /></yAxis>
+                                    </BarChart>
+                                </VBox>
+                                <VBox styleClass="admin-chart-card" HBox.hgrow="ALWAYS">
+                                    <Label text="&#x1F3C6; Top Contributeurs (commentaires)" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 0;" />
+                                    <BarChart fx:id="chartTopCommenters" prefHeight="280" animated="true" legendVisible="false" barGap="2" categoryGap="8">
+                                        <xAxis><CategoryAxis label="Utilisateur" side="BOTTOM" /></xAxis>
+                                        <yAxis><NumberAxis label="Commentaires" side="LEFT" /></yAxis>
+                                    </BarChart>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="16.0" alignment="TOP_CENTER">
+                                <VBox styleClass="admin-chart-card" minWidth="280">
+                                    <Label text="&#x1F6A9; Signalements par statut" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 0;" />
+                                    <PieChart fx:id="chartReports" prefHeight="240" prefWidth="260" labelsVisible="true" legendVisible="true" animated="true" />
+                                </VBox>
+                                <VBox styleClass="admin-chart-card" minWidth="280">
+                                    <Label text="&#x26A0;&#xFE0F; Avertissements" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 0;" />
+                                    <PieChart fx:id="chartWarnings" prefHeight="240" prefWidth="260" labelsVisible="true" legendVisible="true" animated="true" />
+                                </VBox>
+                                <VBox styleClass="admin-chart-card" HBox.hgrow="ALWAYS">
+                                    <Label text="&#x1F550; Activit&#x00E9; par heure" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 0;" />
+                                    <BarChart fx:id="chartByHour" prefHeight="240" animated="true" legendVisible="false" barGap="0" categoryGap="2">
+                                        <xAxis><CategoryAxis label="Heure" side="BOTTOM" /></xAxis>
+                                        <yAxis><NumberAxis label="Posts" side="LEFT" /></yAxis>
+                                    </BarChart>
+                                </VBox>
+                            </HBox>
+
+                            <VBox styleClass="admin-chart-card">
+                                <Label text="&#x1F4E5; Publications les plus comment&#x00E9;es" style="-fx-text-fill: #FFD700; -fx-font-size: 14; -fx-font-weight: bold; -fx-padding: 0 0 8 0;" />
+                                <BarChart fx:id="chartTopPosts" prefHeight="250" animated="true" legendVisible="false" barGap="2" categoryGap="8">
+                                    <xAxis><CategoryAxis label="Publication" side="BOTTOM" /></xAxis>
+                                    <yAxis><NumberAxis label="Commentaires" side="LEFT" /></yAxis>
+                                </BarChart>
+                            </VBox>
+
+                            <padding>
+                                <Insets bottom="30.0" left="20.0" right="20.0" top="20.0" />
+                            </padding>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+
+                <!-- TAB 2: PUBLICATIONS -->
+                <Tab text="&#x1F4DD; Publications">
+                    <VBox alignment="TOP_LEFT" spacing="12.0">
+                        <TableView fx:id="postsTable" prefHeight="500.0" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="colPostId" prefWidth="55" text="ID" />
+                                <TableColumn fx:id="colPostContent" prefWidth="450" text="Contenu" />
+                                <TableColumn fx:id="colPostDate" prefWidth="140" text="Date" />
+                                <TableColumn fx:id="colPostAction" prefWidth="110" text="Action" />
+                            </columns>
+                        </TableView>
+                        <padding>
+                            <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                        </padding>
+                    </VBox>
+                </Tab>
+
+                <!-- TAB 3: COMMENTAIRES -->
+                <Tab text="&#x1F4AC; Commentaires">
+                    <VBox alignment="TOP_LEFT" spacing="12.0">
+                        <TableView fx:id="commentsTable" prefHeight="500.0" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="colCommentId" prefWidth="55" text="ID" />
+                                <TableColumn fx:id="colCommentPostId" prefWidth="70" text="Post ID" />
+                                <TableColumn fx:id="colCommentContent" prefWidth="320" text="Contenu" />
+                                <TableColumn fx:id="colCommentUser" prefWidth="110" text="Utilisateur" />
+                                <TableColumn fx:id="colCommentDate" prefWidth="130" text="Date" />
+                                <TableColumn fx:id="colCommentAction" prefWidth="100" text="Action" />
+                            </columns>
+                        </TableView>
+                        <padding>
+                            <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                        </padding>
+                    </VBox>
+                </Tab>
+
+                <!-- TAB 4: HASHTAGS -->
+                <Tab text="# Hashtags">
+                    <VBox alignment="TOP_LEFT" spacing="16.0">
+                        <HBox alignment="CENTER_LEFT" spacing="12.0">
+                            <TextField fx:id="newHashtagField" promptText="Nouveau hashtag..." styleClass="text-field" prefWidth="200" />
+                            <Button mnemonicParsing="false" onAction="#handleAddHashtag" styleClass="dashboard-button" text="Ajouter" />
+                        </HBox>
+                        <TableView fx:id="hashtagsTable" prefHeight="450.0" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="colHashtagName" prefWidth="200" text="Hashtag" />
+                                <TableColumn fx:id="colHashtagCount" prefWidth="100" text="Occurrences" />
+                                <TableColumn fx:id="colHashtagAction" prefWidth="110" text="Action" />
+                            </columns>
+                        </TableView>
+                        <padding>
+                            <Insets bottom="16.0" left="16.0" right="16.0" top="16.0" />
+                        </padding>
+                    </VBox>
+                </Tab>
+
+                <!-- TAB 5: CONTROLE CHAT -->
+                <Tab text="&#x1F3AE; Contr&#x00F4;le Chat">
+                    <VBox spacing="0" style="-fx-background-color: #0d0d0d;">
+                        <HBox alignment="CENTER_LEFT" spacing="20" style="-fx-background-color: #0a0a0a; -fx-padding: 6 16; -fx-border-color: rgba(255,215,0,0.12); -fx-border-width: 0 0 1 0;">
+                            <Label fx:id="lblWsStatus" text="&#x25CF; D&#x00E9;connect&#x00E9;" style="-fx-text-fill: #FF4444; -fx-font-size: 11; -fx-font-weight: bold;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label fx:id="lblMsgStats" text="0 messages" style="-fx-text-fill: #666; -fx-font-size: 11;" />
+                            <Label fx:id="lblOnlineStats" text="0 en ligne" style="-fx-text-fill: #FFD700; -fx-font-size: 11; -fx-font-weight: bold;" />
+                            <Label fx:id="lblPendingAlerts" text="0 alertes" style="-fx-text-fill: #FFB347; -fx-font-size: 11;" />
+                        </HBox>
+
+                        <VBox VBox.vgrow="SOMETIMES" prefHeight="300" style="-fx-background-color: #0d0d0d; -fx-border-color: rgba(255,215,0,0.06); -fx-border-width: 0 0 1 0;">
+                            <HBox alignment="CENTER_LEFT" spacing="8" style="-fx-padding: 5 12; -fx-background-color: #111;">
+                                <Label text="&#x1F4AC; Chat en direct" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <TextField fx:id="txtChatSearch" promptText="Filtrer..." prefWidth="150" style="-fx-background-color: #1a1a1a; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-background-radius: 12; -fx-font-size: 10; -fx-padding: 3 10; -fx-border-color: rgba(255,215,0,0.1); -fx-border-radius: 12;" />
+                                <Button mnemonicParsing="false" onAction="#refreshChatMessages" style="-fx-background-color: transparent; -fx-text-fill: #888; -fx-cursor: hand; -fx-font-size: 10; -fx-padding: 2 6;" text="&#x1F504;" />
+                                <Button mnemonicParsing="false" onAction="#handleAdminClearChat" style="-fx-background-color: rgba(255,75,75,0.15); -fx-text-fill: #FF6B6B; -fx-cursor: hand; -fx-font-size: 10; -fx-padding: 2 8; -fx-background-radius: 6;" text="&#x1F9F9; Vider" />
+                            </HBox>
+                            <ScrollPane fx:id="chatFeedScroll" fitToWidth="true" VBox.vgrow="ALWAYS" hbarPolicy="NEVER" styleClass="scroll-pane-modern" style="-fx-background: #0d0d0d; -fx-background-color: #0d0d0d;">
+                                <VBox fx:id="chatFeedContainer" spacing="1" style="-fx-padding: 4 8; -fx-background-color: #0d0d0d;" />
+                            </ScrollPane>
+                        </VBox>
+
+                        <HBox VBox.vgrow="ALWAYS" spacing="0">
+                            <VBox HBox.hgrow="ALWAYS" spacing="4" style="-fx-background-color: rgba(18,18,18,0.95); -fx-padding: 10; -fx-border-color: rgba(255,215,0,0.06); -fx-border-width: 0 1 0 0;">
+                                <HBox alignment="CENTER_LEFT">
+                                    <Label text="&#x1F465; En ligne" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="lblConnectedCount" text="0" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" />
+                                </HBox>
+                                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" hbarPolicy="NEVER" styleClass="scroll-pane-modern" style="-fx-background: transparent; -fx-background-color: transparent;">
+                                    <VBox fx:id="adminConnectedUsersList" spacing="2" style="-fx-padding: 2;" />
+                                </ScrollPane>
+                            </VBox>
+
+                            <VBox HBox.hgrow="ALWAYS" spacing="8" style="-fx-background-color: rgba(18,18,18,0.95); -fx-padding: 10; -fx-border-color: rgba(255,215,0,0.06); -fx-border-width: 0 1 0 0;">
+                                <Label text="&#x1F4E2; Annonce admin" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                <TextField fx:id="adminMessageField" promptText="Message &#x00E0; diffuser..." style="-fx-background-color: #1a1a1a; -fx-text-fill: white; -fx-prompt-text-fill: #555; -fx-background-radius: 8; -fx-padding: 8; -fx-border-color: rgba(255,215,0,0.1); -fx-border-radius: 8;" />
+                                <Button mnemonicParsing="false" onAction="#handleSendAdminMessage" maxWidth="Infinity" styleClass="dashboard-button" style="-fx-font-size: 11; -fx-padding: 8;" text="&#x1F4E2; Diffuser &#x00E0; tous" />
+                                <Region VBox.vgrow="ALWAYS" />
+                                <Label text="&#x25CF; Auto-refresh 5s" style="-fx-text-fill: #4CAF50; -fx-font-size: 9;" />
+                            </VBox>
+
+                            <VBox HBox.hgrow="ALWAYS" spacing="4" style="-fx-background-color: rgba(18,18,18,0.95); -fx-padding: 10;">
+                                <HBox alignment="CENTER_LEFT">
+                                    <Label text="&#x26A0;&#xFE0F; Violations" style="-fx-text-fill: #FFD700; -fx-font-size: 12; -fx-font-weight: bold;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Button mnemonicParsing="false" onAction="#refreshChatAlerts" style="-fx-background-color: transparent; -fx-text-fill: #666; -fx-cursor: hand; -fx-font-size: 10;" text="&#x1F504;" />
+                                </HBox>
+                                <TableView fx:id="violationsTable" VBox.vgrow="ALWAYS" style="-fx-font-size: 10;">
+                                    <columns>
+                                        <TableColumn fx:id="colViolId" prefWidth="30" text="#" />
+                                        <TableColumn fx:id="colViolUser" prefWidth="80" text="User" />
+                                        <TableColumn fx:id="colViolBadWord" prefWidth="60" text="Mot" />
+                                        <TableColumn fx:id="colViolStatus" prefWidth="85" text="Statut" />
+                                        <TableColumn fx:id="colViolAction" prefWidth="100" text="Actions" />
+                                    </columns>
+                                </TableView>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </Tab>
+
+                <!-- TAB 6: UTILISATEURS BLOQUES -->
+                <Tab text="&#x1F6AB; Bloqu&#x00E9;s">
+                    <VBox spacing="0" style="-fx-background-color: #0d0d0d;">
+                        <HBox alignment="CENTER_LEFT" spacing="12" style="-fx-background-color: #0a0a0a; -fx-padding: 10 16; -fx-border-color: rgba(255,215,0,0.12); -fx-border-width: 0 0 1 0;">
+                            <Label text="&#x1F6AB; Utilisateurs Bloqu&#x00E9;s" style="-fx-text-fill: #FFD700; -fx-font-size: 16; -fx-font-weight: bold;" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label fx:id="lblBanCount" text="0 bans actifs" style="-fx-text-fill: #FF6B6B; -fx-font-size: 12; -fx-font-weight: bold;" />
+                            <Button mnemonicParsing="false" onAction="#refreshBannedUsers" styleClass="dashboard-button" style="-fx-font-size: 11; -fx-padding: 6 14;" text="&#x1F504; Actualiser" />
+                        </HBox>
+
+                        <TableView fx:id="bannedUsersTable" VBox.vgrow="ALWAYS" style="-fx-font-size: 11;">
+                            <columns>
+                                <TableColumn fx:id="colBanId" prefWidth="40" text="#" />
+                                <TableColumn fx:id="colBanUser" prefWidth="120" text="Utilisateur" />
+                                <TableColumn fx:id="colBanReason" prefWidth="200" text="Raison" />
+                                <TableColumn fx:id="colBanDate" prefWidth="110" text="Banni le" />
+                                <TableColumn fx:id="colBanUntil" prefWidth="110" text="Jusqu'&#x00E0;" />
+                                <TableColumn fx:id="colBanRemaining" prefWidth="100" text="Restant" />
+                                <TableColumn fx:id="colBanStatus" prefWidth="80" text="Statut" />
+                                <TableColumn fx:id="colBanAction" prefWidth="180" text="Actions" />
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+            </tabs>
+        </TabPane>
+        <padding>
+            <Insets bottom="12.0" left="12.0" right="12.0" top="12.0" />
+        </padding>
+    </center>
+</BorderPane>

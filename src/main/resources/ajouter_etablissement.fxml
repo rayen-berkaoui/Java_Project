@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.esprit.controllers.AjouterEtablissementController"
+            stylesheets="@style.css"
+            styleClass="app-root">
+
+    <center>
+        <ScrollPane fitToWidth="true" fitToHeight="true"
+                    styleClass="content-scroll"
+                    hbarPolicy="NEVER">
+
+            <content>
+                <VBox alignment="TOP_CENTER">
+                    <padding>
+                        <Insets top="24" right="28" bottom="28" left="28"/>
+                    </padding>
+
+                    <VBox prefWidth="750" spacing="14" styleClass="form-section">
+                        <padding>
+                            <Insets top="22" right="26" bottom="26" left="26"/>
+                        </padding>
+
+                        <!-- HEADER -->
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <Label fx:id="titleLabel"
+                                   text="Ajouter un établissement"
+                                   styleClass="page-title"/>
+                            <Pane HBox.hgrow="ALWAYS"/>
+                            <Button text="← Retour"
+                                    onAction="#onAnnuler"
+                                    styleClass="home-btn-small"/>
+                            <Region prefWidth="8"/>
+                            <Button text="☀" onAction="#toggleTheme" styleClass="theme-toggle-btn"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-thin"/>
+
+                        <VBox spacing="10">
+
+                            <!-- Section: Informations générales -->
+                            <HBox alignment="CENTER_LEFT" spacing="8">
+                                <Region styleClass="gold-dot"/>
+                                <Label text="Informations générales" styleClass="section-title"/>
+                            </HBox>
+
+                            <Region styleClass="accent-line-full"/>
+
+                        <GridPane hgap="14" vgap="14">
+                            <columnConstraints>
+                                <ColumnConstraints percentWidth="50"/>
+                                <ColumnConstraints percentWidth="50"/>
+                            </columnConstraints>
+
+                            <!-- NOM -->
+                            <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="0">
+                                <Label text="Nom *" styleClass="form-field-label"/>
+                                <TextField fx:id="nomField"
+                                           promptText="Nom"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="nomError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <!-- TYPE -->
+                            <VBox spacing="4" GridPane.rowIndex="0" GridPane.columnIndex="1">
+                                <Label text="Type" styleClass="form-field-label"/>
+                                <ComboBox fx:id="typeField"
+                                          editable="true"
+                                          promptText="hotel / restaurant / cafe / museum ..."
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                                <Label fx:id="typeError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <!-- GOUVERNORAT -->
+                            <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="0">
+                                <Label text="Gouvernorat *" styleClass="form-field-label"/>
+                                <ComboBox fx:id="gouvernoratBox"
+                                          editable="true"
+                                          promptText="Choisir gouvernorat"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                                <Label fx:id="gouvernoratError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <!-- VILLE -->
+                            <VBox spacing="4" GridPane.rowIndex="1" GridPane.columnIndex="1">
+                                <Label text="Ville *" styleClass="form-field-label"/>
+                                <ComboBox fx:id="villeBox"
+                                          editable="true"
+                                          promptText="Choisir ville"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                                <Label fx:id="villeError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <!-- ADRESSE -->
+                            <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="0">
+                                <Label text="Adresse" styleClass="form-field-label"/>
+                                <TextField fx:id="adresseField"
+                                           promptText="Adresse"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="adresseError" styleClass="field-error-label"/>
+                                <Button text="&#x1f4cd; Voir sur Google Maps"
+                                        onAction="#onOpenGoogleMaps"
+                                        styleClass="btn-google-maps"
+                                        maxWidth="Infinity"/>
+                            </VBox>
+
+                            <!-- TELEPHONE -->
+                            <VBox spacing="4" GridPane.rowIndex="2" GridPane.columnIndex="1">
+                                <Label text="Téléphone" styleClass="form-field-label"/>
+                                <HBox spacing="10">
+                                    <ComboBox fx:id="phoneCodeBox"
+                                              editable="true"
+                                              promptText="+216"
+                                              prefWidth="130"
+                                              styleClass="form-combo"/>
+                                    <TextField fx:id="telephoneField"
+                                               promptText="Ex: 22123456"
+                                               styleClass="form-input"
+                                               HBox.hgrow="ALWAYS"/>
+                                </HBox>
+                                <Label fx:id="telephoneError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <!-- EMAIL -->
+                            <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="0">
+                                <Label text="Email" styleClass="form-field-label"/>
+                                <TextField fx:id="emailField"
+                                           promptText="Ex: nom@gmail.com"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="emailError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <!-- GAMME PRIX -->
+                            <VBox spacing="4" GridPane.rowIndex="3" GridPane.columnIndex="1">
+                                <Label text="Gamme prix" styleClass="form-field-label"/>
+                                <ComboBox fx:id="gammePrixStarsBox"
+                                          editable="false"
+                                          promptText="⭐ à ⭐⭐⭐"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                                <Label fx:id="gammeError" styleClass="field-error-label"/>
+                            </VBox>
+
+                            <!-- HORAIRES -->
+                            <VBox spacing="4" GridPane.rowIndex="4" GridPane.columnIndex="0">
+                                <Label text="Horaires" styleClass="form-field-label"/>
+                                <ComboBox fx:id="horairesTemplateBox"
+                                          editable="false"
+                                          promptText="Choisir un modèle"
+                                          styleClass="form-combo"
+                                          maxWidth="Infinity"/>
+                                <TextField fx:id="horairesField"
+                                           promptText="Ex: Lun-Ven 08:00-18:00"
+                                           styleClass="form-input"
+                                           maxWidth="Infinity"/>
+                                <Label fx:id="horairesError" styleClass="field-error-label"/>
+                            </VBox>
+
+                        </GridPane>
+
+                        <Region prefHeight="6"/>
+
+                        <!-- Section: Localisation sur la carte -->
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Localisation sur la carte" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
+                        <VBox spacing="8" styleClass="map-picker-card">
+                            <padding>
+                                <Insets top="10" right="10" bottom="10" left="10"/>
+                            </padding>
+                            <Label text="&#x1f4cd; Cliquez sur la carte pour s&#xe9;lectionner l'emplacement"
+                                   styleClass="muted"/>
+                            <WebView fx:id="mapWebView" prefHeight="500" minHeight="500" maxHeight="600"/>
+                            <HBox spacing="14" alignment="CENTER_LEFT">
+                                <Label text="Lat:" styleClass="form-field-label"/>
+                                <Label fx:id="latLabel" text="&#x2014;" styleClass="map-coord-value"/>
+                                <Label text="Lng:" styleClass="form-field-label"/>
+                                <Label fx:id="lngLabel" text="&#x2014;" styleClass="map-coord-value"/>
+                            </HBox>
+                        </VBox>
+
+                        <Region prefHeight="6"/>
+
+                        <!-- DESCRIPTION -->
+                        <VBox spacing="4">
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Description (max 200)" styleClass="form-field-label" HBox.hgrow="ALWAYS"/>
+                                <Button fx:id="generateDescBtn" text="✨ Generate with AI"
+                                        styleClass="btn-ai-generate"
+                                        onAction="#handleGenerateDescription"
+                                        mnemonicParsing="false"/>
+                            </HBox>
+                            <TextArea fx:id="descriptionArea"
+                                      promptText="Décris l'établissement..."
+                                      prefRowCount="4"
+                                      wrapText="true"
+                                      styleClass="form-textarea"/>
+                            <Label fx:id="descriptionError" styleClass="field-error-label"/>
+                        </VBox>
+
+                        <Region prefHeight="6"/>
+
+                        <!-- Section: Images -->
+                        <HBox alignment="CENTER_LEFT" spacing="8">
+                            <Region styleClass="gold-dot"/>
+                            <Label text="Galerie d'images" styleClass="section-title"/>
+                        </HBox>
+
+                        <Region styleClass="accent-line-full"/>
+
+                        <VBox spacing="10" styleClass="image-preview-card">
+                            <padding>
+                                <Insets top="12" right="14" bottom="12" left="14"/>
+                            </padding>
+
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Pane HBox.hgrow="ALWAYS"/>
+                                <Button text="Choisir image(s)"
+                                        onAction="#onChooseImages"
+                                        styleClass="btn-browse"/>
+                            </HBox>
+
+                            <Label text="La première image sera l'image principale." styleClass="muted"/>
+
+                            <ScrollPane fitToHeight="true"
+                                        hbarPolicy="AS_NEEDED"
+                                        vbarPolicy="NEVER"
+                                        styleClass="gallery-scroll">
+                                <content>
+                                    <HBox fx:id="imagesStrip"
+                                          styleClass="gallery-strip"
+                                          spacing="10"/>
+                                </content>
+                            </ScrollPane>
+                        </VBox>
+
+                        <Region prefHeight="6"/>
+
+                        <!-- ACTIONS -->
+                        <HBox spacing="12" styleClass="action-bar">
+                            <Button fx:id="saveBtn"
+                                    text="Enregistrer"
+                                    onAction="#onEnregistrer"
+                                    styleClass="btn-primary"
+                                    HBox.hgrow="ALWAYS"/>
+                            <Button text="Annuler"
+                                    onAction="#onAnnuler"
+                                    styleClass="btn-secondary"
+                                    HBox.hgrow="ALWAYS"/>
+                        </HBox>
+
+                    </VBox>
+                </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+</BorderPane>
